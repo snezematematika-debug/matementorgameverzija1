@@ -51,5 +51,17 @@ export enum AppMode {
   PROJECT = 'PROJECT',
   BOARD_PLAN = 'BOARD_PLAN',
   ADVANCED_PRACTICE = 'ADVANCED_PRACTICE',
-  TEACHER_PANEL = 'TEACHER_PANEL'
+  TEACHER_PANEL = 'TEACHER_PANEL',
+  GAMES = 'GAMES'
+}
+
+export type GameType = 'BINGO' | 'ESCAPE_ROOM' | 'PASSWORD' | 'BALLOONS' | 'FLASHCARDS';
+
+export interface GameState {
+  pin: string;
+  topic: string;
+  type: GameType;
+  status: 'WAITING' | 'PLAYING' | 'FINISHED';
+  players: string[];
+  content: any;
 }

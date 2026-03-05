@@ -154,6 +154,17 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
           >
             <span>📓</span> Интерактивна тетратка
           </button>
+
+          <button
+            onClick={() => setMode(AppMode.GAMES)}
+            className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border border-pink-500/30 ${
+              currentMode === AppMode.GAMES 
+                ? 'bg-pink-500/20 text-pink-200 shadow-md translate-x-1 border-pink-500' 
+                : 'text-pink-200 hover:bg-pink-900/40 hover:text-pink-100'
+            }`}
+          >
+            <span>🎮</span> Мате игри
+          </button>
         </nav>
 
         {/* Footer Section - Copyright */}

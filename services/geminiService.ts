@@ -719,3 +719,64 @@ export const generateTeacherTask = async (topic: string, grade: string): Promise
     return {problem: "", hint: "", solution: ""};
   }
 };
+
+export const generateGameContent = async (topic: string, type: string, grade: string): Promise<any> => {
+  try {
+    const ai = getAiClient();
+    const prompt = `
+      Генерирај содржина за математичка игра од типот "${type}" на тема "${topic}" за ${grade} одделение.
+      
+      СТРОГИ ПРАВИЛА ЗА JSON СТРУКТУРАТА (Врати само JSON):
+      
+      Ако типот е "BINGO":
+      {
+        "questions": [
+          {"question": "Колку е 5+5?", "answer": "10"},
+          ... (вкупно 24 вакви објекти)
+        ]
+      }
+
+      Ако типот е "FLASHCARDS":
+      {
+        "cards": [
+          {"question": "Што е агол?", "answer": "Дел од рамнина..."},
+          ... (вкупно 10 вакви објекти)
+        ]
+      }
+
+      Ако типот е "ESCAPE_ROOM":
+      {
+        "riddles": [
+          {"question": "Прва загатка...", "answer": "123"},
+          ... (вкупно 5 вакви објекти)
+        ]
+      }
+
+      Ако типот е "PASSWORD" или "BALLOONS":
+      {
+        "tasks": [
+          {"question": "Колку е 2x2?", "answer": "4"},
+          ... (вкупно 10 вакви објекти)
+        ]
+      }
+
+      ${MATH_INSTRUCTION}
+
+      Врати го ОДГОВОРОТ ИСКЛУЧИВО КАКО JSON ОБЈЕКТ.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        systemInstruction: SYSTEM_PERSONA,
+        responseMimeType: "application/json",
+      }
+    });
+
+    return parseJsonSafe(response.text);
+  } catch (error: any) {
+    handleGeminiError(error);
+    return null;
+  }
+};

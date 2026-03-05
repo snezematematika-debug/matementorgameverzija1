@@ -24,6 +24,20 @@
         print-color-adjust: exact !important;
       }
       .katex { font-size: 1.1em; }
+      
+      /* Flashcard Flip Animation */
+      .perspective-1000 {
+        perspective: 1000px;
+      }
+      .preserve-3d {
+        transform-style: preserve-3d;
+      }
+      .backface-hidden {
+        backface-visibility: hidden;
+      }
+      .rotate-y-180 {
+        transform: rotateY(180deg);
+      }
     </style>
     <script type="importmap">
     {
@@ -42,7 +56,6 @@
       }
     }
     </script>
-  <link rel="stylesheet" href="/index.css">
 </head>
   <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>

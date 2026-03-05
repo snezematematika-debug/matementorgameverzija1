@@ -10,6 +10,7 @@ import ProjectGenerator from './components/ProjectGenerator';
 import BoardPlanGenerator from './components/BoardPlanGenerator';
 import AdvancedPractice from './components/AdvancedPractice';
 import TeacherPanel from './components/TeacherPanel';
+import MathGames from './components/MathGames';
 import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
@@ -37,6 +38,8 @@ const App: React.FC = () => {
         return <AdvancedPractice grade={selectedGrade} />;
       case AppMode.TEACHER_PANEL:
         return <TeacherPanel grade={selectedGrade} />;
+      case AppMode.GAMES:
+        return <MathGames grade={selectedGrade} />;
       default:
         return <LessonGenerator grade={selectedGrade} />;
     }
