@@ -1,11 +1,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { ref, set, onValue, update, push, remove, get, child, off } from "firebase/database";
+import { db } from "../services/firebase";
 import { QRCodeSVG } from 'qrcode.react';
 import { GradeLevel, GameType, GameState, CurriculumTopic } from '../types';
 import { PROJECT_TOPICS, PROJECT_THEMES } from '../projectTopics';
 import { generateGameContent } from '../services/geminiService';
 import Loading from './Loading';
+
+const generatePin = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 interface MathGamesProps {
   grade: GradeLevel;
@@ -13,10 +18,10 @@ interface MathGamesProps {
 
 const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   const [role, setRole] = useState<'TEACHER' | 'STUDENT' | null>(null);
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [pinInput, setPinInput] = useState('');
   const [playerName, setPlayerName] = useState('');
+  const [playerId, setPlayerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState('');
@@ -34,9 +39,6 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   const filteredTopics = PROJECT_TOPICS.filter(t => t.grade === grade);
 
   useEffect(() => {
-    const newSocket = io();
-    setSocket(newSocket);
-
     // Check for PIN in URL
     const params = new URLSearchParams(window.location.search);
     const urlPin = params.get('pin');
@@ -45,84 +47,142 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
       setRole('STUDENT');
     }
 
-    newSocket.on('room-created', (data: GameState) => {
-      setGameState(data);
-      setLoading(false);
-    });
-
-    newSocket.on('player-joined', (data: { players: string[] }) => {
-      setGameState(prev => prev ? { ...prev, players: data.players } : null);
-    });
-
-    newSocket.on('join-success', (data: GameState) => {
-      setGameState(data);
-      if (data.solvers) setSolvers(data.solvers);
-      setLoading(false);
-    });
-
-    newSocket.on('join-error', (msg: string) => {
-      setError(msg);
-      setLoading(false);
-    });
-
-    newSocket.on('game-started', (data: GameState) => {
-      setGameState(data);
-      setSolvers([]);
-      setIsSolved(false);
-      setFinalPassword('');
-      if (data.type === 'ESCAPE_ROOM') {
-        const riddleCount = data.content?.riddles?.length || 0;
-        setEscapeRoomAnswers(new Array(riddleCount).fill(''));
-        setSolvedRiddles(new Array(riddleCount).fill(false));
-      }
-    });
-
-    newSocket.on('player-solved-escape-room', (data: { playerName: string, allSolvers?: string[] }) => {
-      if (data.allSolvers) {
-        setSolvers(data.allSolvers);
-      } else {
-        setSolvers(prev => [...new Set([...prev, data.playerName])]);
-      }
-    });
-
-    newSocket.on('room-closed', () => {
-      setGameState(null);
-      setRole(null);
-      setError('Играта беше завршена од наставникот.');
-    });
-
-    return () => {
-      newSocket.disconnect();
-    };
+    // Recover playerId from localStorage
+    const savedPlayerId = localStorage.getItem('math_games_player_id');
+    if (savedPlayerId) {
+      setPlayerId(savedPlayerId);
+    } else {
+      const newId = 'p_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('math_games_player_id', newId);
+      setPlayerId(newId);
+    }
   }, []);
 
+  useEffect(() => {
+    const activePin = gameState?.pin || pinInput;
+    if (!activePin) return;
+
+    const roomRef = ref(db, `games/${activePin}`);
+    const unsubscribe = onValue(roomRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Convert players object to array if needed for the UI
+        const playersArray = data.players ? Object.entries(data.players).map(([id, p]: [string, any]) => ({
+          id,
+          ...p
+        })) : [];
+        
+        // Convert solvers object to array if needed
+        const solversArray = data.solvers ? Object.values(data.solvers) as string[] : [];
+
+        setGameState({
+          ...data,
+          players: playersArray,
+          solvers: solversArray
+        });
+        
+        if (solversArray.length > 0) {
+          setSolvers(solversArray);
+        }
+      } else {
+        if (gameState) {
+          setGameState(null);
+          setRole(null);
+          setError('Играта беше завршена.');
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [pinInput, role, gameState?.pin]);
+
   const handleCreateGame = async () => {
-    if (!selectedTopic || !socket) return;
+    if (!selectedTopic) return;
     setLoading(true);
     setError(null);
     try {
       const content = await generateGameContent(selectedTopic, selectedGameType, grade);
-      socket.emit('create-room', {
+      const pin = generatePin();
+      
+      const newGameState: GameState = {
+        pin,
         topic: selectedTopic,
         type: selectedGameType,
-        content
+        status: 'WAITING',
+        players: [],
+        content,
+        createdAt: Date.now()
+      };
+      
+      await set(ref(db, `games/${pin}`), {
+        ...newGameState,
+        players: {}
       });
+      setGameState(newGameState);
+      setPinInput(pin);
+      setLoading(false);
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
     }
   };
 
-  const handleJoinGame = () => {
-    if (!pinInput || !playerName || !socket) return;
+  const handleJoinGame = async () => {
+    if (!pinInput || !playerName || !playerId) return;
     setLoading(true);
     setError(null);
-    socket.emit('join-room', { pin: pinInput, playerName });
+    
+    try {
+      const roomRef = ref(db, `games/${pinInput}`);
+      const snapshot = await get(roomRef);
+      
+      if (!snapshot.exists()) {
+        setError('Невалиден PIN код.');
+        setLoading(false);
+        return;
+      }
+
+      const roomData = snapshot.val();
+      if (roomData.status !== 'WAITING') {
+        setError('Играта е веќе започната.');
+        setLoading(false);
+        return;
+      }
+
+      // Add player to Firebase
+      await update(ref(db, `games/${pinInput}/players/${playerId}`), {
+        name: playerName,
+        score: 0,
+        joinedAt: Date.now()
+      });
+
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
-  const handleStartGame = () => {
-    if (gameState && socket) {
-      socket.emit('start-game', gameState.pin);
+  const handleStartGame = async () => {
+    if (gameState?.pin) {
+      await update(ref(db, `games/${gameState.pin}`), {
+        status: 'PLAYING'
+      });
+    }
+  };
+
+  const handleEscapeRoomSolved = async () => {
+    if (gameState?.pin && playerName) {
+      const solversRef = ref(db, `games/${gameState.pin}/solvers`);
+      await push(solversRef, playerName);
+    }
+  };
+
+  const closeRoom = async () => {
+    if (gameState?.pin) {
+      await remove(ref(db, `games/${gameState.pin}`));
+      setGameState(null);
+      setRole(null);
     }
   };
 
@@ -163,7 +223,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   };
 
   const checkFinalPassword = () => {
-    if (!gameState || !socket) return;
+    if (!gameState) return;
     
     // Lenient matching: strip spaces and lowercase everything
     const correctPassword = gameState.content.riddles
@@ -174,7 +234,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
     
     if (studentInput === correctPassword) {
       setIsSolved(true);
-      socket.emit('escape-room-solved', { pin: gameState.pin, playerName });
+      handleEscapeRoomSolved();
     } else {
       setError('Неточна лозинка. Провери ги одговорите на загатките и обиди се повторно!');
       setTimeout(() => setError(null), 3000);
@@ -292,11 +352,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
       <div className="flex flex-col items-center space-y-8 py-8">
         <div className="w-full flex justify-start">
           <button 
-            onClick={() => {
-              if (socket && gameState) socket.emit('close-room', gameState.pin);
-              setGameState(null);
-              setRole(null);
-            }} 
+            onClick={closeRoom} 
             className="text-sm text-slate-500 hover:text-indigo-600"
           >
             ← Откажи игра
@@ -397,8 +453,10 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
     return (
       <div className="flex flex-col items-center justify-center space-y-8 py-20 relative">
         <button 
-          onClick={() => {
-            if (socket && gameState) socket.emit('leave-room', gameState.pin);
+          onClick={async () => {
+            if (gameState?.pin && playerId) {
+              await remove(ref(db, `games/${gameState.pin}/players/${playerId}`));
+            }
             setGameState(null);
             setRole(null);
           }} 
@@ -647,16 +705,17 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
         
         <div className="flex justify-center pt-4">
            <button 
-             onClick={() => {
-               // Removed window.confirm to avoid issues in iframe/mobile
-               if (role === 'TEACHER' && socket && gameState) {
-                 socket.emit('close-room', gameState.pin);
-               } else if (role === 'STUDENT' && socket && gameState) {
-                 socket.emit('leave-room', gameState.pin);
+             onClick={async () => {
+               if (role === 'TEACHER') {
+                 await closeRoom();
+               } else if (role === 'STUDENT') {
+                 if (gameState?.pin && playerId) {
+                   await remove(ref(db, `games/${gameState.pin}/players/${playerId}`));
+                 }
+                 setGameState(null);
+                 setRole(null);
                }
                // Reset local state
-               setGameState(null);
-               setRole(null);
                setMarkedCells(new Set());
                setFlippedCards(new Set());
                setEscapeRoomAnswers([]);

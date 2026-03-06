@@ -62,7 +62,9 @@ export interface GameState {
   topic: string;
   type: GameType;
   status: 'WAITING' | 'PLAYING' | 'FINISHED';
-  players: string[];
+  players: any[];
   solvers?: string[];
   content: any;
+  createdAt?: number;
+  currentQuestion?: number;
 }
