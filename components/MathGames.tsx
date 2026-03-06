@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { QRCodeSVG } from 'qrcode.react';
-import { GradeLevel, GameType, GameState } from '../types';
+import { GradeLevel, GameType, GameState, CurriculumTopic } from '../types';
+import { PROJECT_TOPICS, PROJECT_THEMES } from '../projectTopics';
 import { generateGameContent } from '../services/geminiService';
 import Loading from './Loading';
 
@@ -22,14 +23,15 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   const [selectedGameType, setSelectedGameType] = useState<GameType>('BINGO');
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set());
   const [markedCells, setMarkedCells] = useState<Set<number>>(new Set());
+  const [escapeRoomAnswers, setEscapeRoomAnswers] = useState<string[]>([]);
+  const [solvedRiddles, setSolvedRiddles] = useState<boolean[]>([]);
+  const [finalPassword, setFinalPassword] = useState('');
+  const [isSolved, setIsSolved] = useState(false);
+  const [solvers, setSolvers] = useState<string[]>([]);
 
-  const topics = [
-    'Броеви и операции',
-    'Геометрија и решавање проблеми',
-    'Алгебра и функции',
-    'Мерење',
-    'Работа со податоци'
-  ];
+  console.log('MathGames State:', { role, isSolved, solvers, gameType: gameState?.type });
+
+  const filteredTopics = PROJECT_TOPICS.filter(t => t.grade === grade);
 
   useEffect(() => {
     const newSocket = io();
@@ -54,6 +56,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
 
     newSocket.on('join-success', (data: GameState) => {
       setGameState(data);
+      if (data.solvers) setSolvers(data.solvers);
       setLoading(false);
     });
 
@@ -64,6 +67,22 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
 
     newSocket.on('game-started', (data: GameState) => {
       setGameState(data);
+      setSolvers([]);
+      setIsSolved(false);
+      setFinalPassword('');
+      if (data.type === 'ESCAPE_ROOM') {
+        const riddleCount = data.content?.riddles?.length || 0;
+        setEscapeRoomAnswers(new Array(riddleCount).fill(''));
+        setSolvedRiddles(new Array(riddleCount).fill(false));
+      }
+    });
+
+    newSocket.on('player-solved-escape-room', (data: { playerName: string, allSolvers?: string[] }) => {
+      if (data.allSolvers) {
+        setSolvers(data.allSolvers);
+      } else {
+        setSolvers(prev => [...new Set([...prev, data.playerName])]);
+      }
     });
 
     newSocket.on('room-closed', () => {
@@ -127,6 +146,41 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
     setMarkedCells(newMarked);
   };
 
+  const handleEscapeRoomAnswer = (idx: number, answer: string) => {
+    const newAnswers = [...escapeRoomAnswers];
+    newAnswers[idx] = answer;
+    setEscapeRoomAnswers(newAnswers);
+  };
+
+  const checkRiddle = (idx: number) => {
+    const riddle = gameState?.content?.riddles?.[idx];
+    if (!riddle) return;
+    
+    const isCorrect = escapeRoomAnswers[idx].trim().toLowerCase() === riddle.answer.toString().toLowerCase();
+    const newSolved = [...solvedRiddles];
+    newSolved[idx] = isCorrect;
+    setSolvedRiddles(newSolved);
+  };
+
+  const checkFinalPassword = () => {
+    if (!gameState || !socket) return;
+    
+    // Lenient matching: strip spaces and lowercase everything
+    const correctPassword = gameState.content.riddles
+      .map((r: any) => r.answer.toString().toLowerCase().replace(/\s/g, ''))
+      .join('');
+    
+    const studentInput = finalPassword.trim().toLowerCase().replace(/\s/g, '');
+    
+    if (studentInput === correctPassword) {
+      setIsSolved(true);
+      socket.emit('escape-room-solved', { pin: gameState.pin, playerName });
+    } else {
+      setError('Неточна лозинка. Провери ги одговорите на загатките и обиди се повторно!');
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
   if (loading) return <Loading message="Се подготвува играта..." />;
 
   if (!role) {
@@ -169,17 +223,31 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <label className="block text-sm font-bold text-slate-700">1. Избери тема:</label>
-            <div className="grid grid-cols-1 gap-2">
-              {topics.map(topic => (
-                <button
-                  key={topic}
-                  onClick={() => setSelectedTopic(topic)}
-                  className={`p-3 text-left rounded-xl border-2 transition-all ${selectedTopic === topic ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-slate-100 hover:border-indigo-200'}`}
-                >
-                  {topic}
-                </button>
-              ))}
+            <label className="block text-sm font-bold text-slate-700">1. Избери тема ({grade} одд):</label>
+            <div className="grid grid-cols-1 gap-6 max-h-[450px] overflow-y-auto p-4 border border-slate-100 rounded-2xl bg-slate-50/50 custom-scrollbar">
+              {PROJECT_THEMES.filter(theme => theme.grade === grade && !theme.id.startsWith('steam')).map(theme => {
+                const themeTopics = filteredTopics.filter(t => t.themeId === theme.id);
+                if (themeTopics.length === 0) return null;
+                return (
+                  <div key={theme.id} className="space-y-2">
+                    <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                      <span className="w-8 h-[1px] bg-indigo-100"></span>
+                      {theme.title}
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      {themeTopics.map(topic => (
+                        <button
+                          key={topic.id}
+                          onClick={() => setSelectedTopic(topic.name)}
+                          className={`p-3 text-left rounded-xl border-2 transition-all ${selectedTopic === topic.name ? 'border-indigo-500 bg-indigo-50 text-indigo-900' : 'border-white bg-white hover:border-indigo-200 shadow-sm'}`}
+                        >
+                          <div className="text-sm font-bold">{topic.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -398,18 +466,28 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
                   );
                 })}
               </div>
-              <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-                <p className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
-                  <span>📢</span> Наставникот ги чита прашањата:
-                </p>
-                <div className="max-h-40 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                  {content?.questions?.map((q: any, idx: number) => (
-                    <div key={idx} className="text-xs text-slate-600 bg-white/50 p-2 rounded-lg border border-indigo-50">
-                      <strong className="text-indigo-600">{idx + 1}.</strong> {q.question}
-                    </div>
-                  ))}
+              {role === 'TEACHER' && (
+                <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                  <p className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                    <span>📢</span> Наставникот ги чита прашањата:
+                  </p>
+                  <div className="max-h-40 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                    {content?.questions?.map((q: any, idx: number) => (
+                      <div key={idx} className="text-xs text-slate-600 bg-white/50 p-2 rounded-lg border border-indigo-50">
+                        <strong className="text-indigo-600">{idx + 1}.</strong> {q.question}
+                        <span className="ml-2 text-emerald-600 font-bold">(Одговор: {q.answer})</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+              {role === 'STUDENT' && (
+                <div className="p-4 bg-pink-50 rounded-2xl border border-pink-100 text-center">
+                  <p className="text-sm font-bold text-pink-900">
+                    Слушајте го наставникот внимателно и означете ги точните одговори на вашата картичка! 👂
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -444,19 +522,101 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
 
           {gameState.type === 'ESCAPE_ROOM' && (
             <div className="space-y-8">
-              <h3 className="text-xl font-bold text-center text-indigo-900">Escape Room: Математичка Мисија 🔐</h3>
+              <h3 className="text-2xl font-black text-center text-indigo-900 flex items-center justify-center gap-3">
+                <span className="text-3xl">🔐</span> Escape Room: Математичка Мисија
+              </h3>
+              
+              {role === 'STUDENT' && !isSolved && (
+                <div className="bg-amber-50 border-2 border-amber-200 p-4 rounded-2xl text-amber-900 text-center font-bold animate-pulse">
+                  📢 Реши ги сите загатки и внеси ја лозинката најдолу за да излезеш!
+                </div>
+              )}
+              
+              <div className="bg-indigo-50 p-6 rounded-3xl border border-indigo-100 mb-8">
+                <h4 className="font-bold text-indigo-900 mb-4 flex items-center gap-2">
+                  <span>🏆</span> Ученици кои ја открија лозинката:
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {solvers.map((name, i) => (
+                    <div key={i} className="bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-sm animate-bounce">
+                      🎉 {name}
+                    </div>
+                  ))}
+                  {solvers.length === 0 && <p className="text-slate-400 italic text-sm">Сè уште никој не ја открил лозинката...</p>}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 gap-6">
                 {content?.riddles?.map((riddle: any, idx: number) => (
-                  <div key={idx} className="p-6 bg-slate-50 rounded-2xl border-l-4 border-indigo-500 shadow-sm">
-                    <h4 className="font-bold text-indigo-900 mb-2">Загатка {idx + 1}</h4>
-                    <p className="text-slate-700">{riddle.question}</p>
-                    <div className="mt-4 flex gap-2">
-                      <input type="text" placeholder="Внеси одговор..." className="flex-1 p-2 rounded-lg border border-slate-200 text-sm" />
-                      <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold">Провери</button>
+                  <div key={idx} className={`p-6 rounded-2xl border-l-4 transition-all ${solvedRiddles[idx] ? 'bg-emerald-50 border-emerald-500' : 'bg-slate-50 border-indigo-500 shadow-sm'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-bold text-indigo-900">Загатка {idx + 1}</h4>
+                      {solvedRiddles[idx] && <span className="text-emerald-600 font-bold text-sm">✅ Решено!</span>}
                     </div>
+                    <p className="text-slate-700 mb-4">{riddle.question}</p>
+                    
+                    {role === 'TEACHER' ? (
+                      <div className="p-3 bg-white/50 rounded-xl border border-indigo-100">
+                        <p className="text-sm font-bold text-indigo-600">Клуч: <span className="text-emerald-600">{riddle.answer}</span></p>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          placeholder="Внеси одговор..." 
+                          value={escapeRoomAnswers[idx] || ''}
+                          onChange={(e) => handleEscapeRoomAnswer(idx, e.target.value)}
+                          disabled={solvedRiddles[idx]}
+                          className={`flex-1 p-3 rounded-xl border-2 outline-none transition-all ${solvedRiddles[idx] ? 'bg-emerald-100 border-emerald-200 text-emerald-800' : 'bg-white border-slate-100 focus:border-indigo-500'}`}
+                        />
+                        {!solvedRiddles[idx] && (
+                          <button 
+                            onClick={() => checkRiddle(idx)}
+                            className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all"
+                          >
+                            Провери
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
+
+              {/* Final Password Section - Always visible for students until solved */}
+              {role === 'STUDENT' && !isSolved && (
+                <div className="mt-12 p-8 bg-indigo-900 text-white rounded-[2.5rem] shadow-2xl space-y-6 border-4 border-indigo-400">
+                  <div className="text-center">
+                    <h4 className="text-xl font-bold mb-2">Внеси ја финалната лозинка ⌨️</h4>
+                    <p className="text-indigo-300 text-sm">Лозинката е низа од сите одговори на загатките по ред.</p>
+                    <div className="mt-2 text-[10px] text-indigo-400">v1.2 - Проверка на лозинка</div>
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    <input 
+                      type="text" 
+                      placeholder="Внеси ја лозинката..." 
+                      value={finalPassword}
+                      onChange={(e) => setFinalPassword(e.target.value)}
+                      className="w-full p-4 bg-white/10 border-2 border-white/20 rounded-2xl text-center text-2xl font-black tracking-widest focus:border-white focus:bg-white/20 outline-none transition-all placeholder:text-white/30"
+                    />
+                    <button 
+                      onClick={checkFinalPassword}
+                      className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-lg transition-all active:scale-95"
+                    >
+                      ОТКРИЈ ЈА ЛОЗИНКАТА! 🔓
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {isSolved && (
+                <div className="mt-12 p-10 bg-emerald-500 text-white rounded-[2.5rem] shadow-2xl text-center animate-in zoom-in duration-500">
+                  <div className="text-6xl mb-4">🎉</div>
+                  <h4 className="text-3xl font-black mb-2">БРАВО!</h4>
+                  <p className="text-xl font-bold">Успешно ја откри лозинката и излезе од собата!</p>
+                  <p className="mt-4 text-emerald-100">Наставникот е известен за твојот успех.</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -499,6 +659,11 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
                setRole(null);
                setMarkedCells(new Set());
                setFlippedCards(new Set());
+               setEscapeRoomAnswers([]);
+               setSolvedRiddles([]);
+               setFinalPassword('');
+               setIsSolved(false);
+               setSolvers([]);
                setError(null);
              }}
              className="px-8 py-3 bg-red-50 text-red-600 rounded-2xl font-bold text-sm hover:bg-red-100 transition-all border border-red-100 shadow-sm active:scale-95"

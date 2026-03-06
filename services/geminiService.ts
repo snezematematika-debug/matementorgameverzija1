@@ -748,7 +748,7 @@ export const generateGameContent = async (topic: string, type: string, grade: st
       {
         "riddles": [
           {"question": "Прва загатка...", "answer": "123"},
-          ... (вкупно 5 вакви објекти)
+          ... (вкупно 5 вакви објекти. Одговорите треба да бидат кратки - еден збор или број)
         ]
       }
 

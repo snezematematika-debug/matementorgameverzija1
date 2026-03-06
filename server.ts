@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +21,32 @@ async function startServer() {
   });
 
   const PORT = 3000;
+
+  // Diagnostic logging
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+  });
+
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "ok", 
+      time: new Date().toISOString(),
+      env: process.env.NODE_ENV || 'development'
+    });
+  });
+
+  app.get("/api/debug-files", (req, res) => {
+    try {
+      const files = fs.readdirSync(__dirname);
+      const distFiles = fs.existsSync(path.join(__dirname, "dist")) 
+        ? fs.readdirSync(path.join(__dirname, "dist")) 
+        : ["dist folder missing"];
+      res.json({ root: files, dist: distFiles });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 
   // Game rooms state
   const rooms = new Map<string, any>();
@@ -95,6 +122,19 @@ async function startServer() {
       io.to(pin).emit("answer-received", { playerName, answer });
     });
 
+    socket.on("escape-room-solved", (data) => {
+      const { pin, playerName } = data;
+      const room = rooms.get(pin);
+      if (room) {
+        if (!room.solvers) room.solvers = [];
+        if (!room.solvers.includes(playerName)) {
+          room.solvers.push(playerName);
+        }
+        io.to(pin).emit("player-solved-escape-room", { playerName, allSolvers: room.solvers });
+        console.log(`Player ${playerName} solved Escape Room in room ${pin}`);
+      }
+    });
+
     socket.on("disconnect", () => {
       // Cleanup rooms if host disconnects or remove player
       rooms.forEach((room, pin) => {
@@ -118,15 +158,19 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    console.log("Starting Vite in middleware mode...");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
+      root: __dirname,
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.join(__dirname, "dist")));
+    console.log("Serving static files from dist...");
+    const distPath = path.join(__dirname, "dist");
+    app.use(express.static(distPath));
     app.get("*", (req, res) => {
-      res.sendFile(path.join(__dirname, "dist", "index.html"));
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 

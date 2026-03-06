@@ -63,5 +63,6 @@ export interface GameState {
   type: GameType;
   status: 'WAITING' | 'PLAYING' | 'FINISHED';
   players: string[];
+  solvers?: string[];
   content: any;
 }

@@ -11,9 +11,12 @@
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
+    "@tailwindcss/vite": "^4.2.1",
+    "autoprefixer": "^10.4.27",
     "express": "^5.2.1",
     "katex": "0.16.9",
     "marked": "12.0.0",
+    "postcss": "^8.5.8",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
@@ -24,6 +27,7 @@
     "remark-math": "6.0.0",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
+    "tailwindcss": "^4.2.1",
     "tsx": "^4.21.0"
   },
   "devDependencies": {
