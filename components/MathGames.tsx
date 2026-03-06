@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { ref, set, onValue, update, push, remove, get, child, off } from "firebase/database";
-import { db } from "../services/firebase";
+// Линијата за import db е отстранета
 import { QRCodeSVG } from 'qrcode.react';
 import { GradeLevel, GameType, GameState, CurriculumTopic } from '../types';
 import { PROJECT_TOPICS, PROJECT_THEMES } from '../projectTopics';
@@ -14,9 +13,10 @@ const generatePin = () => {
 
 interface MathGamesProps {
   grade: GradeLevel;
+  database: any; // Додадено за Firebase конекција
 }
 
-const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
+const MathGames: React.FC<MathGamesProps> = ({ grade, database }) => {
   const [role, setRole] = useState<'TEACHER' | 'STUDENT' | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [pinInput, setPinInput] = useState('');
@@ -60,19 +60,17 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
 
   useEffect(() => {
     const activePin = gameState?.pin || pinInput;
-    if (!activePin) return;
+    if (!activePin || !database) return;
 
-    const roomRef = ref(db, `games/${activePin}`);
+    const roomRef = ref(database, `games/${activePin}`);
     const unsubscribe = onValue(roomRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Convert players object to array if needed for the UI
         const playersArray = data.players ? Object.entries(data.players).map(([id, p]: [string, any]) => ({
           id,
           ...p
         })) : [];
         
-        // Convert solvers object to array if needed
         const solversArray = data.solvers ? Object.values(data.solvers) as string[] : [];
 
         setGameState({
@@ -94,10 +92,10 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
     });
 
     return () => unsubscribe();
-  }, [pinInput, role, gameState?.pin]);
+  }, [pinInput, role, gameState?.pin, database]);
 
   const handleCreateGame = async () => {
-    if (!selectedTopic) return;
+    if (!selectedTopic || !database) return;
     setLoading(true);
     setError(null);
     try {
@@ -114,7 +112,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
         createdAt: Date.now()
       };
       
-      await set(ref(db, `games/${pin}`), {
+      await set(ref(database, `games/${pin}`), {
         ...newGameState,
         players: {}
       });
@@ -128,12 +126,12 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   };
 
   const handleJoinGame = async () => {
-    if (!pinInput || !playerName || !playerId) return;
+    if (!pinInput || !playerName || !playerId || !database) return;
     setLoading(true);
     setError(null);
     
     try {
-      const roomRef = ref(db, `games/${pinInput}`);
+      const roomRef = ref(database, `games/${pinInput}`);
       const snapshot = await get(roomRef);
       
       if (!snapshot.exists()) {
@@ -149,8 +147,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
         return;
       }
 
-      // Add player to Firebase
-      await update(ref(db, `games/${pinInput}/players/${playerId}`), {
+      await update(ref(database, `games/${pinInput}/players/${playerId}`), {
         name: playerName,
         score: 0,
         joinedAt: Date.now()
@@ -164,23 +161,23 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   };
 
   const handleStartGame = async () => {
-    if (gameState?.pin) {
-      await update(ref(db, `games/${gameState.pin}`), {
+    if (gameState?.pin && database) {
+      await update(ref(database, `games/${gameState.pin}`), {
         status: 'PLAYING'
       });
     }
   };
 
   const handleEscapeRoomSolved = async () => {
-    if (gameState?.pin && playerName) {
-      const solversRef = ref(db, `games/${gameState.pin}/solvers`);
+    if (gameState?.pin && playerName && database) {
+      const solversRef = ref(database, `games/${gameState.pin}/solvers`);
       await push(solversRef, playerName);
     }
   };
 
   const closeRoom = async () => {
-    if (gameState?.pin) {
-      await remove(ref(db, `games/${gameState.pin}`));
+    if (gameState?.pin && database) {
+      await remove(ref(database, `games/${gameState.pin}`));
       setGameState(null);
       setRole(null);
     }
@@ -225,7 +222,6 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   const checkFinalPassword = () => {
     if (!gameState) return;
     
-    // Lenient matching: strip spaces and lowercase everything
     const correctPassword = gameState.content.riddles
       .map((r: any) => r.answer.toString().toLowerCase().replace(/\s/g, ''))
       .join('');
@@ -272,7 +268,6 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
     );
   }
 
-  // Teacher View: Setup
   if (role === 'TEACHER' && !gameState) {
     return (
       <div className="space-y-8">
@@ -346,24 +341,15 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
     );
   }
 
-  // Teacher View: Waiting Room
   if (role === 'TEACHER' && gameState && gameState.status === 'WAITING') {
     return (
       <div className="flex flex-col items-center space-y-8 py-8">
         <div className="w-full flex justify-start">
-          <button 
-            onClick={closeRoom} 
-            className="text-sm text-slate-500 hover:text-indigo-600"
-          >
-            ← Откажи игра
-          </button>
+          <button onClick={closeRoom} className="text-sm text-slate-500 hover:text-indigo-600">← Откажи игра</button>
         </div>
         <div className="text-center">
           <h2 className="text-4xl font-black text-indigo-900 tracking-tight mb-2">ПОКАНЕТЕ ГИ УЧЕНИЦИТЕ</h2>
           <p className="text-slate-500">Скенирајте го QR кодот или внесете го PIN кодот</p>
-          <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg text-[10px] text-yellow-800 max-w-xs mx-auto">
-            ⚠️ <strong>Важно:</strong> За QR кодот да работи кај учениците, мора да ја користите апликацијата преку <strong>Shared App URL</strong>.
-          </div>
         </div>
 
         <div className="flex flex-col md:flex-row items-center gap-12 bg-white p-10 rounded-[2.5rem] shadow-2xl border border-slate-100">
@@ -379,13 +365,10 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
         <div className="w-full max-w-md">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-slate-700">Приклучени ученици ({gameState.players.length})</h3>
-            <div className="flex gap-1">
-              {[1, 2, 3].map(i => <div key={i} className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />)}
-            </div>
           </div>
           <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2">
             {gameState.players.map((p: any) => (
-              <div key={p.id} className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-bold border border-indigo-100 animate-in fade-in slide-in-from-bottom-2">
+              <div key={p.id} className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full text-sm font-bold border border-indigo-100">
                 👤 {p.name}
               </div>
             ))}
@@ -396,7 +379,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
         <button
           onClick={handleStartGame}
           disabled={gameState.players.length === 0}
-          className="px-12 py-4 bg-emerald-500 text-white rounded-2xl font-bold text-xl hover:bg-emerald-600 disabled:opacity-50 shadow-xl transition-all hover:scale-105 active:scale-95"
+          className="px-12 py-4 bg-emerald-500 text-white rounded-2xl font-bold text-xl hover:bg-emerald-600 disabled:opacity-50 shadow-xl transition-all"
         >
           ЗАПОЧНИ ИГРА! 🏁
         </button>
@@ -404,15 +387,12 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
     );
   }
 
-  // Student View: Join
   if (role === 'STUDENT' && !gameState) {
     return (
       <div className="max-w-md mx-auto space-y-8 py-12">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-pink-900">Приклучи се на играта! 🎒</h2>
-          <p className="text-slate-500 mt-2">Внеси ги податоците за да започнеш.</p>
         </div>
-
         <div className="bg-white p-8 rounded-[2rem] shadow-xl border border-pink-50 space-y-6">
           <div className="space-y-2">
             <label className="block text-sm font-bold text-slate-700">PIN КОД</label>
@@ -421,7 +401,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value)}
               placeholder="123456"
-              className="w-full p-4 text-center text-3xl font-black tracking-widest bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-pink-500 outline-none transition-all"
+              className="w-full p-4 text-center text-3xl font-black tracking-widest bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-pink-500 outline-none"
             />
           </div>
           <div className="space-y-2">
@@ -431,31 +411,30 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
               placeholder="Внеси име..."
-              className="w-full p-4 text-center text-xl font-bold bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-pink-500 outline-none transition-all"
+              className="w-full p-4 text-center text-xl font-bold bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-pink-500 outline-none"
             />
           </div>
           <button
             onClick={handleJoinGame}
             disabled={!pinInput || !playerName}
-            className="w-full py-4 bg-pink-600 text-white rounded-2xl font-bold text-lg hover:bg-pink-700 disabled:opacity-50 shadow-lg transition-all"
+            className="w-full py-4 bg-pink-600 text-white rounded-2xl font-bold text-lg hover:bg-pink-700 disabled:opacity-50"
           >
             ВЛЕЗИ ВО ИГРАТА 🚀
           </button>
           {error && <p className="text-red-500 text-center font-medium">{error}</p>}
         </div>
-        <button onClick={() => setRole(null)} className="w-full text-slate-400 text-sm hover:text-pink-600">← Назад</button>
+        <button onClick={() => setRole(null)} className="w-full text-slate-400 text-sm">← Назад</button>
       </div>
     );
   }
 
-  // Student View: Waiting Room
   if (role === 'STUDENT' && gameState && gameState.status === 'WAITING') {
     return (
       <div className="flex flex-col items-center justify-center space-y-8 py-20 relative">
         <button 
           onClick={async () => {
-            if (gameState?.pin && playerId) {
-              await remove(ref(db, `games/${gameState.pin}/players/${playerId}`));
+            if (gameState?.pin && playerId && database) {
+              await remove(ref(database, `games/${gameState.pin}/players/${playerId}`));
             }
             setGameState(null);
             setRole(null);
@@ -464,29 +443,25 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
         >
           ← Излези
         </button>
-        <div className="relative">
-          <div className="w-32 h-32 bg-pink-100 rounded-full animate-ping absolute opacity-20" />
-          <div className="w-32 h-32 bg-pink-500 rounded-full flex items-center justify-center text-5xl relative shadow-2xl">👤</div>
-        </div>
+        <div className="w-32 h-32 bg-pink-500 rounded-full flex items-center justify-center text-5xl shadow-2xl">👤</div>
         <div className="text-center">
           <h2 className="text-2xl font-bold text-pink-900">Здраво, {playerName}!</h2>
-          <p className="text-slate-500">Успешно се приклучи на играта за <span className="font-bold text-indigo-600">{gameState.topic}</span>.</p>
+          <p className="text-slate-500">Успешно се приклучи на играта.</p>
         </div>
-        <div className="bg-white px-8 py-4 rounded-full shadow-md border border-slate-100 flex items-center gap-3">
+        <div className="bg-white px-8 py-4 rounded-full shadow-md flex items-center gap-3">
           <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-          <p className="text-sm font-bold text-slate-600">Се чека наставникот да ја започне играта...</p>
+          <p className="text-sm font-bold text-slate-600">Се чека наставникот...</p>
         </div>
       </div>
     );
   }
 
-  // Game Play View
   if (gameState && gameState.status === 'PLAYING') {
     const content = gameState.content;
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+        <div className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm">
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{gameState.type}</p>
             <h3 className="text-lg font-bold text-indigo-900">{gameState.topic}</h3>
@@ -496,28 +471,20 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-100 min-h-[500px]">
+        <div className="bg-white p-6 rounded-3xl shadow-xl min-h-[500px]">
           {gameState.type === 'BINGO' && (
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-center text-indigo-900">Бинго Картичка 🔢</h3>
               <div className="grid grid-cols-5 gap-2 max-w-md mx-auto">
                 {Array.from({ length: 25 }).map((_, i) => {
-                  if (i === 12) return (
-                    <div key={i} className="aspect-square bg-indigo-600 text-white flex items-center justify-center rounded-lg font-bold text-[10px] shadow-inner">
-                      FREE
-                    </div>
-                  );
+                  if (i === 12) return <div key={i} className="aspect-square bg-indigo-600 text-white flex items-center justify-center rounded-lg font-bold text-[10px]">FREE</div>;
                   const item = content?.questions?.[i > 12 ? i - 1 : i];
                   const isMarked = markedCells.has(i);
                   return (
                     <div 
                       key={i} 
                       onClick={() => toggleMarkCell(i)}
-                      className={`aspect-square border rounded-lg flex items-center justify-center p-1 text-[10px] text-center font-bold cursor-pointer transition-all duration-200 ${
-                        isMarked 
-                          ? 'bg-indigo-600 text-white border-indigo-700 shadow-inner scale-95' 
-                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-200'
-                      }`}
+                      className={`aspect-square border rounded-lg flex items-center justify-center p-1 text-[10px] text-center font-bold cursor-pointer transition-all ${isMarked ? 'bg-indigo-600 text-white' : 'bg-slate-50'}`}
                     >
                       {item?.answer || '?'}
                     </div>
@@ -525,210 +492,51 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
                 })}
               </div>
               {role === 'TEACHER' && (
-                <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-                  <p className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
-                    <span>📢</span> Наставникот ги чита прашањата:
-                  </p>
-                  <div className="max-h-40 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                    {content?.questions?.map((q: any, idx: number) => (
-                      <div key={idx} className="text-xs text-slate-600 bg-white/50 p-2 rounded-lg border border-indigo-50">
-                        <strong className="text-indigo-600">{idx + 1}.</strong> {q.question}
-                        <span className="ml-2 text-emerald-600 font-bold">(Одговор: {q.answer})</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className="p-4 bg-indigo-50 rounded-2xl">
+                  {content?.questions?.map((q: any, idx: number) => (
+                    <div key={idx} className="text-xs mb-1"><strong>{idx + 1}.</strong> {q.question} ({q.answer})</div>
+                  ))}
                 </div>
               )}
-              {role === 'STUDENT' && (
-                <div className="p-4 bg-pink-50 rounded-2xl border border-pink-100 text-center">
-                  <p className="text-sm font-bold text-pink-900">
-                    Слушајте го наставникот внимателно и означете ги точните одговори на вашата картичка! 👂
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {gameState.type === 'FLASHCARDS' && (
-            <div className="space-y-8">
-              <h3 className="text-xl font-bold text-center text-indigo-900">Флеш Картички 🗂️</h3>
-              <p className="text-center text-sm text-slate-500">Кликни на картичката за да го видиш одговорот</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                {content?.cards?.map((card: any, idx: number) => (
-                  <div 
-                    key={idx} 
-                    onClick={() => toggleCard(idx)}
-                    className="group perspective-1000 h-48 cursor-pointer"
-                  >
-                    <div className={`relative w-full h-full transition-all duration-500 preserve-3d ${flippedCards.has(idx) ? 'rotate-y-180' : ''}`}>
-                      {/* Front */}
-                      <div className="absolute inset-0 backface-hidden bg-slate-50 border-2 border-indigo-100 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
-                        <p className="text-xs font-bold text-indigo-400 mb-2 uppercase tracking-widest">Прашање {idx + 1}</p>
-                        <p className="text-lg font-bold text-indigo-900">{card.question}</p>
-                      </div>
-                      {/* Back */}
-                      <div className="absolute inset-0 backface-hidden rotate-y-180 bg-emerald-50 border-2 border-emerald-200 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-inner">
-                        <p className="text-xs font-bold text-emerald-500 mb-2 uppercase tracking-widest">Одговор</p>
-                        <p className="text-lg font-bold text-emerald-900">{card.answer}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
 
           {gameState.type === 'ESCAPE_ROOM' && (
             <div className="space-y-8">
-              <h3 className="text-2xl font-black text-center text-indigo-900 flex items-center justify-center gap-3">
-                <span className="text-3xl">🔐</span> Escape Room: Математичка Мисија
-              </h3>
-              
-              {role === 'STUDENT' && !isSolved && (
-                <div className="bg-amber-50 border-2 border-amber-200 p-4 rounded-2xl text-amber-900 text-center font-bold animate-pulse">
-                  📢 Реши ги сите загатки и внеси ја лозинката најдолу за да излезеш!
-                </div>
-              )}
-              
-              <div className="bg-indigo-50 p-6 rounded-3xl border border-indigo-100 mb-8">
-                <h4 className="font-bold text-indigo-900 mb-4 flex items-center gap-2">
-                  <span>🏆</span> Ученици кои ја открија лозинката:
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {solvers.map((name, i) => (
-                    <div key={i} className="bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-sm animate-bounce">
-                      🎉 {name}
-                    </div>
-                  ))}
-                  {solvers.length === 0 && <p className="text-slate-400 italic text-sm">Сè уште никој не ја открил лозинката...</p>}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-6">
+              <h3 className="text-2xl font-black text-center text-indigo-900">🔐 Escape Room</h3>
+              <div className="grid grid-cols-1 gap-4">
                 {content?.riddles?.map((riddle: any, idx: number) => (
-                  <div key={idx} className={`p-6 rounded-2xl border-l-4 transition-all ${solvedRiddles[idx] ? 'bg-emerald-50 border-emerald-500' : 'bg-slate-50 border-indigo-500 shadow-sm'}`}>
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-indigo-900">Загатка {idx + 1}</h4>
-                      {solvedRiddles[idx] && <span className="text-emerald-600 font-bold text-sm">✅ Решено!</span>}
-                    </div>
-                    <p className="text-slate-700 mb-4">{riddle.question}</p>
-                    
-                    {role === 'TEACHER' ? (
-                      <div className="p-3 bg-white/50 rounded-xl border border-indigo-100">
-                        <p className="text-sm font-bold text-indigo-600">Клуч: <span className="text-emerald-600">{riddle.answer}</span></p>
-                      </div>
-                    ) : (
+                  <div key={idx} className={`p-6 rounded-2xl border-l-4 ${solvedRiddles[idx] ? 'bg-emerald-50 border-emerald-500' : 'bg-slate-50 border-indigo-500'}`}>
+                    <p className="font-bold mb-2">{riddle.question}</p>
+                    {role === 'STUDENT' && !solvedRiddles[idx] && (
                       <div className="flex gap-2">
                         <input 
                           type="text" 
-                          placeholder="Внеси одговор..." 
-                          value={escapeRoomAnswers[idx] || ''}
                           onChange={(e) => handleEscapeRoomAnswer(idx, e.target.value)}
-                          disabled={solvedRiddles[idx]}
-                          className={`flex-1 p-3 rounded-xl border-2 outline-none transition-all ${solvedRiddles[idx] ? 'bg-emerald-100 border-emerald-200 text-emerald-800' : 'bg-white border-slate-100 focus:border-indigo-500'}`}
+                          className="flex-1 p-2 border rounded-xl"
                         />
-                        {!solvedRiddles[idx] && (
-                          <button 
-                            onClick={() => checkRiddle(idx)}
-                            className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all"
-                          >
-                            Провери
-                          </button>
-                        )}
+                        <button onClick={() => checkRiddle(idx)} className="px-4 py-2 bg-indigo-600 text-white rounded-xl">Провери</button>
                       </div>
                     )}
+                    {solvedRiddles[idx] && <p className="text-emerald-600 font-bold">✅ Точно!</p>}
+                    {role === 'TEACHER' && <p className="text-sm text-indigo-400">Одговор: {riddle.answer}</p>}
                   </div>
                 ))}
               </div>
-
-              {/* Final Password Section - Always visible for students until solved */}
               {role === 'STUDENT' && !isSolved && (
-                <div className="mt-12 p-8 bg-indigo-900 text-white rounded-[2.5rem] shadow-2xl space-y-6 border-4 border-indigo-400">
-                  <div className="text-center">
-                    <h4 className="text-xl font-bold mb-2">Внеси ја финалната лозинка ⌨️</h4>
-                    <p className="text-indigo-300 text-sm">Лозинката е низа од сите одговори на загатките по ред.</p>
-                    <div className="mt-2 text-[10px] text-indigo-400">v1.2 - Проверка на лозинка</div>
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <input 
-                      type="text" 
-                      placeholder="Внеси ја лозинката..." 
-                      value={finalPassword}
-                      onChange={(e) => setFinalPassword(e.target.value)}
-                      className="w-full p-4 bg-white/10 border-2 border-white/20 rounded-2xl text-center text-2xl font-black tracking-widest focus:border-white focus:bg-white/20 outline-none transition-all placeholder:text-white/30"
-                    />
-                    <button 
-                      onClick={checkFinalPassword}
-                      className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-lg shadow-lg transition-all active:scale-95"
-                    >
-                      ОТКРИЈ ЈА ЛОЗИНКАТА! 🔓
-                    </button>
-                  </div>
+                <div className="mt-8 p-6 bg-indigo-900 text-white rounded-3xl text-center">
+                  <input 
+                    type="text" 
+                    placeholder="Лозинка..." 
+                    onChange={(e) => setFinalPassword(e.target.value)}
+                    className="w-full p-4 mb-4 bg-white/10 rounded-xl text-center"
+                  />
+                  <button onClick={checkFinalPassword} className="w-full py-4 bg-emerald-500 rounded-xl font-bold">ОТКРИЈ ЈА ЛОЗИНКАТА!</button>
                 </div>
               )}
-
-              {isSolved && (
-                <div className="mt-12 p-10 bg-emerald-500 text-white rounded-[2.5rem] shadow-2xl text-center animate-in zoom-in duration-500">
-                  <div className="text-6xl mb-4">🎉</div>
-                  <h4 className="text-3xl font-black mb-2">БРАВО!</h4>
-                  <p className="text-xl font-bold">Успешно ја откри лозинката и излезе од собата!</p>
-                  <p className="mt-4 text-emerald-100">Наставникот е известен за твојот успех.</p>
-                </div>
-              )}
+              {isSolved && <div className="p-10 bg-emerald-500 text-white rounded-3xl text-center font-bold">🎉 УСПЕШНО ИЗЛЕЗЕ!</div>}
             </div>
           )}
-
-          {/* Fallback for other types */}
-          {['PASSWORD', 'BALLOONS'].includes(gameState.type) && (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="text-6xl mb-6">{gameState.type === 'PASSWORD' ? '⌨️' : '🎈'}</div>
-              <h2 className="text-2xl font-bold text-slate-800">Играта е во тек!</h2>
-              <p className="text-slate-500 mt-2 max-w-md">
-                Оваа игра бара интеракција во живо. Наставникот ги прикажува задачите, а учениците одговараат.
-              </p>
-              <div className="mt-8 p-6 bg-slate-50 rounded-2xl w-full text-left">
-                <h4 className="font-bold text-slate-700 mb-2">Задачи:</h4>
-                <div className="space-y-4">
-                  {content?.tasks?.map((task: any, idx: number) => (
-                    <div key={idx} className="p-3 bg-white rounded-xl border border-slate-200">
-                      <p className="text-sm font-bold text-indigo-900">{idx + 1}. {task.question}</p>
-                      {role === 'TEACHER' && (
-                        <p className="text-xs text-emerald-600 mt-1 font-bold">Точен одговор: {task.answer}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className="flex justify-center pt-4">
-           <button 
-             onClick={async () => {
-               if (role === 'TEACHER') {
-                 await closeRoom();
-               } else if (role === 'STUDENT') {
-                 if (gameState?.pin && playerId) {
-                   await remove(ref(db, `games/${gameState.pin}/players/${playerId}`));
-                 }
-                 setGameState(null);
-                 setRole(null);
-               }
-               // Reset local state
-               setMarkedCells(new Set());
-               setFlippedCards(new Set());
-               setEscapeRoomAnswers([]);
-               setSolvedRiddles([]);
-               setFinalPassword('');
-               setIsSolved(false);
-               setSolvers([]);
-               setError(null);
-             }}
-             className="px-8 py-3 bg-red-50 text-red-600 rounded-2xl font-bold text-sm hover:bg-red-100 transition-all border border-red-100 shadow-sm active:scale-95"
-           >
-             Заврши ја играта 🏁
-           </button>
         </div>
       </div>
     );
