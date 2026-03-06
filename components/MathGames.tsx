@@ -14,10 +14,12 @@ const generatePin = () => {
 
 interface MathGamesProps {
   grade: GradeLevel;
+  initialRole?: 'TEACHER' | 'STUDENT' | null;
+  onBack?: () => void;
 }
 
-const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
-  const [role, setRole] = useState<'TEACHER' | 'STUDENT' | null>(null);
+const MathGames: React.FC<MathGamesProps> = ({ grade, initialRole = null, onBack }) => {
+  const [role, setRole] = useState<'TEACHER' | 'STUDENT' | null>(initialRole);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [pinInput, setPinInput] = useState('');
   const [playerName, setPlayerName] = useState('');
@@ -38,6 +40,12 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   console.log('MathGames State:', { role, isSolved, solvers, gameType: gameState?.type });
 
   const filteredTopics = PROJECT_TOPICS.filter(t => t.grade === grade);
+
+  useEffect(() => {
+    if (initialRole) {
+      setRole(initialRole);
+    }
+  }, [initialRole]);
 
   useEffect(() => {
     // Check for PIN in URL
@@ -443,6 +451,14 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   if (role === 'STUDENT' && !isPlayerInRoom) {
     return (
       <div className="max-w-md mx-auto space-y-8 py-12">
+        {onBack && (
+          <button 
+            onClick={onBack}
+            className="text-sm font-bold text-slate-400 hover:text-pink-600 transition-colors flex items-center gap-2"
+          >
+            ← Промени улога
+          </button>
+        )}
         <div className="text-center">
           <h2 className="text-3xl font-bold text-pink-900">Приклучи се на играта! 🎒</h2>
           <p className="text-slate-500 mt-2">Внеси ги податоците за да започнеш.</p>
