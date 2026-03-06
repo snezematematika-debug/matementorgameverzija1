@@ -33,6 +33,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   const [finalPassword, setFinalPassword] = useState('');
   const [isSolved, setIsSolved] = useState(false);
   const [solvers, setSolvers] = useState<string[]>([]);
+  const [shuffledBingoItems, setShuffledBingoItems] = useState<any[]>([]);
 
   console.log('MathGames State:', { role, isSolved, solvers, gameType: gameState?.type });
 
@@ -246,6 +247,15 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
       setTimeout(() => setError(null), 3000);
     }
   };
+
+  useEffect(() => {
+    if (gameState?.status === 'PLAYING' && gameState?.type === 'BINGO' && shuffledBingoItems.length === 0 && gameState.content?.questions) {
+      const shuffled = [...gameState.content.questions]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 9);
+      setShuffledBingoItems(shuffled);
+    }
+  }, [gameState?.status, gameState?.type, gameState?.content?.questions, shuffledBingoItems.length]);
 
   const isPlayerInRoom = role === 'STUDENT' && gameState?.players?.some((p: any) => p.id === playerId);
 
@@ -505,52 +515,65 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
 
         <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-100 min-h-[500px]">
           {gameState.type === 'BINGO' && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold text-center text-indigo-900">Бинго Картичка 🔢</h3>
-              <div className="grid grid-cols-5 gap-2 max-w-md mx-auto">
-                {Array.from({ length: 25 }).map((_, i) => {
-                  if (i === 12) return (
-                    <div key={i} className="aspect-square bg-indigo-600 text-white flex items-center justify-center rounded-lg font-bold text-[10px] shadow-inner">
-                      FREE
-                    </div>
-                  );
-                  const item = content?.questions?.[i > 12 ? i - 1 : i];
+            <div className="space-y-8">
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl font-black text-indigo-900 tracking-tight">МАТЕМАТИЧКО БИНГО 🔢</h3>
+                <p className="text-slate-500 text-sm">Пронајди ги точните одговори на твојата картичка!</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+                {(role === 'STUDENT' ? shuffledBingoItems : (gameState.content?.questions?.slice(0, 9) || [])).map((item: any, i: number) => {
                   const isMarked = markedCells.has(i);
                   return (
-                    <div 
+                    <button 
                       key={i} 
                       onClick={() => toggleMarkCell(i)}
-                      className={`aspect-square border rounded-lg flex items-center justify-center p-1 text-[10px] text-center font-bold cursor-pointer transition-all duration-200 ${
+                      className={`aspect-square border-2 rounded-2xl flex items-center justify-center p-4 text-xl font-black cursor-pointer transition-all duration-300 shadow-sm active:scale-90 ${
                         isMarked 
-                          ? 'bg-indigo-600 text-white border-indigo-700 shadow-inner scale-95' 
-                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-200'
+                          ? 'bg-indigo-600 text-white border-indigo-700 shadow-indigo-200 shadow-lg -translate-y-1' 
+                          : 'bg-white border-slate-100 text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-md'
                       }`}
                     >
-                      {item?.answer || '?'}
-                    </div>
+                      <span className={isMarked ? 'scale-110 transition-transform' : ''}>
+                        {item?.answer || '?'}
+                      </span>
+                    </button>
                   );
                 })}
               </div>
+
               {role === 'TEACHER' && (
-                <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-                  <p className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
-                    <span>📢</span> Наставникот ги чита прашањата:
-                  </p>
-                  <div className="max-h-40 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                    {content?.questions?.map((q: any, idx: number) => (
-                      <div key={idx} className="text-xs text-slate-600 bg-white/50 p-2 rounded-lg border border-indigo-50">
-                        <strong className="text-indigo-600">{idx + 1}.</strong> {q.question}
-                        <span className="ml-2 text-emerald-600 font-bold">(Одговор: {q.answer})</span>
+                <div className="mt-12 p-6 bg-slate-50 rounded-3xl border border-slate-200 shadow-inner">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-lg">📢</div>
+                    <h4 className="font-bold text-slate-800">Прашања за читање:</h4>
+                  </div>
+                  <div className="grid gap-3">
+                    {gameState.content?.questions?.map((q: any, idx: number) => (
+                      <div key={idx} className="flex items-start gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-indigo-200 transition-colors group">
+                        <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 font-bold text-sm shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                          {idx + 1}
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm text-slate-700 leading-relaxed font-medium">{q.question}</p>
+                          <p className="text-xs font-bold text-emerald-600 bg-emerald-50 inline-block px-2 py-0.5 rounded-md">
+                            Одговор: {q.answer}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+              
               {role === 'STUDENT' && (
-                <div className="p-4 bg-pink-50 rounded-2xl border border-pink-100 text-center">
-                  <p className="text-sm font-bold text-pink-900">
-                    Слушајте го наставникот внимателно и означете ги точните одговори на вашата картичка! 👂
-                  </p>
+                <div className="mt-8 flex justify-center">
+                  <div className="bg-amber-50 border border-amber-100 px-6 py-3 rounded-2xl flex items-center gap-3">
+                    <span className="text-xl animate-bounce">💡</span>
+                    <p className="text-sm font-medium text-amber-900">
+                      Слушај го наставникот внимателно и означи го точниот одговор!
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
