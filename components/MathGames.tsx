@@ -60,7 +60,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
 
   useEffect(() => {
     const activePin = gameState?.pin || pinInput;
-    if (!activePin || !role) return;
+    if (!activePin || activePin.length < 6 || !role) return;
 
     const roomRef = ref(db, `games/${activePin}`);
     const unsubscribe = onValue(roomRef, (snapshot) => {
@@ -247,6 +247,8 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
     }
   };
 
+  const isPlayerInRoom = role === 'STUDENT' && gameState?.players?.some((p: any) => p.id === playerId);
+
   if (loading) return <Loading message="Се подготвува играта..." />;
 
   if (!role) {
@@ -410,7 +412,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
   }
 
   // Student View: Join
-  if (role === 'STUDENT' && !gameState) {
+  if (role === 'STUDENT' && !isPlayerInRoom) {
     return (
       <div className="max-w-md mx-auto space-y-8 py-12">
         <div className="text-center">
