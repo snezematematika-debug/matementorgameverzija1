@@ -60,32 +60,36 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
 
   useEffect(() => {
     const activePin = gameState?.pin || pinInput;
-    if (!activePin) return;
+    if (!activePin || !role) return;
 
     const roomRef = ref(db, `games/${activePin}`);
     const unsubscribe = onValue(roomRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Convert players object to array if needed for the UI
-        const playersArray = data.players ? Object.entries(data.players).map(([id, p]: [string, any]) => ({
+        // Convert players object to array
+        const playersObj = data.players || {};
+        const playersArray = Object.entries(playersObj).map(([id, p]: [string, any]) => ({
           id,
           ...p
-        })) : [];
+        }));
         
-        // Convert solvers object to array if needed
-        const solversArray = data.solvers ? Object.values(data.solvers) as string[] : [];
+        // Convert solvers object to array
+        const solversObj = data.solvers || {};
+        const solversArray = Object.values(solversObj) as string[];
 
-        setGameState({
+        setGameState(prev => ({
           ...data,
           players: playersArray,
           solvers: solversArray
-        });
+        }));
         
         if (solversArray.length > 0) {
           setSolvers(solversArray);
         }
       } else {
-        if (gameState) {
+        // Only reset for students if the room is gone
+        // Teachers should only be reset if they manually close
+        if (role === 'STUDENT') {
           setGameState(null);
           setRole(null);
           setError('Играта беше завршена.');
@@ -114,10 +118,12 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
         createdAt: Date.now()
       };
       
+      // Set in Firebase first
       await set(ref(db, `games/${pin}`), {
         ...newGameState,
-        players: {}
+        players: {} // Ensure players is an object in Firebase
       });
+      
       setGameState(newGameState);
       setPinInput(pin);
       setLoading(false);
@@ -395,8 +401,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
 
         <button
           onClick={handleStartGame}
-          disabled={gameState.players.length === 0}
-          className="px-12 py-4 bg-emerald-500 text-white rounded-2xl font-bold text-xl hover:bg-emerald-600 disabled:opacity-50 shadow-xl transition-all hover:scale-105 active:scale-95"
+          className="px-12 py-4 bg-emerald-500 text-white rounded-2xl font-bold text-xl hover:bg-emerald-600 shadow-xl transition-all hover:scale-105 active:scale-95"
         >
           ЗАПОЧНИ ИГРА! 🏁
         </button>
