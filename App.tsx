@@ -1,19 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAtXI1kYErR34Cnv9MnxhW6XCobD5dCous",
-  authDomain: "matementorgameverzija1.firebaseapp.com",
-  databaseURL: "https://matementorgameverzija1-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "matementorgameverzija1",
-  storageBucket: "matementorgameverzija1.appspot.com",
-  messagingSenderId: "544726317445",
-  appId: "1:544726317445:web:59976435497c6b511c6cec"
-};
-
-// Ова ја активира врската
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
 import React, { useState } from 'react';
 import Layout from './components/Layout';
 import LessonGenerator from './components/LessonGenerator';
@@ -27,6 +13,19 @@ import AdvancedPractice from './components/AdvancedPractice';
 import TeacherPanel from './components/TeacherPanel';
 import MathGames from './components/MathGames';
 import { AppMode, GradeLevel } from './types';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAtXI1kYErR34Cnv9MnxhW6XCobD5dCous",
+  authDomain: "matementorgameverzija1.firebaseapp.com",
+  databaseURL: "https://matementorgameverzija1-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "matementorgameverzija1",
+  storageBucket: "matementorgameverzija1.appspot.com",
+  messagingSenderId: "544726317445",
+  appId: "1:544726317445:web:59976435497c6b511c6cec"
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
 
 const App: React.FC = () => {
   const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.LESSON);
@@ -43,7 +42,6 @@ const App: React.FC = () => {
       case AppMode.WORKSHEET:
         return <WorksheetGenerator grade={selectedGrade} />;
       case AppMode.PROJECT:
-        // Project generator remains generic/shared per instructions
         return <ProjectGenerator />;
       case AppMode.VISUALIZER:
         return <GeometryVisualizer />;
