@@ -52,7 +52,8 @@ const App: React.FC = () => {
       case AppMode.TEACHER_PANEL:
         return <TeacherPanel grade={selectedGrade} />;
       case AppMode.GAMES:
-        return <MathGames grade={selectedGrade} />;
+        // Овде ја додаваме базата за игрите да работат во реално време
+        return <MathGames grade={selectedGrade} database={database} />;
       default:
         return <LessonGenerator grade={selectedGrade} />;
     }
