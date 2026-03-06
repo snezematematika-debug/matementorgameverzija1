@@ -1,4 +1,19 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyAtXI1kYErR34Cnv9MnxhW6XCobD5dCous",
+  authDomain: "matementorgameverzija1.firebaseapp.com",
+  databaseURL: "https://matementorgameverzija1-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "matementorgameverzija1",
+  storageBucket: "matementorgameverzija1.appspot.com",
+  messagingSenderId: "544726317445",
+  appId: "1:544726317445:web:59976435497c6b511c6cec"
+};
+
+// Ова ја активира врската
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
 import React, { useState } from 'react';
 import Layout from './components/Layout';
 import LessonGenerator from './components/LessonGenerator';
