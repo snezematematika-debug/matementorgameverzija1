@@ -64,6 +64,7 @@ export interface GameState {
   status: 'WAITING' | 'PLAYING' | 'FINISHED';
   players: any[];
   solvers?: string[];
+  bingoWinner?: string;
   content: any;
   createdAt?: number;
   currentQuestion?: number;

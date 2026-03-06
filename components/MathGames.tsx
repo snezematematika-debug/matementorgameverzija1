@@ -160,6 +160,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
       await update(ref(db, `games/${pinInput}/players/${playerId}`), {
         name: playerName,
         score: 0,
+        markedCount: 0,
         joinedAt: Date.now()
       });
 
@@ -203,7 +204,9 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
     setFlippedCards(newFlipped);
   };
 
-  const toggleMarkCell = (idx: number) => {
+  const toggleMarkCell = async (idx: number) => {
+    if (!gameState || role !== 'STUDENT' || !playerId) return;
+    
     const newMarked = new Set(markedCells);
     if (newMarked.has(idx)) {
       newMarked.delete(idx);
@@ -211,6 +214,20 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
       newMarked.add(idx);
     }
     setMarkedCells(newMarked);
+
+    // Sync progress to Firebase
+    const playerRef = ref(db, `games/${gameState.pin}/players/${playerId}`);
+    await update(playerRef, {
+      markedCount: newMarked.size
+    });
+
+    // Check for Bingo (all 9 cells marked)
+    if (newMarked.size === 9 && !gameState.bingoWinner) {
+      await update(ref(db, `games/${gameState.pin}`), {
+        bingoWinner: playerName,
+        status: 'FINISHED'
+      });
+    }
   };
 
   const handleEscapeRoomAnswer = (idx: number, answer: string) => {
@@ -254,6 +271,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
         .sort(() => Math.random() - 0.5)
         .slice(0, 9);
       setShuffledBingoItems(shuffled);
+      setMarkedCells(new Set());
     }
   }, [gameState?.status, gameState?.type, gameState?.content?.questions, shuffledBingoItems.length]);
 
@@ -513,7 +531,26 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-100 min-h-[500px]">
+        <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-100 min-h-[500px] relative">
+          {/* Bingo Celebration Overlay */}
+          {gameState.type === 'BINGO' && gameState.bingoWinner && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-indigo-900/90 rounded-3xl animate-in fade-in zoom-in duration-500">
+              <div className="text-center space-y-4">
+                <div className="text-8xl animate-bounce">🏆</div>
+                <h2 className="text-7xl font-black text-white tracking-tighter animate-pulse">BINGO!</h2>
+                <div className="bg-white/20 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/30">
+                  <p className="text-white text-2xl font-bold">Победник: <span className="text-yellow-400">{gameState.bingoWinner}</span></p>
+                </div>
+                <button 
+                  onClick={() => setRole(null)}
+                  className="mt-8 px-8 py-3 bg-white text-indigo-900 rounded-xl font-bold hover:bg-indigo-50 transition-colors"
+                >
+                  Затвори
+                </button>
+              </div>
+            </div>
+          )}
+
           {gameState.type === 'BINGO' && (
             <div className="space-y-8">
               <div className="text-center space-y-2">
@@ -543,7 +580,46 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
               </div>
 
               {role === 'TEACHER' && (
-                <div className="mt-12 p-6 bg-slate-50 rounded-3xl border border-slate-200 shadow-inner">
+                <div className="mt-12 space-y-8">
+                  {/* Teacher Dashboard */}
+                  <div className="p-6 bg-indigo-900 text-white rounded-3xl shadow-xl border border-indigo-800">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-xl">📊</div>
+                        <h4 className="font-bold text-xl tracking-tight">Teacher Dashboard</h4>
+                      </div>
+                      <div className="px-3 py-1 bg-white/10 rounded-full text-xs font-bold uppercase tracking-widest">
+                        Во живо
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {gameState.players.map((p: any) => (
+                        <div key={p.id} className="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-sm font-bold">
+                              {p.name.charAt(0)}
+                            </div>
+                            <span className="font-medium">{p.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 w-24 bg-white/10 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-emerald-400 transition-all duration-500" 
+                                style={{ width: `${(p.markedCount || 0) / 9 * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-bold text-emerald-400">{p.markedCount || 0}/9</span>
+                          </div>
+                        </div>
+                      ))}
+                      {gameState.players.length === 0 && (
+                        <p className="text-white/40 text-sm italic col-span-full text-center py-4">Се чекаат ученици...</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 shadow-inner">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-lg">📢</div>
                     <h4 className="font-bold text-slate-800">Прашања за читање:</h4>
@@ -564,7 +640,8 @@ const MathGames: React.FC<MathGamesProps> = ({ grade }) => {
                     ))}
                   </div>
                 </div>
-              )}
+              </div>
+            )}
               
               {role === 'STUDENT' && (
                 <div className="mt-8 flex justify-center">
