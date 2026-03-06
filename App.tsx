@@ -1,6 +1,7 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import React, { useState } from 'react';
+// Го повлекуваме веќе конфигурираниот 'db' од твојот firebase.ts
+import { db } from './firebase'; 
+
 import Layout from './components/Layout';
 import LessonGenerator from './components/LessonGenerator';
 import QuizMaker from './components/QuizMaker';
@@ -13,19 +14,6 @@ import AdvancedPractice from './components/AdvancedPractice';
 import TeacherPanel from './components/TeacherPanel';
 import MathGames from './components/MathGames';
 import { AppMode, GradeLevel } from './types';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAtXI1kYErR34Cnv9MnxhW6XCobD5dCous",
-  authDomain: "matementorgameverzija1.firebaseapp.com",
-  databaseURL: "https://matementorgameverzija1-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "matementorgameverzija1",
-  storageBucket: "matementorgameverzija1.appspot.com",
-  messagingSenderId: "544726317445",
-  appId: "1:544726317445:web:59976435497c6b511c6cec"
-};
-
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
 
 const App: React.FC = () => {
   const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.LESSON);
@@ -52,8 +40,8 @@ const App: React.FC = () => {
       case AppMode.TEACHER_PANEL:
         return <TeacherPanel grade={selectedGrade} />;
       case AppMode.GAMES:
-        // Овде ја додаваме базата за игрите да работат во реално време
-        return <MathGames grade={selectedGrade} database={database} />;
+        // Сега го користиме 'db' што доаѓа од firebase.ts
+        return <MathGames grade={selectedGrade} database={db} />;
       default:
         return <LessonGenerator grade={selectedGrade} />;
     }
