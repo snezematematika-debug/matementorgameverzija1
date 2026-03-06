@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
-// Го повлекуваме веќе конфигурираниот 'db' од твојот firebase.ts
-import { db } from './services/firebase'; 
 
+import React, { useState } from 'react';
 import Layout from './components/Layout';
 import LessonGenerator from './components/LessonGenerator';
 import QuizMaker from './components/QuizMaker';
@@ -30,6 +28,7 @@ const App: React.FC = () => {
       case AppMode.WORKSHEET:
         return <WorksheetGenerator grade={selectedGrade} />;
       case AppMode.PROJECT:
+        // Project generator remains generic/shared per instructions
         return <ProjectGenerator />;
       case AppMode.VISUALIZER:
         return <GeometryVisualizer />;
@@ -40,8 +39,7 @@ const App: React.FC = () => {
       case AppMode.TEACHER_PANEL:
         return <TeacherPanel grade={selectedGrade} />;
       case AppMode.GAMES:
-        // Сега го користиме 'db' што доаѓа од firebase.ts
-        return <MathGames grade={selectedGrade} database={db} />;
+        return <MathGames grade={selectedGrade} />;
       default:
         return <LessonGenerator grade={selectedGrade} />;
     }
