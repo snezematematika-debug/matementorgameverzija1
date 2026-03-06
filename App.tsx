@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // Го повлекуваме веќе конфигурираниот 'db' од твојот firebase.ts
-import { db } from './firebase'; 
+import { db } from './services/firebase'; 
 
 import Layout from './components/Layout';
 import LessonGenerator from './components/LessonGenerator';
