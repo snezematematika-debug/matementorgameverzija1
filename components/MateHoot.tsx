@@ -37,7 +37,12 @@ const COLORS = [
 
 const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }) => {
   const [role, setRole] = useState<'TEACHER' | 'STUDENT' | null>(initialRole);
-  const [pinInput, setPinInput] = useState(() => sessionStorage.getItem('matehoot_pin') || '');
+  const [pinInput, setPinInput] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPin = urlParams.get('pin');
+    if (urlPin) return urlPin;
+    return sessionStorage.getItem('matehoot_pin') || '';
+  });
   const [playerName, setPlayerName] = useState(() => sessionStorage.getItem('matehoot_player_name') || '');
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
