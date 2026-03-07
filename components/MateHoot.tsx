@@ -48,6 +48,8 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
   const [hasAnswered, setHasAnswered] = useState(false);
   const [lastAnswerResult, setLastAnswerResult] = useState<{ correct: boolean, points: number } | null>(null);
 
+  const [isJoined, setIsJoined] = useState(false);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize Player ID
@@ -83,9 +85,12 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
         }));
 
         // Recover player name if already in room
-        if (role === 'STUDENT' && playerId && !playerName) {
+        if (role === 'STUDENT' && playerId) {
           const me = playersArray.find(p => p.id === playerId);
-          if (me) setPlayerName(me.name);
+          if (me) {
+            if (!playerName) setPlayerName(me.name);
+            setIsJoined(true);
+          }
         }
       } else if (role === 'STUDENT') {
         setGameState(null);
@@ -194,6 +199,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
         score: 0,
         joinedAt: Date.now()
       });
+      setIsJoined(true);
       setLoading(false);
     } catch (err: any) {
       setError(err.message);
@@ -288,7 +294,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
           <div className="inline-flex items-center justify-center w-20 h-20 bg-indigo-600 text-white rounded-3xl mb-6 shadow-xl shadow-indigo-200">
             <Sparkles className="w-10 h-10" />
           </div>
-          <h1 className="text-5xl font-black text-indigo-900 tracking-tight mb-4">MateHoot! 🚀</h1>
+          <h1 className="text-5xl font-black text-indigo-900 tracking-tight mb-4">Мате-Хут! 🚀</h1>
           <p className="text-slate-500 text-lg font-medium">Најзабавниот начин да ја провериш твојата математичка вештина.</p>
         </div>
 
@@ -331,7 +337,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     return (
       <div className="max-w-2xl mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100">
         <h2 className="text-3xl font-black text-indigo-900 mb-8 flex items-center gap-3">
-          <Sparkles className="text-indigo-500" /> Поставки за MateHoot
+          <Sparkles className="text-indigo-500" /> Поставки за Мате-Хут
         </h2>
         
         <div className="space-y-8">
@@ -363,10 +369,10 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     );
   }
 
-  if (role === 'STUDENT' && !gameState) {
+  if (role === 'STUDENT' && (!gameState || !isJoined)) {
     return (
       <div className="max-w-md mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 text-center">
-        <h2 className="text-4xl font-black text-pink-900 mb-8">MateHoot! 🎒</h2>
+        <h2 className="text-4xl font-black text-pink-900 mb-8">Мате-Хут! 🎒</h2>
         
         <div className="space-y-6">
           <input
@@ -406,7 +412,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
 
   // --- GAME SCREENS ---
 
-  if (gameState?.status === 'WAITING') {
+  if (gameState?.status === 'WAITING' && (role === 'TEACHER' || isJoined)) {
     return (
       <div className="max-w-5xl mx-auto">
         <div className="bg-indigo-900 text-white p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden mb-8">
@@ -414,7 +420,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
           
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left">
-              <p className="text-indigo-300 font-bold uppercase tracking-widest mb-2">Приклучи се на MateHoot</p>
+              <p className="text-indigo-300 font-bold uppercase tracking-widest mb-2">Приклучи се на Мате-Хут</p>
               <h2 className="text-8xl font-black tracking-tighter mb-4">{gameState.pin}</h2>
               <div className="flex items-center gap-2 text-indigo-200 font-medium bg-white/10 px-4 py-2 rounded-xl inline-flex">
                 <Users className="w-5 h-5" />

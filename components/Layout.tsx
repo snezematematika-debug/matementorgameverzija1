@@ -166,7 +166,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                   : 'text-pink-200 hover:bg-pink-900/40 hover:text-pink-100'
               }`}
             >
-              <span>🎮</span> Мате игри
+              <span>🎮</span> Мате-Хут
             </button>
           </nav>
 
