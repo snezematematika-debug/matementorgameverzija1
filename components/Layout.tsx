@@ -80,56 +80,70 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
 
             <button
               onClick={() => setMode(AppMode.LESSON)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 ${
-                currentMode === AppMode.LESSON ? 'bg-indigo-700 text-white shadow-md translate-x-1' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white'
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 border ${
+                currentMode === AppMode.LESSON 
+                  ? 'bg-blue-500/30 text-blue-100 shadow-lg translate-x-1 border-blue-400' 
+                  : 'text-blue-200/80 hover:bg-blue-800/40 hover:text-blue-100 border-blue-500/20'
               }`}
             >
               <span>📚</span> Лекции
             </button>
             <button
               onClick={() => setMode(AppMode.BOARD_PLAN)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 ${
-                currentMode === AppMode.BOARD_PLAN ? 'bg-indigo-700 text-white shadow-md translate-x-1' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white'
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
+                currentMode === AppMode.BOARD_PLAN 
+                  ? 'bg-indigo-500/30 text-indigo-100 shadow-lg translate-x-1 border-indigo-400' 
+                  : 'text-indigo-200/80 hover:bg-indigo-800/40 hover:text-indigo-100 border-indigo-500/20'
               }`}
             >
               <span>👨‍🏫</span> План на табла
             </button>
             <button
               onClick={() => setMode(AppMode.SCENARIO)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 ${
-                currentMode === AppMode.SCENARIO ? 'bg-indigo-700 text-white shadow-md translate-x-1' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white'
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
+                currentMode === AppMode.SCENARIO 
+                  ? 'bg-emerald-500/30 text-emerald-100 shadow-lg translate-x-1 border-emerald-400' 
+                  : 'text-emerald-200/80 hover:bg-emerald-800/40 hover:text-emerald-100 border-emerald-500/20'
               }`}
             >
               <span>📋</span> Сценарија
             </button>
             <button
               onClick={() => setMode(AppMode.QUIZ)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 ${
-                currentMode === AppMode.QUIZ ? 'bg-indigo-700 text-white shadow-md translate-x-1' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white'
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
+                currentMode === AppMode.QUIZ 
+                  ? 'bg-orange-500/30 text-orange-100 shadow-lg translate-x-1 border-orange-400' 
+                  : 'text-orange-200/80 hover:bg-orange-800/40 hover:text-orange-100 border-orange-500/20'
               }`}
             >
               <span>📝</span> Тестови
             </button>
             <button
               onClick={() => setMode(AppMode.WORKSHEET)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 ${
-                currentMode === AppMode.WORKSHEET ? 'bg-indigo-700 text-white shadow-md translate-x-1' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white'
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
+                currentMode === AppMode.WORKSHEET 
+                  ? 'bg-sky-500/30 text-sky-100 shadow-lg translate-x-1 border-sky-400' 
+                  : 'text-sky-200/80 hover:bg-sky-800/40 hover:text-sky-100 border-sky-500/20'
               }`}
             >
               <span>📄</span> Работни листови
             </button>
             <button
               onClick={() => setMode(AppMode.PROJECT)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 ${
-                currentMode === AppMode.PROJECT ? 'bg-indigo-700 text-white shadow-md translate-x-1' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white'
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
+                currentMode === AppMode.PROJECT 
+                  ? 'bg-rose-500/30 text-rose-100 shadow-lg translate-x-1 border-rose-400' 
+                  : 'text-rose-200/80 hover:bg-rose-800/40 hover:text-rose-100 border-rose-500/20'
               }`}
             >
               <span>🚀</span> Проектни задачи
             </button>
             <button
               onClick={() => setMode(AppMode.VISUALIZER)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 ${
-                currentMode === AppMode.VISUALIZER ? 'bg-indigo-700 text-white shadow-md translate-x-1' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white'
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
+                currentMode === AppMode.VISUALIZER 
+                  ? 'bg-fuchsia-500/30 text-fuchsia-100 shadow-lg translate-x-1 border-fuchsia-400' 
+                  : 'text-fuchsia-200/80 hover:bg-fuchsia-800/40 hover:text-fuchsia-100 border-fuchsia-500/20'
               }`}
             >
               <span>🎨</span> AI Визуелизатор
@@ -137,10 +151,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
             
              <button
               onClick={() => setMode(AppMode.ADVANCED_PRACTICE)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-2 border border-yellow-500/30 ${
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-2 border ${
                 currentMode === AppMode.ADVANCED_PRACTICE 
-                  ? 'bg-yellow-500/20 text-yellow-200 shadow-md translate-x-1 border-yellow-500' 
-                  : 'text-yellow-200 hover:bg-yellow-900/40 hover:text-yellow-100'
+                  ? 'bg-yellow-500/30 text-yellow-100 shadow-lg translate-x-1 border-yellow-400' 
+                  : 'text-yellow-200/80 hover:bg-yellow-900/40 hover:text-yellow-100 border-yellow-500/20'
               }`}
             >
               <span>🏆</span> Додатна настава
@@ -148,10 +162,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
 
             <button
               onClick={() => setMode(AppMode.TEACHER_PANEL)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border border-teal-500/30 ${
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
                 currentMode === AppMode.TEACHER_PANEL 
-                  ? 'bg-teal-500/20 text-teal-200 shadow-md translate-x-1 border-teal-500' 
-                  : 'text-teal-200 hover:bg-teal-900/40 hover:text-teal-100'
+                  ? 'bg-teal-500/30 text-teal-100 shadow-lg translate-x-1 border-teal-400' 
+                  : 'text-teal-200/80 hover:bg-teal-900/40 hover:text-teal-100 border-teal-500/20'
               }`}
             >
               <span>📓</span> Интерактивна тетратка
@@ -159,10 +173,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
 
             <button
               onClick={() => setMode(AppMode.GAMES)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border border-pink-500/30 ${
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
                 currentMode === AppMode.GAMES 
-                  ? 'bg-pink-500/20 text-pink-200 shadow-md translate-x-1 border-pink-500' 
-                  : 'text-pink-200 hover:bg-pink-900/40 hover:text-pink-100'
+                  ? 'bg-pink-500/30 text-pink-100 shadow-lg translate-x-1 border-pink-400' 
+                  : 'text-pink-200/80 hover:bg-pink-900/40 hover:text-pink-100 border-pink-500/20'
               }`}
             >
               <span>🎮</span> Мате-Хут

@@ -653,8 +653,6 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
               <p className="text-sm font-bold uppercase tracking-widest opacity-60 mb-2">Твојот резултат</p>
               <p className="text-3xl font-black">{gameState.players.find(p => p.id === playerId)?.score || 0}</p>
             </div>
-            
-            <p className="mt-12 font-bold animate-pulse">Погледни во таблата...</p>
           </motion.div>
         );
       }
@@ -669,19 +667,33 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
         );
       }
 
+      const currentQuestion = gameState.content.questions[gameState.currentQuestionIndex || 0];
+
       return (
-        <div className="h-[85vh] grid grid-cols-1 grid-rows-4 md:grid-cols-2 md:grid-rows-2 gap-4 p-4">
-          {COLORS.map((color, idx) => (
-            <button
-              key={idx}
-              onClick={() => submitAnswer(idx)}
-              className={`${color.bg} ${color.hover} rounded-[2rem] shadow-xl flex items-center justify-center text-white transition-all active:scale-95 group`}
-            >
-              <span className="text-8xl font-black group-hover:scale-110 transition-transform">
-                {color.icon}
-              </span>
-            </button>
-          ))}
+        <div className="h-full flex flex-col p-4 gap-4 overflow-y-auto">
+          {/* Question on student device */}
+          <div className="bg-white p-6 rounded-3xl shadow-lg border border-slate-100 text-center mb-2">
+            <div className="text-xl font-black text-indigo-900 leading-tight">
+              <FormattedText text={currentQuestion.question} />
+            </div>
+          </div>
+
+          <div className="flex-1 grid grid-cols-1 grid-rows-4 md:grid-cols-2 md:grid-rows-2 gap-4">
+            {COLORS.map((color, idx) => (
+              <button
+                key={idx}
+                onClick={() => submitAnswer(idx)}
+                className={`${color.bg} ${color.hover} rounded-2xl shadow-xl flex flex-col items-center justify-center text-white transition-all active:scale-95 group p-4 min-h-[100px]`}
+              >
+                <span className="text-4xl font-black group-hover:scale-110 transition-transform mb-2">
+                  {color.icon}
+                </span>
+                <span className="text-lg font-bold leading-tight">
+                  {currentQuestion.options[idx]}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       );
     }
