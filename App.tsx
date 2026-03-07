@@ -14,9 +14,30 @@ import MateHoot from './components/MateHoot';
 import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
-  const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.LESSON);
-  const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(GradeLevel.VI);
-  const [userRole, setUserRole] = useState<'TEACHER' | 'STUDENT' | null>(null);
+  const [currentMode, setCurrentMode] = useState<AppMode>(() => {
+    const saved = sessionStorage.getItem('matementor_mode');
+    return (saved as AppMode) || AppMode.LESSON;
+  });
+  const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(() => {
+    const saved = sessionStorage.getItem('matementor_grade');
+    return (saved as GradeLevel) || GradeLevel.VI;
+  });
+  const [userRole, setUserRole] = useState<'TEACHER' | 'STUDENT' | null>(() => {
+    return (sessionStorage.getItem('matementor_role') as 'TEACHER' | 'STUDENT' | null);
+  });
+
+  useEffect(() => {
+    if (userRole) sessionStorage.setItem('matementor_role', userRole);
+    else sessionStorage.removeItem('matementor_role');
+  }, [userRole]);
+
+  useEffect(() => {
+    sessionStorage.setItem('matementor_mode', currentMode);
+  }, [currentMode]);
+
+  useEffect(() => {
+    sessionStorage.setItem('matementor_grade', selectedGrade);
+  }, [selectedGrade]);
 
   useEffect(() => {
     // Check for PIN in URL
@@ -140,7 +161,12 @@ const App: React.FC = () => {
       selectedGrade={selectedGrade}
       setGrade={setSelectedGrade}
       hideSidebar={userRole === 'STUDENT'}
-      onLogout={() => setUserRole(null)}
+      onLogout={() => {
+        setUserRole(null);
+        sessionStorage.removeItem('matementor_role');
+        sessionStorage.removeItem('matementor_mode');
+        sessionStorage.removeItem('matehoot_pin');
+      }}
     >
       {renderContent()}
     </Layout>

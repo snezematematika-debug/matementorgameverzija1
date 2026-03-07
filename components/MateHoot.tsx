@@ -37,8 +37,8 @@ const COLORS = [
 
 const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }) => {
   const [role, setRole] = useState<'TEACHER' | 'STUDENT' | null>(initialRole);
-  const [pinInput, setPinInput] = useState('');
-  const [playerName, setPlayerName] = useState('');
+  const [pinInput, setPinInput] = useState(() => sessionStorage.getItem('matehoot_pin') || '');
+  const [playerName, setPlayerName] = useState(() => sessionStorage.getItem('matehoot_player_name') || '');
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(false);
@@ -101,6 +101,20 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
 
     return () => unsubscribe();
   }, [pinInput, role, gameState?.pin, playerId, playerName]);
+
+  // Reset student state when question changes
+  useEffect(() => {
+    if (role === 'STUDENT' && gameState?.status === 'QUESTION') {
+      setHasAnswered(false);
+      setLastAnswerResult(null);
+    }
+  }, [gameState?.currentQuestionIndex, gameState?.status]);
+
+  // Persist PIN and Name
+  useEffect(() => {
+    if (pinInput) sessionStorage.setItem('matehoot_pin', pinInput);
+    if (playerName) sessionStorage.setItem('matehoot_player_name', playerName);
+  }, [pinInput, playerName]);
 
   // Timer Logic
   useEffect(() => {
@@ -169,6 +183,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
       
       setGameState(newGameState);
       setPinInput(pin);
+      sessionStorage.setItem('matehoot_pin', pin);
       setLoading(false);
     } catch (err: any) {
       setError(err.message);
@@ -235,9 +250,6 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
           questionStartTime: Date.now(),
           showCorrectAnswer: false
         });
-        // Reset student state for next question
-        setHasAnswered(false);
-        setLastAnswerResult(null);
       } else {
         await update(ref(db, `games/${gameState.pin}`), {
           status: 'FINISHED'
@@ -283,6 +295,8 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     }
     setGameState(null);
     setRole(null);
+    sessionStorage.removeItem('matehoot_pin');
+    sessionStorage.removeItem('matehoot_player_name');
   };
 
   // --- RENDER HELPERS ---
