@@ -14,8 +14,10 @@ import {
   Medal,
   ChevronRight,
   Loader2,
-  Sparkles
+  Sparkles,
+  QrCode
 } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { db } from '../services/firebase';
 import { ref, set, onValue, update, remove, get } from "firebase/database";
 import { generateGameContent } from '../services/geminiService';
@@ -151,6 +153,16 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [gameState?.status, gameState?.currentQuestionIndex, gameState?.questionStartTime]);
+
+  // Auto-advance when all players have answered
+  useEffect(() => {
+    if (role === 'TEACHER' && gameState?.status === 'QUESTION' && gameState.players.length > 0) {
+      const answeredCount = gameState.players.filter(p => p.lastAnswer?.timestamp > (gameState.questionStartTime || 0)).length;
+      if (answeredCount === gameState.players.length) {
+        handleTimeUp();
+      }
+    }
+  }, [gameState?.players, gameState?.status, role, gameState?.pin, gameState?.questionStartTime]);
 
   const handleTimeUp = async () => {
     if (!gameState?.pin) return;
@@ -432,13 +444,15 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
   // --- GAME SCREENS ---
 
   if (gameState?.status === 'WAITING' && (role === 'TEACHER' || isJoined)) {
+    const joinUrl = `${window.location.origin}/?pin=${gameState.pin}`;
+
     return (
       <div className="max-w-5xl mx-auto">
         <div className="bg-indigo-900 text-white p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden mb-8">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
           
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="text-center md:text-left">
+            <div className="text-center md:text-left flex-1">
               <p className="text-indigo-300 font-bold uppercase tracking-widest mb-2">Приклучи се на Мате-Хут</p>
               <h2 className="text-8xl font-black tracking-tighter mb-4">{gameState.pin}</h2>
               <div className="flex items-center gap-2 text-indigo-200 font-medium bg-white/10 px-4 py-2 rounded-xl inline-flex">
@@ -448,13 +462,31 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
             </div>
 
             {role === 'TEACHER' && (
-              <button
-                onClick={startGame}
-                disabled={gameState.players.length === 0}
-                className="px-12 py-6 bg-white text-indigo-900 rounded-3xl font-black text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
-              >
-                ЗАПОЧНИ <ArrowRight className="w-8 h-8" />
-              </button>
+              <div className="flex flex-col items-center gap-6">
+                <div className="bg-white p-4 rounded-3xl shadow-2xl border-4 border-indigo-400/30">
+                  <QRCodeCanvas 
+                    value={joinUrl} 
+                    size={180}
+                    level="H"
+                    includeMargin={true}
+                    imageSettings={{
+                      src: "https://picsum.photos/seed/math/40/40",
+                      height: 30,
+                      width: 30,
+                      excavate: true,
+                    }}
+                  />
+                  <p className="text-indigo-900 text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Скенирај за влез</p>
+                </div>
+                
+                <button
+                  onClick={startGame}
+                  disabled={gameState.players.length === 0}
+                  className="px-12 py-6 bg-white text-indigo-900 rounded-3xl font-black text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
+                >
+                  ЗАПОЧНИ <ArrowRight className="w-8 h-8" />
+                </button>
+              </div>
             )}
 
             {role === 'STUDENT' && (
@@ -547,9 +579,25 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
 
           {/* Teacher Controls */}
           <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-white/20">
-            <div className="flex items-center gap-4 text-slate-600 font-bold">
-              <Users className="w-6 h-6" />
-              <span>{gameState.players.filter(p => p.lastAnswer?.timestamp > (gameState.questionStartTime || 0)).length} одговориле</span>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4 text-slate-600 font-bold">
+                <Users className="w-6 h-6" />
+                <span>{gameState.players.filter(p => p.lastAnswer?.timestamp > (gameState.questionStartTime || 0)).length} одговориле</span>
+              </div>
+
+              {gameState.status === 'QUESTION' && (
+                <button
+                  onClick={() => {
+                    update(ref(db, `games/${gameState.pin}`), {
+                      status: 'RESULT',
+                      showCorrectAnswer: true
+                    });
+                  }}
+                  className="text-indigo-600 hover:text-indigo-800 font-bold text-sm uppercase tracking-wider transition-colors"
+                >
+                  Прескокни време
+                </button>
+              )}
             </div>
             
             {gameState.status === 'RESULT' && (
@@ -560,6 +608,17 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
                 СЛЕДНО <ChevronRight className="w-6 h-6" />
               </button>
             )}
+
+            <button
+              onClick={() => {
+                if (confirm('Дали сте сигурни дека сакате да го прекинете квизот?')) {
+                  closeRoom();
+                }
+              }}
+              className="px-6 py-4 text-slate-400 hover:text-red-500 font-bold flex items-center gap-2 transition-colors"
+            >
+              <LogOut className="w-5 h-5" /> ПРЕКИНИ
+            </button>
           </div>
         </div>
       );
@@ -671,12 +730,23 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
         </div>
 
         {role === 'TEACHER' && (
-          <div className="mt-12 flex justify-center">
+          <div className="mt-12 flex flex-col items-center gap-4">
             <button
               onClick={nextStep}
               className="px-12 py-6 bg-indigo-600 text-white rounded-3xl font-black text-2xl shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3"
             >
               СЛЕДНО ПРАШАЊЕ <ArrowRight className="w-8 h-8" />
+            </button>
+            
+            <button
+              onClick={() => {
+                if (confirm('Дали сте сигурни дека сакате да го прекинете квизот?')) {
+                  closeRoom();
+                }
+              }}
+              className="text-slate-400 hover:text-red-500 font-bold flex items-center gap-2 transition-colors"
+            >
+              <LogOut className="w-5 h-5" /> ПРЕКИНИ КВИЗ
             </button>
           </div>
         )}
