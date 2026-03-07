@@ -10,7 +10,7 @@ import ProjectGenerator from './components/ProjectGenerator';
 import BoardPlanGenerator from './components/BoardPlanGenerator';
 import AdvancedPractice from './components/AdvancedPractice';
 import TeacherPanel from './components/TeacherPanel';
-import MathGames from './components/MathGames';
+import MateHoot from './components/MateHoot';
 import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
@@ -50,7 +50,7 @@ const App: React.FC = () => {
         return <TeacherPanel grade={selectedGrade} />;
       case AppMode.GAMES:
         return (
-          <MathGames 
+          <MateHoot 
             grade={selectedGrade} 
             initialRole={userRole} 
             onBack={() => setUserRole(null)} 

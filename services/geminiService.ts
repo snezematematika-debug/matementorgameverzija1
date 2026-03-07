@@ -760,6 +760,19 @@ export const generateGameContent = async (topic: string, type: string, grade: st
         ]
       }
 
+      Ако типот е "MATEHOOT":
+      {
+        "questions": [
+          {
+            "question": "Текстот на прашањето...",
+            "options": ["Опција 1", "Опција 2", "Опција 3", "Опција 4"],
+            "correctAnswerIndex": 0,
+            "explanation": "Зошто е ова точно..."
+          },
+          ... (вкупно 10-15 вакви објекти. Погрешните одговори треба да бидат логични грешки.)
+        ]
+      }
+
       ${MATH_INSTRUCTION}
 
       Врати го ОДГОВОРОТ ИСКЛУЧИВО КАКО JSON ОБЈЕКТ.

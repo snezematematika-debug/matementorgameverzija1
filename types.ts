@@ -55,17 +55,19 @@ export enum AppMode {
   GAMES = 'GAMES'
 }
 
-export type GameType = 'BINGO' | 'ESCAPE_ROOM' | 'PASSWORD' | 'BALLOONS' | 'FLASHCARDS';
+export type GameType = 'BINGO' | 'ESCAPE_ROOM' | 'PASSWORD' | 'BALLOONS' | 'FLASHCARDS' | 'MATEHOOT';
 
 export interface GameState {
   pin: string;
   topic: string;
   type: GameType;
-  status: 'WAITING' | 'PLAYING' | 'FINISHED';
+  status: 'WAITING' | 'PLAYING' | 'QUESTION' | 'RESULT' | 'LEADERBOARD' | 'FINISHED';
   players: any[];
   solvers?: string[];
   bingoWinner?: string;
   content: any;
   createdAt?: number;
-  currentQuestion?: number;
+  currentQuestionIndex?: number;
+  questionStartTime?: number;
+  showCorrectAnswer?: boolean;
 }
