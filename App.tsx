@@ -96,12 +96,6 @@ const App: React.FC = () => {
       selectedGrade={selectedGrade}
       setGrade={setSelectedGrade}
       hideSidebar={userRole === 'STUDENT'}
-      onLogout={() => {
-        setUserRole(null);
-        sessionStorage.removeItem('matementor_role');
-        sessionStorage.removeItem('matementor_mode');
-        sessionStorage.removeItem('matehoot_pin');
-      }}
     >
       {renderContent()}
     </Layout>

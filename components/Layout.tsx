@@ -9,10 +9,9 @@ interface LayoutProps {
   setGrade: (grade: GradeLevel) => void;
   children: React.ReactNode;
   hideSidebar?: boolean;
-  onLogout?: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, setGrade, children, hideSidebar = false, onLogout }) => {
+const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, setGrade, children, hideSidebar = false }) => {
   const [isGradeMenuOpen, setIsGradeMenuOpen] = useState(false);
 
   const handleGradeSelect = (grade: GradeLevel) => {
@@ -171,15 +170,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
           </nav>
 
           {/* Footer Section - Copyright & Logout */}
-          <div className="p-4 mt-auto border-t border-indigo-800 bg-indigo-900/50 backdrop-blur-sm space-y-4">
-             {onLogout && (
-               <button 
-                 onClick={onLogout}
-                 className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-indigo-800/50 hover:bg-red-500/20 text-indigo-300 hover:text-red-200 rounded-xl border border-indigo-700 hover:border-red-500/50 transition-all text-xs font-bold uppercase tracking-widest"
-               >
-                 <span>🚪</span> Промени улога
-               </button>
-             )}
+          <div className="p-4 mt-auto border-t border-indigo-800 bg-indigo-900/50 backdrop-blur-sm">
              <div className="text-center">
                  <p className="text-[10px] uppercase tracking-widest text-indigo-400 font-semibold mb-1">АВТОР НА ПРОЕКТОТ</p>
                  <p className="text-base font-bold text-white mb-1">Снежана Златковска</p>
