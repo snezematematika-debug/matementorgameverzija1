@@ -63,7 +63,15 @@ const App: React.FC = () => {
 
   if (!userRole) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="text-center mb-16 animate-in fade-in slide-in-from-top-8 duration-1000">
+          <h1 className="text-6xl md:text-8xl font-black text-indigo-900 tracking-tighter drop-shadow-sm">
+            МАТЕ-МЕНТОР
+          </h1>
+          <div className="h-2 w-32 bg-indigo-500 mx-auto mt-6 rounded-full shadow-sm"></div>
+          <p className="text-slate-500 mt-6 font-medium text-lg tracking-wide uppercase">Вашиот дигитален асистент по математика</p>
+        </div>
+
         <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
           <button
             onClick={() => {

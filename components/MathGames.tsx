@@ -36,6 +36,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade, initialRole = null, onBack
   const [isSolved, setIsSolved] = useState(false);
   const [solvers, setSolvers] = useState<string[]>([]);
   const [shuffledBingoItems, setShuffledBingoItems] = useState<any[]>([]);
+  const [visibleAnswers, setVisibleAnswers] = useState<Set<number>>(new Set());
 
   console.log('MathGames State:', { role, isSolved, solvers, gameType: gameState?.type });
 
@@ -236,6 +237,16 @@ const MathGames: React.FC<MathGamesProps> = ({ grade, initialRole = null, onBack
         status: 'FINISHED'
       });
     }
+  };
+
+  const toggleAnswerVisibility = (idx: number) => {
+    const newVisible = new Set(visibleAnswers);
+    if (newVisible.has(idx)) {
+      newVisible.delete(idx);
+    } else {
+      newVisible.add(idx);
+    }
+    setVisibleAnswers(newVisible);
   };
 
   const handleEscapeRoomAnswer = (idx: number, answer: string) => {
@@ -636,9 +647,24 @@ const MathGames: React.FC<MathGamesProps> = ({ grade, initialRole = null, onBack
                   </div>
 
                   <div className="p-6 bg-slate-50 rounded-3xl border border-slate-200 shadow-inner">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-lg">📢</div>
-                    <h4 className="font-bold text-slate-800">Прашања за читање:</h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-lg">📢</div>
+                      <h4 className="font-bold text-slate-800">Прашања за читање:</h4>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        if (visibleAnswers.size === (gameState.content?.questions?.length || 0)) {
+                          setVisibleAnswers(new Set());
+                        } else {
+                          const all = new Set(gameState.content?.questions?.map((_: any, i: number) => i));
+                          setVisibleAnswers(all);
+                        }
+                      }}
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all"
+                    >
+                      {visibleAnswers.size === (gameState.content?.questions?.length || 0) ? 'Скриј ги сите одговори' : 'Прикажи ги сите одговори'}
+                    </button>
                   </div>
                   <div className="grid gap-3">
                     {gameState.content?.questions?.map((q: any, idx: number) => (
@@ -646,11 +672,20 @@ const MathGames: React.FC<MathGamesProps> = ({ grade, initialRole = null, onBack
                         <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 font-bold text-sm shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                           {idx + 1}
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-1 flex-1">
                           <p className="text-sm text-slate-700 leading-relaxed font-medium">{q.question}</p>
-                          <p className="text-xs font-bold text-emerald-600 bg-emerald-50 inline-block px-2 py-0.5 rounded-md">
-                            Одговор: {q.answer}
-                          </p>
+                          {visibleAnswers.has(idx) ? (
+                            <p className="text-xs font-bold text-emerald-600 bg-emerald-50 inline-block px-2 py-0.5 rounded-md animate-in fade-in slide-in-from-left-2">
+                              Одговор: {q.answer}
+                            </p>
+                          ) : (
+                            <button 
+                              onClick={() => toggleAnswerVisibility(idx)}
+                              className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-1 mt-1 transition-colors"
+                            >
+                              <span>👁️</span> Прикажи одговор
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -738,7 +773,16 @@ const MathGames: React.FC<MathGamesProps> = ({ grade, initialRole = null, onBack
                     
                     {role === 'TEACHER' ? (
                       <div className="p-3 bg-white/50 rounded-xl border border-indigo-100">
-                        <p className="text-sm font-bold text-indigo-600">Клуч: <span className="text-emerald-600">{riddle.answer}</span></p>
+                        {visibleAnswers.has(idx + 100) ? ( // Use offset for different game types if needed, or just idx
+                          <p className="text-sm font-bold text-emerald-600 animate-in fade-in">Клуч: {riddle.answer}</p>
+                        ) : (
+                          <button 
+                            onClick={() => toggleAnswerVisibility(idx + 100)}
+                            className="text-xs font-bold text-indigo-600 flex items-center gap-1"
+                          >
+                            <span>👁️</span> Прикажи го клучот
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <div className="flex gap-2">
@@ -810,13 +854,41 @@ const MathGames: React.FC<MathGamesProps> = ({ grade, initialRole = null, onBack
                 Оваа игра бара интеракција во живо. Наставникот ги прикажува задачите, а учениците одговараат.
               </p>
               <div className="mt-8 p-6 bg-slate-50 rounded-2xl w-full text-left">
-                <h4 className="font-bold text-slate-700 mb-2">Задачи:</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-slate-700">Задачи:</h4>
+                  {role === 'TEACHER' && (
+                    <button 
+                      onClick={() => {
+                        if (visibleAnswers.size === (content?.tasks?.length || 0)) {
+                          setVisibleAnswers(new Set());
+                        } else {
+                          const all = new Set(content?.tasks?.map((_: any, i: number) => i + 200));
+                          setVisibleAnswers(all);
+                        }
+                      }}
+                      className="text-[10px] font-bold text-indigo-600 bg-white px-2 py-1 rounded border border-indigo-100"
+                    >
+                      {visibleAnswers.size > 0 ? 'Скриј ги сите' : 'Прикажи ги сите'}
+                    </button>
+                  )}
+                </div>
                 <div className="space-y-4">
                   {content?.tasks?.map((task: any, idx: number) => (
                     <div key={idx} className="p-3 bg-white rounded-xl border border-slate-200">
                       <p className="text-sm font-bold text-indigo-900">{idx + 1}. {task.question}</p>
                       {role === 'TEACHER' && (
-                        <p className="text-xs text-emerald-600 mt-1 font-bold">Точен одговор: {task.answer}</p>
+                        <div className="mt-1">
+                          {visibleAnswers.has(idx + 200) ? (
+                            <p className="text-xs text-emerald-600 font-bold animate-in fade-in">Точен одговор: {task.answer}</p>
+                          ) : (
+                            <button 
+                              onClick={() => toggleAnswerVisibility(idx + 200)}
+                              className="text-[10px] font-bold text-slate-400 hover:text-indigo-600"
+                            >
+                              👁️ Прикажи одговор
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   ))}
@@ -841,6 +913,7 @@ const MathGames: React.FC<MathGamesProps> = ({ grade, initialRole = null, onBack
                // Reset local state
                setMarkedCells(new Set());
                setFlippedCards(new Set());
+               setVisibleAnswers(new Set());
                setEscapeRoomAnswers([]);
                setSolvedRiddles([]);
                setFinalPassword('');
