@@ -290,8 +290,28 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
     }
     setGameState(null);
     setRole(null);
+    setPinInput('');
+    setStudentProgress(new Array(9).fill(0));
+    setCurrentFieldIndex(null);
+    setAttempts(0);
+    setAnswerInput('');
+    setIsJoined(false);
     sessionStorage.removeItem('matebingo_pin');
     sessionStorage.removeItem('matebingo_player_name');
+  };
+
+  const resetToStart = async () => {
+    if (role === 'TEACHER' && gameState?.pin) {
+      await remove(ref(db, `games/${gameState.pin}`));
+    }
+    setGameState(null);
+    setPinInput('');
+    setStudentProgress(new Array(9).fill(0));
+    setCurrentFieldIndex(null);
+    setAttempts(0);
+    setAnswerInput('');
+    setIsJoined(false);
+    sessionStorage.removeItem('matebingo_pin');
   };
 
   // --- RENDER HELPERS ---
@@ -701,12 +721,26 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
               <p className="text-slate-400 font-bold">Одлична игра на сите ученици!</p>
             )}
             
-            <button
-              onClick={onBack}
-              className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-indigo-700 transition-all"
-            >
-              НАЗАД ВО МЕНИТО
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              {role === 'TEACHER' && (
+                <button
+                  onClick={resetToStart}
+                  className="px-10 py-5 bg-amber-500 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-amber-600 transition-all flex items-center gap-2"
+                >
+                  <Play className="w-6 h-6" /> НОВА ИГРА
+                </button>
+              )}
+              
+              <button
+                onClick={async () => {
+                  if (role === 'TEACHER') await closeRoom();
+                  onBack();
+                }}
+                className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-indigo-700 transition-all"
+              >
+                НАЗАД ВО МЕНИТО
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
