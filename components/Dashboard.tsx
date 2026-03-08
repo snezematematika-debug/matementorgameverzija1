@@ -16,10 +16,9 @@ import { AppMode } from '../types';
 
 interface DashboardProps {
   setMode: (mode: AppMode) => void;
-  userName: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ setMode, userName }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
   const stats = [
     { label: 'Генерирани лекции', value: '12', icon: BookOpen, color: 'text-blue-500', bg: 'bg-blue-50' },
     { label: 'Одиграни квизови', value: '48', icon: Play, color: 'text-pink-500', bg: 'bg-pink-50' },
@@ -49,7 +48,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode, userName }) => {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl font-black text-indigo-950 mb-2"
           >
-            Добредојде назад, {userName}! 👋
+            Добредојдовте во Мате-Ментор! 👋
           </motion.h1>
           <p className="text-slate-500 font-medium text-lg">
             Твојот дигитален кабинет е подготвен за денешните часови.

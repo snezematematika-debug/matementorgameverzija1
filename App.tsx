@@ -120,7 +120,7 @@ const App: React.FC = () => {
       case AppMode.MATHIGON:
         return <Mathigon />;
       case AppMode.DASHBOARD:
-        return <Dashboard setMode={setCurrentMode} userName="Снежана" />;
+        return <Dashboard setMode={setCurrentMode} />;
       case AppMode.ANALYTICS:
         return (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
@@ -138,7 +138,7 @@ const App: React.FC = () => {
           </div>
         );
       default:
-        return <Dashboard setMode={setCurrentMode} userName="Снежана" />;
+        return <Dashboard setMode={setCurrentMode} />;
     }
   };
 
