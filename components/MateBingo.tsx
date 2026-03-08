@@ -404,23 +404,34 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
   }
 
   if (role === 'STUDENT' && (!gameState || !isJoined)) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasUrlPin = !!urlParams.get('pin');
+
     return (
       <div className="max-w-md mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 text-center">
         <h2 className="text-4xl font-black text-blue-900 mb-8">Мате-Бинго! 🎯</h2>
         
         <div className="space-y-6">
-          <input
-            type="text"
-            maxLength={6}
-            value={pinInput}
-            onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
-            placeholder="Внеси PIN код"
-            className="w-full p-6 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-4 border-slate-100 rounded-3xl focus:border-blue-500 focus:ring-0 transition-all placeholder:tracking-normal placeholder:text-lg"
-          />
+          {hasUrlPin ? (
+            <div className="bg-blue-50 p-6 rounded-3xl border-2 border-blue-100 mb-4">
+              <p className="text-blue-600 font-bold uppercase tracking-widest text-xs mb-1">Приклучување на игра</p>
+              <p className="text-3xl font-black text-blue-900 tracking-widest">{pinInput}</p>
+            </div>
+          ) : (
+            <input
+              type="text"
+              maxLength={6}
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
+              placeholder="Внеси PIN код"
+              className="w-full p-6 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-4 border-slate-100 rounded-3xl focus:border-blue-500 focus:ring-0 transition-all placeholder:tracking-normal placeholder:text-lg"
+            />
+          )}
           
           <input
             type="text"
             value={playerName}
+            autoFocus={hasUrlPin}
             onChange={(e) => setPlayerName(e.target.value)}
             placeholder="Твоето име"
             className="w-full p-5 text-center text-xl font-bold bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-blue-500 focus:ring-0 transition-all"
