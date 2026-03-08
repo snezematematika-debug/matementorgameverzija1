@@ -16,7 +16,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
   const [openCategory, setOpenCategory] = useState<string | null>(() => {
     if ([AppMode.LESSON, AppMode.SCENARIO, AppMode.BOARD_PLAN].includes(currentMode)) return 'PREP';
     if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) return 'MATERIALS';
-    if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GAMES, AppMode.GEOGEBRA].includes(currentMode)) return 'INTERACTIVE';
+    if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GAMES, AppMode.GEOGEBRA, AppMode.MATHIGON].includes(currentMode)) return 'INTERACTIVE';
     if ([AppMode.ADVANCED_PRACTICE].includes(currentMode)) return 'SUPPORT';
     if (currentMode === AppMode.ANALYTICS) return 'ANALYTICS';
     return null;
@@ -29,7 +29,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
   React.useEffect(() => {
     if ([AppMode.LESSON, AppMode.SCENARIO, AppMode.BOARD_PLAN].includes(currentMode)) setOpenCategory('PREP');
     else if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) setOpenCategory('MATERIALS');
-    else if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GAMES, AppMode.GEOGEBRA].includes(currentMode)) setOpenCategory('INTERACTIVE');
+    else if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GAMES, AppMode.GEOGEBRA, AppMode.MATHIGON].includes(currentMode)) setOpenCategory('INTERACTIVE');
     else if ([AppMode.ADVANCED_PRACTICE].includes(currentMode)) setOpenCategory('SUPPORT');
     else if (currentMode === AppMode.ANALYTICS) setOpenCategory('ANALYTICS');
     else if (currentMode === AppMode.DASHBOARD) setOpenCategory(null);
@@ -287,6 +287,16 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }`}
                   >
                     <span>📐</span> GeoGebra
+                  </button>
+                  <button
+                    onClick={() => setMode(AppMode.MATHIGON)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.MATHIGON 
+                        ? 'bg-amber-500/30 text-amber-100 shadow-lg border-amber-400' 
+                        : 'text-amber-200/80 hover:bg-indigo-800/40 hover:text-amber-100 border-transparent'
+                    }`}
+                  >
+                    <span>🎨</span> Mathigon
                   </button>
                 </div>
               </div>

@@ -13,6 +13,7 @@ import TeacherPanel from './components/TeacherPanel';
 import MateHoot from './components/MateHoot';
 import Dashboard from './components/Dashboard';
 import GeoGebra from './components/GeoGebra';
+import Mathigon from './components/Mathigon';
 import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
@@ -102,6 +103,8 @@ const App: React.FC = () => {
         );
       case AppMode.GEOGEBRA:
         return <GeoGebra />;
+      case AppMode.MATHIGON:
+        return <Mathigon />;
       case AppMode.DASHBOARD:
         return <Dashboard setMode={setCurrentMode} userName="Снежана" />;
       case AppMode.ANALYTICS:
