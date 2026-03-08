@@ -118,6 +118,9 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
     setError(null);
     try {
       const content = await generateGameContent(selectedTopic, 'BINGO', grade);
+      if (!content || !content.questions) {
+        throw new Error("Неуспешно генерирање на прашања. Ве молиме обидете се повторно.");
+      }
       const pin = generatePin();
       
       const newGameState: GameState = {
@@ -364,6 +367,13 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
             {loading ? <Loader2 className="animate-spin" /> : <Play className="w-6 h-6" />}
             ГЕНЕРИРАЈ БИНГО ТАБЛА
           </button>
+
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-bold flex items-center gap-3">
+              <XCircle className="w-5 h-5 flex-shrink-0" />
+              {error}
+            </div>
+          )}
 
           <button onClick={() => setRole(null)} className="w-full text-slate-400 font-bold hover:text-indigo-600 transition-colors">
             Откажи

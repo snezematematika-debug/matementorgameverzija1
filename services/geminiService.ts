@@ -732,7 +732,7 @@ export const generateGameContent = async (topic: string, type: string, grade: st
       {
         "questions": [
           {"question": "Колку е 5+5?", "answer": "10"},
-          ... (вкупно 24 вакви објекти)
+          ... (вкупно 12-15 вакви објекти)
         ]
       }
 
