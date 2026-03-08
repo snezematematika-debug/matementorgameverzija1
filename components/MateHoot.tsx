@@ -221,16 +221,23 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
         return;
       }
       const roomData = snapshot.val();
-      if (roomData.status !== 'WAITING') {
-        setError('Играта е веќе започната.');
+      if (roomData.status === 'FINISHED') {
+        setError('Овој квиз веќе заврши.');
         setLoading(false);
         return;
       }
-      await update(ref(db, `games/${pinInput}/players/${playerId}`), {
-        name: playerName,
-        score: 0,
-        joinedAt: Date.now()
-      });
+      // If student joins late, they start with 0 points
+      const playerRef = ref(db, `games/${pinInput}/players/${playerId}`);
+      const playerSnapshot = await get(playerRef);
+      
+      if (!playerSnapshot.exists()) {
+        await update(playerRef, {
+          name: playerName,
+          score: 0,
+          joinedAt: Date.now()
+        });
+      }
+      
       setIsJoined(true);
       setLoading(false);
     } catch (err: any) {
@@ -626,6 +633,15 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
 
     if (role === 'STUDENT') {
       if (gameState.status === 'RESULT') {
+        if (!lastAnswerResult) {
+          return (
+            <div className="max-w-md mx-auto h-[70vh] bg-indigo-600 rounded-[3rem] flex flex-col items-center justify-center text-center p-10 text-white shadow-2xl">
+              <Sparkles className="w-20 h-20 mb-8 opacity-50" />
+              <h2 className="text-4xl font-black mb-4">Добредојде!</h2>
+              <p className="text-xl font-medium opacity-80">Се приклучи среде квиз. Чекаме на следното прашање...</p>
+            </div>
+          );
+        }
         const isCorrect = lastAnswerResult?.correct;
         return (
           <motion.div 
