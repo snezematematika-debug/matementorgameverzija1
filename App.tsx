@@ -11,6 +11,7 @@ import BoardPlanGenerator from './components/BoardPlanGenerator';
 import AdvancedPractice from './components/AdvancedPractice';
 import TeacherPanel from './components/TeacherPanel';
 import MateHoot from './components/MateHoot';
+import MateBingo from './components/MateBingo';
 import Dashboard from './components/Dashboard';
 import GeoGebra from './components/GeoGebra';
 import Mathigon from './components/Mathigon';
@@ -53,18 +54,20 @@ const App: React.FC = () => {
     // Check for PIN in URL for mode switching
     const params = new URLSearchParams(window.location.search);
     const urlPin = params.get('pin');
+    const gameType = params.get('type');
     if (urlPin) {
       setUserRole('STUDENT');
-      setCurrentMode(AppMode.GAMES);
+      setCurrentMode(gameType === 'BINGO' ? AppMode.BINGO : AppMode.GAMES);
     }
   }, []);
 
   useEffect(() => {
-    // Clear PIN from URL if we are not in GAMES mode
-    if (currentMode !== AppMode.GAMES) {
+    // Clear PIN from URL if we are not in GAMES or BINGO mode
+    if (currentMode !== AppMode.GAMES && currentMode !== AppMode.BINGO) {
       const url = new URL(window.location.href);
       if (url.searchParams.has('pin')) {
         url.searchParams.delete('pin');
+        url.searchParams.delete('type');
         window.history.replaceState({}, '', url.toString());
       }
     }
@@ -93,6 +96,17 @@ const App: React.FC = () => {
       case AppMode.GAMES:
         return (
           <MateHoot 
+            grade={selectedGrade} 
+            initialRole={userRole} 
+            onBack={() => {
+              setUserRole('TEACHER');
+              setCurrentMode(AppMode.DASHBOARD);
+            }} 
+          />
+        );
+      case AppMode.BINGO:
+        return (
+          <MateBingo 
             grade={selectedGrade} 
             initialRole={userRole} 
             onBack={() => {
