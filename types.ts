@@ -43,6 +43,7 @@ export interface GeneratedScenario {
 }
 
 export enum AppMode {
+  DASHBOARD = 'DASHBOARD',
   LESSON = 'LESSON',
   QUIZ = 'QUIZ',
   VISUALIZER = 'VISUALIZER',
@@ -52,7 +53,9 @@ export enum AppMode {
   BOARD_PLAN = 'BOARD_PLAN',
   ADVANCED_PRACTICE = 'ADVANCED_PRACTICE',
   TEACHER_PANEL = 'TEACHER_PANEL',
-  GAMES = 'GAMES'
+  GAMES = 'GAMES',
+  GEOGEBRA = 'GEOGEBRA',
+  ANALYTICS = 'ANALYTICS'
 }
 
 export type GameType = 'BINGO' | 'ESCAPE_ROOM' | 'PASSWORD' | 'BALLOONS' | 'FLASHCARDS' | 'MATEHOOT';

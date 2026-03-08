@@ -8,6 +8,7 @@ import FormattedText from './FormattedText';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import { parse } from 'marked';
 
 interface QuizMakerProps {
   grade: GradeLevel;
@@ -23,6 +24,10 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade }) => {
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Custom fields for the print view
+  const [teacherName, setTeacherName] = useState('');
+  const [schoolName, setSchoolName] = useState('');
 
   // Filter content
   const filteredThemes = THEMES.filter(t => t.grade === grade);
@@ -66,6 +71,77 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownloadWord = () => {
+    if (questions.length === 0) return;
+    
+    const questionsHtml = questions.map((q, idx) => `
+      <div style="margin-bottom: 20px;">
+        <p><b>${idx + 1}. ${q.question}</b> <span style="font-size: 9pt; color: #666;">(${q.difficulty})</span></p>
+        <div style="margin-left: 20px;">
+          ${q.options.map((opt, optIdx) => `
+            <p>${String.fromCharCode(65 + optIdx)}) ${opt}</p>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+
+    let rubricHtml = '';
+    if (rubric) {
+      const parsedRubric = parse(rubric);
+      rubricHtml = `
+        <div style="page-break-before: always; border-top: 2px solid black; padding-top: 20px; margin-top: 40px;">
+          <h2 style="color: #2c3e50;">Клуч за одговори и Рубрика за оценување</h2>
+          <div style="font-size: 10pt;">${parsedRubric}</div>
+        </div>
+      `;
+    }
+
+    const fullHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <style>
+          body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; line-height: 1.5; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          td, th { border: 1px solid #ccc; padding: 8px; text-align: left; }
+          .header-table td { border: none; padding: 4px; }
+          h1 { font-size: 18pt; text-align: center; text-transform: uppercase; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 30px; }
+        </style>
+      </head>
+      <body>
+        <p style="text-align: right; font-size: 8pt; color: #999; border-bottom: 1px solid #eee;">Мате-Ментор - Платформа за дигитално образование</p>
+        <table class="header-table">
+          <tr>
+            <td><b>Предмет:</b> Математика</td>
+            <td style="text-align: right;"><b>Датум:</b> ________________</td>
+          </tr>
+          <tr>
+            <td><b>Одделение:</b> ${grade} одд.</td>
+            <td style="text-align: right;"><b>Ученик:</b> __________________________</td>
+          </tr>
+          <tr>
+            <td><b>Наставник:</b> ${teacherName || '__________________'}</td>
+            <td style="text-align: right;"><b>Училиште:</b> ${schoolName || '__________________'}</td>
+          </tr>
+        </table>
+        <h1>Тест за ${selectedTopic}</h1>
+        ${questionsHtml}
+        ${rubricHtml}
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([fullHtml], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Test_${selectedTopic.replace(/\s+/g, '_')}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleAnswerSelect = (qIndex: number, optionIndex: number) => {
@@ -139,6 +215,29 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade }) => {
                 </select>
             </div>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-200 pt-4">
+            <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Изготвил (за печатење)</label>
+                <input 
+                    type="text" 
+                    value={teacherName} 
+                    onChange={(e) => setTeacherName(e.target.value)} 
+                    placeholder="Вашето име" 
+                    className="w-full p-2.5 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                />
+            </div>
+            <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">ООУ (за печатење)</label>
+                <input 
+                    type="text" 
+                    value={schoolName} 
+                    onChange={(e) => setSchoolName(e.target.value)} 
+                    placeholder="Име на училиштето" 
+                    className="w-full p-2.5 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                />
+            </div>
+        </div>
         
         <div className="mt-4 flex justify-end">
             <button
@@ -166,37 +265,52 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade }) => {
       {loading && <Loading message="Се генерираат прашања..." />}
 
       {!loading && questions.length > 0 && (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-6 animate-fade-in print:space-y-4">
           
           {/* PRINT HEADER - Visible ONLY on print */}
-          <div className="hidden print:block mb-6 text-black">
-              <div className="text-right text-xs text-slate-500 mb-2 border-b pb-1">Мате-Ментор - Платформа за дигитално образование</div>
-              <h1 className="text-2xl font-bold text-center mb-2 uppercase border-b-2 border-black pb-2">Тест по Математика ({grade} Одд.)</h1>
-              <div className="flex justify-between text-sm mb-4">
-                  <span>Ученик: __________________________</span>
-                  <span>Датум: ________________</span>
+          <div className="hidden print:block mb-8 text-black">
+              <div className="text-right text-[10px] text-slate-500 mb-4 border-b pb-1 italic">Мате-Ментор - Платформа за дигитално образование</div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6 text-sm border-b-2 border-slate-200 pb-4">
+                  <div className="space-y-1">
+                      <p><strong>Предмет:</strong> Математика</p>
+                      <p><strong>Одделение:</strong> {grade} одд.</p>
+                      <p><strong>Наставник:</strong> {teacherName || '__________________'}</p>
+                  </div>
+                  <div className="space-y-1 text-right">
+                      <p><strong>Училиште:</strong> {schoolName || '__________________'}</p>
+                      <p><strong>Датум:</strong> ________________</p>
+                      <p><strong>Ученик:</strong> __________________________</p>
+                  </div>
               </div>
+
+              <h1 className="text-2xl font-black text-center mb-8 uppercase tracking-tight">
+                Тест за {selectedTopic}
+              </h1>
           </div>
 
           {questions.map((q, idx) => {
             const isCorrect = selectedAnswers[idx] === q.correctAnswerIndex;
             return (
-              <div key={idx} className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow break-inside-avoid">
-                <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1 text-slate-800 text-lg">
-                        <span className="font-bold text-slate-400 mr-2">{idx + 1}.</span> 
+              <div key={idx} className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow break-inside-avoid print:shadow-none print:border-slate-200 print:p-4 print:mb-4">
+                <div className="flex justify-between items-start mb-4 print:mb-2">
+                    <div className="flex-1 text-slate-800 text-lg print:text-base">
+                        <span className="font-bold text-slate-400 mr-2 print:text-black">{idx + 1}.</span> 
                         <div className="inline-block"><FormattedText text={q.question} /></div>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded font-bold ml-4 uppercase tracking-wider print:hidden ${
-                        q.difficulty === 'Лесно' ? 'bg-green-100 text-green-700' :
-                        q.difficulty === 'Средно' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                    }`}>
-                        {q.difficulty}
-                    </span>
+                    <div className="flex flex-col items-end gap-1">
+                        <span className={`text-xs px-2 py-1 rounded font-bold ml-4 uppercase tracking-wider print:hidden ${
+                            q.difficulty === 'Лесно' ? 'bg-green-100 text-green-700' :
+                            q.difficulty === 'Средно' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                        }`}>
+                            {q.difficulty}
+                        </span>
+                        <span className="hidden print:block text-[10px] font-bold text-slate-400">Поени: ____ / 10</span>
+                    </div>
                 </div>
 
-                <div className="space-y-2 pl-6">
+                <div className="space-y-2 pl-6 print:pl-4 print:space-y-1">
                   {q.options.map((opt, optIdx) => {
                     let btnClass = "w-full text-left p-3 rounded-lg border transition-all text-sm flex items-center gap-2 cursor-pointer select-none ";
                     
@@ -217,7 +331,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade }) => {
                     }
 
                     // Print styles override
-                    btnClass += " print:border-none print:p-1 print:pl-0 print:bg-transparent";
+                    btnClass += " print:border-none print:p-0.5 print:pl-0 print:bg-transparent print:text-sm";
 
                     return (
                       <div
@@ -227,7 +341,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade }) => {
                         role="button"
                         aria-disabled={showResults}
                       >
-                        <span className="font-mono font-bold text-slate-400 flex-shrink-0 print:text-black">{String.fromCharCode(65 + optIdx)}.</span> 
+                        <span className="font-mono font-bold text-slate-400 flex-shrink-0 print:text-black w-6">{String.fromCharCode(65 + optIdx)})</span> 
                         <div className="flex-1"><FormattedText text={opt} /></div>
                       </div>
                     );
@@ -272,35 +386,48 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade }) => {
               </div>
           )}
 
-          <div className="sticky bottom-6 bg-white/90 backdrop-blur p-4 shadow-2xl rounded-xl border border-slate-200 flex justify-between items-center z-10 print:hidden">
-            {showResults ? (
-                <div className="text-xl font-bold flex items-center gap-4">
-                    <span>Резултат: <span className={calculateScore() > questions.length/2 ? "text-green-600" : "text-orange-600"}>{calculateScore()} / {questions.length}</span></span>
-                    <button 
-                        onClick={handleGenerate} 
-                        className="text-sm bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg transition-colors font-bold"
-                    >
-                        Нов Тест
-                    </button>
+          <div className="sticky bottom-6 bg-white/90 backdrop-blur p-4 shadow-2xl rounded-xl border border-slate-200 flex flex-wrap justify-between items-center gap-4 z-10 print:hidden">
+            <div className="flex items-center gap-4 flex-1">
+                {showResults ? (
+                    <div className="text-xl font-bold flex items-center gap-4">
+                        <span>Резултат: <span className={calculateScore() > questions.length/2 ? "text-green-600" : "text-orange-600"}>{calculateScore()} / {questions.length}</span></span>
+                        <button 
+                            onClick={handleGenerate} 
+                            className="text-sm bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg transition-colors font-bold"
+                        >
+                            Нов Тест
+                        </button>
+                    </div>
+                ) : (
                     <button
-                        onClick={() => window.print()}
-                        className="text-sm bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-lg transition-colors flex items-center gap-2 font-bold shadow-md"
+                        onClick={() => setShowResults(true)}
+                        disabled={selectedAnswers.includes(-1)}
+                        className="flex-1 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed font-bold shadow-lg transform active:scale-95 transition-all"
                     >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                         Печати
+                        Заврши и Провери
                     </button>
-                </div>
-            ) : (
-                <button
-                    onClick={() => setShowResults(true)}
-                    disabled={selectedAnswers.includes(-1)}
-                    className="w-full py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed font-bold shadow-lg transform active:scale-95 transition-all"
-                >
-                    Заврши и Провери
-                </button>
-            )}
+                )}
+            </div>
+
+            <button
+                onClick={handleDownloadWord}
+                className="px-6 py-3 bg-white border-2 border-indigo-600 text-indigo-700 rounded-lg transition-colors flex items-center gap-2 font-bold shadow-sm hover:bg-indigo-50"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Word Документ
+            </button>
+
+            <button
+                onClick={() => window.print()}
+                className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors flex items-center gap-2 font-bold shadow-md"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Печати PDF
+            </button>
           </div>
         </div>
       )}

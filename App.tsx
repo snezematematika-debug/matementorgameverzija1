@@ -11,12 +11,14 @@ import BoardPlanGenerator from './components/BoardPlanGenerator';
 import AdvancedPractice from './components/AdvancedPractice';
 import TeacherPanel from './components/TeacherPanel';
 import MateHoot from './components/MateHoot';
+import Dashboard from './components/Dashboard';
+import GeoGebra from './components/GeoGebra';
 import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
   const [currentMode, setCurrentMode] = useState<AppMode>(() => {
     const saved = sessionStorage.getItem('matementor_mode');
-    return (saved as AppMode) || AppMode.LESSON;
+    return (saved as AppMode) || AppMode.DASHBOARD;
   });
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(() => {
     const saved = sessionStorage.getItem('matementor_grade');
@@ -56,6 +58,17 @@ const App: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    // Clear PIN from URL if we are not in GAMES mode
+    if (currentMode !== AppMode.GAMES) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('pin')) {
+        url.searchParams.delete('pin');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  }, [currentMode]);
+
   const renderContent = () => {
     switch (currentMode) {
       case AppMode.LESSON:
@@ -81,11 +94,34 @@ const App: React.FC = () => {
           <MateHoot 
             grade={selectedGrade} 
             initialRole={userRole} 
-            onBack={() => setUserRole(null)} 
+            onBack={() => {
+              setUserRole('TEACHER');
+              setCurrentMode(AppMode.DASHBOARD);
+            }} 
           />
         );
+      case AppMode.GEOGEBRA:
+        return <GeoGebra />;
+      case AppMode.DASHBOARD:
+        return <Dashboard setMode={setCurrentMode} userName="Снежана" />;
+      case AppMode.ANALYTICS:
+        return (
+          <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
+            <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center text-5xl">📊</div>
+            <h2 className="text-3xl font-black text-slate-900">Аналитика и Статистика</h2>
+            <p className="text-slate-500 max-w-md text-lg">
+              Овој модул е во фаза на изработка. Наскоро ќе можете да ги следите постигањата на вашите ученици во реално време.
+            </p>
+            <button 
+              onClick={() => setCurrentMode(AppMode.DASHBOARD)}
+              className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all"
+            >
+              Назад на почетна
+            </button>
+          </div>
+        );
       default:
-        return <LessonGenerator grade={selectedGrade} />;
+        return <Dashboard setMode={setCurrentMode} userName="Снежана" />;
     }
   };
 

@@ -13,6 +13,27 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, setGrade, children, hideSidebar = false }) => {
   const [isGradeMenuOpen, setIsGradeMenuOpen] = useState(false);
+  const [openCategory, setOpenCategory] = useState<string | null>(() => {
+    if ([AppMode.LESSON, AppMode.SCENARIO, AppMode.BOARD_PLAN].includes(currentMode)) return 'PREP';
+    if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) return 'MATERIALS';
+    if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GAMES, AppMode.GEOGEBRA].includes(currentMode)) return 'INTERACTIVE';
+    if ([AppMode.ADVANCED_PRACTICE].includes(currentMode)) return 'SUPPORT';
+    if (currentMode === AppMode.ANALYTICS) return 'ANALYTICS';
+    return null;
+  });
+
+  const toggleCategory = (cat: string) => {
+    setOpenCategory(openCategory === cat ? null : cat);
+  };
+
+  React.useEffect(() => {
+    if ([AppMode.LESSON, AppMode.SCENARIO, AppMode.BOARD_PLAN].includes(currentMode)) setOpenCategory('PREP');
+    else if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) setOpenCategory('MATERIALS');
+    else if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GAMES, AppMode.GEOGEBRA].includes(currentMode)) setOpenCategory('INTERACTIVE');
+    else if ([AppMode.ADVANCED_PRACTICE].includes(currentMode)) setOpenCategory('SUPPORT');
+    else if (currentMode === AppMode.ANALYTICS) setOpenCategory('ANALYTICS');
+    else if (currentMode === AppMode.DASHBOARD) setOpenCategory(null);
+  }, [currentMode]);
 
   const handleGradeSelect = (grade: GradeLevel) => {
     setGrade(grade);
@@ -42,8 +63,20 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
           {/* Scrollable Navigation Area */}
           <nav className="px-3 py-3 space-y-1 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-indigo-700 scrollbar-track-transparent">
             
+            {/* 0. Dashboard */}
+            <button
+              onClick={() => setMode(AppMode.DASHBOARD)}
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mb-4 border ${
+                currentMode === AppMode.DASHBOARD 
+                  ? 'bg-indigo-600 text-white shadow-lg translate-x-1 border-indigo-400' 
+                  : 'text-indigo-200 hover:bg-indigo-800/50 hover:text-white border-indigo-700/30'
+              }`}
+            >
+              <span>🏠</span> Почетна
+            </button>
+
             {/* 1. Collapsible Grade Selector */}
-            <div className="mb-2 pb-2 border-b border-indigo-800/50">
+            <div className="mb-4 pb-2 border-b border-indigo-800/50">
               <button
                 onClick={() => setIsGradeMenuOpen(!isGradeMenuOpen)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all text-sm font-bold uppercase tracking-wider border border-transparent ${isGradeMenuOpen ? 'bg-indigo-800 text-white border-indigo-600' : 'text-indigo-200 hover:bg-indigo-800/50 hover:text-white'}`}
@@ -78,109 +111,260 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               </div>
             </div>
 
-            <button
-              onClick={() => setMode(AppMode.LESSON)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 border ${
-                currentMode === AppMode.LESSON 
-                  ? 'bg-blue-500/30 text-blue-100 shadow-lg translate-x-1 border-blue-400' 
-                  : 'text-blue-200/80 hover:bg-blue-800/40 hover:text-blue-100 border-blue-500/20'
-              }`}
-            >
-              <span>📚</span> Лекции
-            </button>
-            <button
-              onClick={() => setMode(AppMode.BOARD_PLAN)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
-                currentMode === AppMode.BOARD_PLAN 
-                  ? 'bg-indigo-500/30 text-indigo-100 shadow-lg translate-x-1 border-indigo-400' 
-                  : 'text-indigo-200/80 hover:bg-indigo-800/40 hover:text-indigo-100 border-indigo-500/20'
-              }`}
-            >
-              <span>👨‍🏫</span> План на табла
-            </button>
-            <button
-              onClick={() => setMode(AppMode.SCENARIO)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
-                currentMode === AppMode.SCENARIO 
-                  ? 'bg-emerald-500/30 text-emerald-100 shadow-lg translate-x-1 border-emerald-400' 
-                  : 'text-emerald-200/80 hover:bg-emerald-800/40 hover:text-emerald-100 border-emerald-500/20'
-              }`}
-            >
-              <span>📋</span> Сценарија
-            </button>
-            <button
-              onClick={() => setMode(AppMode.QUIZ)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
-                currentMode === AppMode.QUIZ 
-                  ? 'bg-orange-500/30 text-orange-100 shadow-lg translate-x-1 border-orange-400' 
-                  : 'text-orange-200/80 hover:bg-orange-800/40 hover:text-orange-100 border-orange-500/20'
-              }`}
-            >
-              <span>📝</span> Тестови
-            </button>
-            <button
-              onClick={() => setMode(AppMode.WORKSHEET)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
-                currentMode === AppMode.WORKSHEET 
-                  ? 'bg-sky-500/30 text-sky-100 shadow-lg translate-x-1 border-sky-400' 
-                  : 'text-sky-200/80 hover:bg-sky-800/40 hover:text-sky-100 border-sky-500/20'
-              }`}
-            >
-              <span>📄</span> Работни листови
-            </button>
-            <button
-              onClick={() => setMode(AppMode.PROJECT)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
-                currentMode === AppMode.PROJECT 
-                  ? 'bg-rose-500/30 text-rose-100 shadow-lg translate-x-1 border-rose-400' 
-                  : 'text-rose-200/80 hover:bg-rose-800/40 hover:text-rose-100 border-rose-500/20'
-              }`}
-            >
-              <span>🚀</span> Проектни задачи
-            </button>
-            <button
-              onClick={() => setMode(AppMode.VISUALIZER)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
-                currentMode === AppMode.VISUALIZER 
-                  ? 'bg-fuchsia-500/30 text-fuchsia-100 shadow-lg translate-x-1 border-fuchsia-400' 
-                  : 'text-fuchsia-200/80 hover:bg-fuchsia-800/40 hover:text-fuchsia-100 border-fuchsia-500/20'
-              }`}
-            >
-              <span>🎨</span> AI Визуелизатор
-            </button>
-            
-             <button
-              onClick={() => setMode(AppMode.ADVANCED_PRACTICE)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-2 border ${
-                currentMode === AppMode.ADVANCED_PRACTICE 
-                  ? 'bg-yellow-500/30 text-yellow-100 shadow-lg translate-x-1 border-yellow-400' 
-                  : 'text-yellow-200/80 hover:bg-yellow-900/40 hover:text-yellow-100 border-yellow-500/20'
-              }`}
-            >
-              <span>🏆</span> Додатна настава
-            </button>
+            {/* ПОДГОТОВКА И ПЛАНИРАЊЕ */}
+            <div className="pt-2">
+              <button
+                onClick={() => toggleCategory('PREP')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                  openCategory === 'PREP' 
+                    ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
+                    : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
+                  <span>📝</span> Подготовка
+                </span>
+                <svg 
+                  className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'PREP' ? 'rotate-180' : ''}`} 
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'PREP' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                <div className="flex flex-col gap-1 pl-4 pb-2">
+                  <button
+                    onClick={() => setMode(AppMode.LESSON)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.LESSON 
+                        ? 'bg-blue-500/30 text-blue-100 shadow-lg border-blue-400' 
+                        : 'text-blue-200/80 hover:bg-indigo-800/40 hover:text-blue-100 border-transparent'
+                    }`}
+                  >
+                    <span>📚</span> Лекции
+                  </button>
+                  <button
+                    onClick={() => setMode(AppMode.SCENARIO)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.SCENARIO 
+                        ? 'bg-emerald-500/30 text-emerald-100 shadow-lg border-emerald-400' 
+                        : 'text-emerald-200/80 hover:bg-indigo-800/40 hover:text-emerald-100 border-transparent'
+                    }`}
+                  >
+                    <span>📋</span> Сценарија
+                  </button>
+                  <button
+                    onClick={() => setMode(AppMode.BOARD_PLAN)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.BOARD_PLAN 
+                        ? 'bg-indigo-500/30 text-indigo-100 shadow-lg border-indigo-400' 
+                        : 'text-indigo-200/80 hover:bg-indigo-800/40 hover:text-indigo-100 border-transparent'
+                    }`}
+                  >
+                    <span>👨‍🏫</span> План на табла
+                  </button>
+                </div>
+              </div>
+            </div>
 
-            <button
-              onClick={() => setMode(AppMode.TEACHER_PANEL)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
-                currentMode === AppMode.TEACHER_PANEL 
-                  ? 'bg-teal-500/30 text-teal-100 shadow-lg translate-x-1 border-teal-400' 
-                  : 'text-teal-200/80 hover:bg-teal-900/40 hover:text-teal-100 border-teal-500/20'
-              }`}
-            >
-              <span>📓</span> Интерактивна тетратка
-            </button>
+            {/* МАТЕРИЈАЛИ */}
+            <div className="pt-2">
+              <button
+                onClick={() => toggleCategory('MATERIALS')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                  openCategory === 'MATERIALS' 
+                    ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
+                    : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
+                  <span>📂</span> Материјали
+                </span>
+                <svg 
+                  className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'MATERIALS' ? 'rotate-180' : ''}`} 
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'MATERIALS' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                <div className="flex flex-col gap-1 pl-4 pb-2">
+                  <button
+                    onClick={() => setMode(AppMode.WORKSHEET)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.WORKSHEET 
+                        ? 'bg-sky-500/30 text-sky-100 shadow-lg border-sky-400' 
+                        : 'text-sky-200/80 hover:bg-indigo-800/40 hover:text-sky-100 border-transparent'
+                    }`}
+                  >
+                    <span>📄</span> Работни листови
+                  </button>
+                  <button
+                    onClick={() => setMode(AppMode.QUIZ)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.QUIZ 
+                        ? 'bg-orange-500/30 text-orange-100 shadow-lg border-orange-400' 
+                        : 'text-orange-200/80 hover:bg-indigo-800/40 hover:text-orange-100 border-transparent'
+                    }`}
+                  >
+                    <span>📝</span> Тестови
+                  </button>
+                  <button
+                    onClick={() => setMode(AppMode.PROJECT)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.PROJECT 
+                        ? 'bg-rose-500/30 text-rose-100 shadow-lg border-rose-400' 
+                        : 'text-rose-200/80 hover:bg-indigo-800/40 hover:text-rose-100 border-transparent'
+                    }`}
+                  >
+                    <span>🚀</span> Проектни задачи
+                  </button>
+                </div>
+              </div>
+            </div>
 
-            <button
-              onClick={() => setMode(AppMode.GAMES)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mt-1 border ${
-                currentMode === AppMode.GAMES 
-                  ? 'bg-pink-500/30 text-pink-100 shadow-lg translate-x-1 border-pink-400' 
-                  : 'text-pink-200/80 hover:bg-pink-900/40 hover:text-pink-100 border-pink-500/20'
-              }`}
-            >
-              <span>🎮</span> Мате-Хут
-            </button>
+            {/* ИНТЕРАКТИВНОСТИ И ГЕЈМИФИКАЦИЈА */}
+            <div className="pt-2">
+              <button
+                onClick={() => toggleCategory('INTERACTIVE')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                  openCategory === 'INTERACTIVE' 
+                    ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
+                    : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
+                  <span>🎮</span> Интерактивности
+                </span>
+                <svg 
+                  className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'INTERACTIVE' ? 'rotate-180' : ''}`} 
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'INTERACTIVE' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                <div className="flex flex-col gap-1 pl-4 pb-2">
+                  <button
+                    onClick={() => setMode(AppMode.TEACHER_PANEL)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.TEACHER_PANEL 
+                        ? 'bg-teal-500/30 text-teal-100 shadow-lg border-teal-400' 
+                        : 'text-teal-200/80 hover:bg-indigo-800/40 hover:text-teal-100 border-transparent'
+                    }`}
+                  >
+                    <span>📓</span> Интерактивна тетратка
+                  </button>
+                  <button
+                    onClick={() => setMode(AppMode.VISUALIZER)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.VISUALIZER 
+                        ? 'bg-fuchsia-500/30 text-fuchsia-100 shadow-lg border-fuchsia-400' 
+                        : 'text-fuchsia-200/80 hover:bg-indigo-800/40 hover:text-fuchsia-100 border-transparent'
+                    }`}
+                  >
+                    <span>🎨</span> AI Визуелизатор
+                  </button>
+                  <button
+                    onClick={() => setMode(AppMode.GAMES)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.GAMES 
+                        ? 'bg-pink-500/30 text-pink-100 shadow-lg border-pink-400' 
+                        : 'text-pink-200/80 hover:bg-indigo-800/40 hover:text-pink-100 border-transparent'
+                    }`}
+                  >
+                    <span>🎮</span> Мате-Хут
+                  </button>
+                  <button
+                    onClick={() => setMode(AppMode.GEOGEBRA)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.GEOGEBRA 
+                        ? 'bg-blue-500/30 text-blue-100 shadow-lg border-blue-400' 
+                        : 'text-blue-200/80 hover:bg-indigo-800/40 hover:text-blue-100 border-transparent'
+                    }`}
+                  >
+                    <span>📐</span> GeoGebra
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* ПОДДРШКА */}
+            <div className="pt-2">
+              <button
+                onClick={() => toggleCategory('SUPPORT')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                  openCategory === 'SUPPORT' 
+                    ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
+                    : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
+                  <span>🤝</span> Поддршка
+                </span>
+                <svg 
+                  className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'SUPPORT' ? 'rotate-180' : ''}`} 
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'SUPPORT' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                <div className="flex flex-col gap-1 pl-4 pb-2">
+                  <button
+                    onClick={() => setMode(AppMode.ADVANCED_PRACTICE)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.ADVANCED_PRACTICE 
+                        ? 'bg-yellow-500/30 text-yellow-100 shadow-lg border-yellow-400' 
+                        : 'text-yellow-200/80 hover:bg-indigo-800/40 hover:text-yellow-100 border-transparent'
+                    }`}
+                  >
+                    <span>🏆</span> Додатна настава
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* АНАЛИТИКА */}
+            <div className="pt-2 border-t border-indigo-800/50 mt-4">
+              <button
+                onClick={() => toggleCategory('ANALYTICS')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                  openCategory === 'ANALYTICS' 
+                    ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
+                    : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
+                  <span>📊</span> Аналитика
+                </span>
+                <svg 
+                  className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'ANALYTICS' ? 'rotate-180' : ''}`} 
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'ANALYTICS' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                <div className="flex flex-col gap-1 pl-4 pb-2">
+                  <button
+                    onClick={() => setMode(AppMode.ANALYTICS)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.ANALYTICS 
+                        ? 'bg-slate-500/30 text-slate-100 shadow-lg border-slate-400' 
+                        : 'text-slate-400 hover:bg-indigo-800/40 hover:text-slate-100 border-transparent'
+                    }`}
+                  >
+                    <span>📊</span> Статистички извештаи
+                  </button>
+                </div>
+              </div>
+            </div>
           </nav>
 
           {/* Footer Section - Copyright & Logout */}
