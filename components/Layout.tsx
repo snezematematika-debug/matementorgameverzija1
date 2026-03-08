@@ -16,7 +16,8 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
   const [openCategory, setOpenCategory] = useState<string | null>(() => {
     if ([AppMode.LESSON, AppMode.SCENARIO, AppMode.BOARD_PLAN].includes(currentMode)) return 'PREP';
     if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) return 'MATERIALS';
-    if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GAMES, AppMode.GEOGEBRA, AppMode.MATHIGON].includes(currentMode)) return 'INTERACTIVE';
+    if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GEOGEBRA, AppMode.MATHIGON].includes(currentMode)) return 'INTERACTIVE';
+    if (currentMode === AppMode.GAMES) return 'GAMIFICATION';
     if ([AppMode.ADVANCED_PRACTICE].includes(currentMode)) return 'SUPPORT';
     if (currentMode === AppMode.ANALYTICS) return 'ANALYTICS';
     return null;
@@ -29,7 +30,8 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
   React.useEffect(() => {
     if ([AppMode.LESSON, AppMode.SCENARIO, AppMode.BOARD_PLAN].includes(currentMode)) setOpenCategory('PREP');
     else if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) setOpenCategory('MATERIALS');
-    else if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GAMES, AppMode.GEOGEBRA, AppMode.MATHIGON].includes(currentMode)) setOpenCategory('INTERACTIVE');
+    else if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GEOGEBRA, AppMode.MATHIGON].includes(currentMode)) setOpenCategory('INTERACTIVE');
+    else if (currentMode === AppMode.GAMES) setOpenCategory('GAMIFICATION');
     else if ([AppMode.ADVANCED_PRACTICE].includes(currentMode)) setOpenCategory('SUPPORT');
     else if (currentMode === AppMode.ANALYTICS) setOpenCategory('ANALYTICS');
     else if (currentMode === AppMode.DASHBOARD) setOpenCategory(null);
@@ -225,7 +227,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               </div>
             </div>
 
-            {/* ИНТЕРАКТИВНОСТИ И ГЕЈМИФИКАЦИЈА */}
+            {/* ИНТЕРАКТИВНОСТИ */}
             <div className="pt-2">
               <button
                 onClick={() => toggleCategory('INTERACTIVE')}
@@ -269,16 +271,6 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     <span>🎨</span> AI Визуелизатор
                   </button>
                   <button
-                    onClick={() => setMode(AppMode.GAMES)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
-                      currentMode === AppMode.GAMES 
-                        ? 'bg-pink-500/30 text-pink-100 shadow-lg border-pink-400' 
-                        : 'text-pink-200/80 hover:bg-indigo-800/40 hover:text-pink-100 border-transparent'
-                    }`}
-                  >
-                    <span>🎮</span> Мате-Хут
-                  </button>
-                  <button
                     onClick={() => setMode(AppMode.GEOGEBRA)}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.GEOGEBRA 
@@ -297,6 +289,43 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }`}
                   >
                     <span>🎨</span> Mathigon
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* ГЕЈМИФИКАЦИЈА */}
+            <div className="pt-2">
+              <button
+                onClick={() => toggleCategory('GAMIFICATION')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                  openCategory === 'GAMIFICATION' 
+                    ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
+                    : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
+                  <span>🏆</span> Гејмификација
+                </span>
+                <svg 
+                  className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'GAMIFICATION' ? 'rotate-180' : ''}`} 
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'GAMIFICATION' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                <div className="flex flex-col gap-1 pl-4 pb-2">
+                  <button
+                    onClick={() => setMode(AppMode.GAMES)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.GAMES 
+                        ? 'bg-pink-500/30 text-pink-100 shadow-lg border-pink-400' 
+                        : 'text-pink-200/80 hover:bg-indigo-800/40 hover:text-pink-100 border-transparent'
+                    }`}
+                  >
+                    <span>🎮</span> Мате-Хут
                   </button>
                 </div>
               </div>
