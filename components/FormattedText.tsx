@@ -12,6 +12,28 @@ interface FormattedTextProps {
   theme?: 'light' | 'dark'; // 'light' is default, 'dark' for chalkboard
 }
 
+const attributeMap: Record<string, string> = {
+  'font-size': 'fontSize',
+  'stroke-width': 'strokeWidth',
+  'stroke-linecap': 'strokeLinecap',
+  'stroke-linejoin': 'strokeLinejoin',
+  'fill-opacity': 'fillOpacity',
+  'stroke-opacity': 'strokeOpacity',
+  'text-anchor': 'textAnchor',
+  'viewbox': 'viewBox',
+  'font-family': 'fontFamily',
+  'font-weight': 'fontWeight',
+};
+
+const mapProps = (props: any) => {
+  const newProps: any = {};
+  Object.keys(props).forEach(key => {
+    const mappedKey = attributeMap[key.toLowerCase()] || key;
+    newProps[mappedKey] = props[key];
+  });
+  return newProps;
+};
+
 const FormattedText: React.FC<FormattedTextProps> = ({ text, className = "", theme = 'light' }) => {
   if (!text) return null;
 
@@ -74,8 +96,27 @@ const FormattedText: React.FC<FormattedTextProps> = ({ text, className = "", the
           td: ({node, ...props}) => <td className={`px-6 py-4 align-top ${colors.tableCell}`} {...props} />,
           strong: ({node, ...props}) => <strong className={colors.strong} {...props} />,
           
+          // SVG Support & Attribute Mapping
+          svg: ({node, ...props}) => <svg {...mapProps(props)} />,
+          text: ({node, ...props}) => <text {...mapProps(props)} />,
+          rect: ({node, ...props}) => <rect {...mapProps(props)} />,
+          circle: ({node, ...props}) => <circle {...mapProps(props)} />,
+          path: ({node, ...props}) => <path {...mapProps(props)} />,
+          line: ({node, ...props}) => <line {...mapProps(props)} />,
+          ellipse: ({node, ...props}) => <ellipse {...mapProps(props)} />,
+          polygon: ({node, ...props}) => <polygon {...mapProps(props)} />,
+          polyline: ({node, ...props}) => <polyline {...mapProps(props)} />,
+          g: ({node, ...props}) => <g {...mapProps(props)} />,
+          defs: ({node, ...props}) => <defs {...mapProps(props)} />,
+          marker: ({node, ...props}) => <marker {...mapProps(props)} />,
+          use: ({node, ...props}) => <use {...mapProps(props)} />,
+          image: ({node, ...props}) => <image {...mapProps(props)} />,
+
           div: ({node, className, ...props}: any) => {
-             return <div className={className} {...props} />;
+             return <div className={className} {...mapProps(props)} />;
+          },
+          span: ({node, className, ...props}: any) => {
+             return <span className={className} {...mapProps(props)} />;
           }
         }}
       >
