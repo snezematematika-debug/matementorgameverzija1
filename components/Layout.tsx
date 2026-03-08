@@ -13,6 +13,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, setGrade, children, hideSidebar = false }) => {
   const [isGradeMenuOpen, setIsGradeMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openCategory, setOpenCategory] = useState<string | null>(() => {
     if ([AppMode.LESSON, AppMode.SCENARIO, AppMode.BOARD_PLAN].includes(currentMode)) return 'PREP';
     if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) return 'MATERIALS';
@@ -47,12 +48,47 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 print:bg-white">
+      {/* Mobile Header - Only visible on small screens */}
+      {!hideSidebar && (
+        <div className="md:hidden bg-indigo-950 text-white p-4 flex justify-between items-center sticky top-0 z-30 shadow-md">
+          <h1 className="text-lg font-bold flex items-center gap-2">
+            <span className="text-xl">📐</span> Мате-Ментор
+          </h1>
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 hover:bg-indigo-900 rounded-lg transition-colors"
+          >
+            {isMobileMenuOpen ? (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+              </svg>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Mobile Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
+      )}
+
       {/* Sidebar - Hidden when printing or if hideSidebar is true */}
       {!hideSidebar && (
-        <aside className="w-full md:w-72 bg-indigo-900 text-white flex-shrink-0 transition-all print:hidden flex flex-col h-auto md:h-screen relative md:sticky md:top-0 z-20">
+        <aside className={`
+          fixed inset-0 z-40 md:relative md:z-20
+          w-full md:w-72 bg-indigo-900 text-white flex-shrink-0 transition-all duration-300 ease-in-out print:hidden flex flex-col h-full md:h-screen md:sticky md:top-0
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
           
-          {/* Compact Header */}
-          <div className="p-4 border-b border-indigo-800 bg-indigo-950/50 flex justify-between items-center shadow-sm">
+          {/* Compact Header - Hidden on mobile because we have the sticky mobile header */}
+          <div className="hidden md:flex p-4 border-b border-indigo-800 bg-indigo-950/50 justify-between items-center shadow-sm">
             <h1 className="text-xl font-bold flex items-center gap-2">
               <span className="text-2xl">📐</span> Мате-Ментор
             </h1>
@@ -67,7 +103,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
             
             {/* 0. Dashboard */}
             <button
-              onClick={() => setMode(AppMode.DASHBOARD)}
+              onClick={() => {
+                setMode(AppMode.DASHBOARD);
+                setIsMobileMenuOpen(false);
+              }}
               className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mb-4 border ${
                 currentMode === AppMode.DASHBOARD 
                   ? 'bg-indigo-600 text-white shadow-lg translate-x-1 border-indigo-400' 
@@ -137,7 +176,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'PREP' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
                 <div className="flex flex-col gap-1 pl-4 pb-2">
                   <button
-                    onClick={() => setMode(AppMode.LESSON)}
+                    onClick={() => {
+                      setMode(AppMode.LESSON);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.LESSON 
                         ? 'bg-blue-500/30 text-blue-100 shadow-lg border-blue-400' 
@@ -147,7 +189,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     <span>📚</span> Лекции
                   </button>
                   <button
-                    onClick={() => setMode(AppMode.SCENARIO)}
+                    onClick={() => {
+                      setMode(AppMode.SCENARIO);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.SCENARIO 
                         ? 'bg-emerald-500/30 text-emerald-100 shadow-lg border-emerald-400' 
@@ -157,7 +202,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     <span>📋</span> Сценарија
                   </button>
                   <button
-                    onClick={() => setMode(AppMode.BOARD_PLAN)}
+                    onClick={() => {
+                      setMode(AppMode.BOARD_PLAN);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.BOARD_PLAN 
                         ? 'bg-indigo-500/30 text-indigo-100 shadow-lg border-indigo-400' 
@@ -194,7 +242,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'MATERIALS' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
                 <div className="flex flex-col gap-1 pl-4 pb-2">
                   <button
-                    onClick={() => setMode(AppMode.WORKSHEET)}
+                    onClick={() => {
+                      setMode(AppMode.WORKSHEET);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.WORKSHEET 
                         ? 'bg-sky-500/30 text-sky-100 shadow-lg border-sky-400' 
@@ -204,7 +255,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     <span>📄</span> Работни листови
                   </button>
                   <button
-                    onClick={() => setMode(AppMode.QUIZ)}
+                    onClick={() => {
+                      setMode(AppMode.QUIZ);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.QUIZ 
                         ? 'bg-orange-500/30 text-orange-100 shadow-lg border-orange-400' 
@@ -214,7 +268,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     <span>📝</span> Тестови
                   </button>
                   <button
-                    onClick={() => setMode(AppMode.PROJECT)}
+                    onClick={() => {
+                      setMode(AppMode.PROJECT);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.PROJECT 
                         ? 'bg-rose-500/30 text-rose-100 shadow-lg border-rose-400' 
@@ -251,7 +308,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'INTERACTIVE' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
                 <div className="flex flex-col gap-1 pl-4 pb-2">
                   <button
-                    onClick={() => setMode(AppMode.TEACHER_PANEL)}
+                    onClick={() => {
+                      setMode(AppMode.TEACHER_PANEL);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.TEACHER_PANEL 
                         ? 'bg-teal-500/30 text-teal-100 shadow-lg border-teal-400' 
@@ -261,7 +321,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     <span>📓</span> Интерактивна тетратка
                   </button>
                   <button
-                    onClick={() => setMode(AppMode.VISUALIZER)}
+                    onClick={() => {
+                      setMode(AppMode.VISUALIZER);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.VISUALIZER 
                         ? 'bg-fuchsia-500/30 text-fuchsia-100 shadow-lg border-fuchsia-400' 
@@ -271,7 +334,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     <span>🎨</span> AI Визуелизатор
                   </button>
                   <button
-                    onClick={() => setMode(AppMode.GEOGEBRA)}
+                    onClick={() => {
+                      setMode(AppMode.GEOGEBRA);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.GEOGEBRA 
                         ? 'bg-blue-500/30 text-blue-100 shadow-lg border-blue-400' 
@@ -281,7 +347,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     <span>📐</span> GeoGebra
                   </button>
                   <button
-                    onClick={() => setMode(AppMode.MATHIGON)}
+                    onClick={() => {
+                      setMode(AppMode.MATHIGON);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.MATHIGON 
                         ? 'bg-amber-500/30 text-amber-100 shadow-lg border-amber-400' 
@@ -318,7 +387,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'GAMIFICATION' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
                 <div className="flex flex-col gap-1 pl-4 pb-2">
                   <button
-                    onClick={() => setMode(AppMode.GAMES)}
+                    onClick={() => {
+                      setMode(AppMode.GAMES);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.GAMES 
                         ? 'bg-pink-500/30 text-pink-100 shadow-lg border-pink-400' 
@@ -355,7 +427,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'SUPPORT' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
                 <div className="flex flex-col gap-1 pl-4 pb-2">
                   <button
-                    onClick={() => setMode(AppMode.ADVANCED_PRACTICE)}
+                    onClick={() => {
+                      setMode(AppMode.ADVANCED_PRACTICE);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.ADVANCED_PRACTICE 
                         ? 'bg-yellow-500/30 text-yellow-100 shadow-lg border-yellow-400' 

@@ -12,7 +12,7 @@ const Mathigon: React.FC = () => {
         <p className="text-slate-500 mt-1">Користете шестар, линијар, агломер и други математички алатки за рачни конструкции.</p>
       </div>
 
-      <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm min-h-[650px]">
+      <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-[500px] md:h-[700px]">
         <iframe
           src="https://mathigon.org/polypad/embed"
           width="100%"

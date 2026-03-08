@@ -12,7 +12,7 @@ const GeoGebra: React.FC = () => {
         <p className="text-slate-500 mt-1">Истражувајте геометрија, алгебра и графикони во живо.</p>
       </div>
 
-      <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm min-h-[600px]">
+      <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm h-[500px] md:h-[700px]">
         <iframe
           src="https://www.geogebra.org/geometry"
           width="100%"
