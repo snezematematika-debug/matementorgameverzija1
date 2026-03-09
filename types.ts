@@ -1,7 +1,9 @@
 
 export enum GradeLevel {
   VI = "VI",
-  VII = "VII"
+  VII = "VII",
+  VIII = "VIII",
+  IX = "IX"
 }
 
 export interface CurriculumTheme {

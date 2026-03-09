@@ -15,6 +15,7 @@ import MateBingo from './components/MateBingo';
 import Dashboard from './components/Dashboard';
 import GeoGebra from './components/GeoGebra';
 import Mathigon from './components/Mathigon';
+import AdminDashboard from './components/AdminDashboard';
 import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
@@ -84,7 +85,7 @@ const App: React.FC = () => {
       case AppMode.WORKSHEET:
         return <WorksheetGenerator grade={selectedGrade} />;
       case AppMode.PROJECT:
-        return <ProjectGenerator />;
+        return <ProjectGenerator grade={selectedGrade} />;
       case AppMode.VISUALIZER:
         return <GeometryVisualizer />;
       case AppMode.BOARD_PLAN:
@@ -122,21 +123,7 @@ const App: React.FC = () => {
       case AppMode.DASHBOARD:
         return <Dashboard setMode={setCurrentMode} />;
       case AppMode.ANALYTICS:
-        return (
-          <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
-            <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center text-5xl">📊</div>
-            <h2 className="text-3xl font-black text-slate-900">Аналитика и Статистика</h2>
-            <p className="text-slate-500 max-w-md text-lg">
-              Овој модул е во фаза на изработка. Наскоро ќе можете да ги следите постигањата на вашите ученици во реално време.
-            </p>
-            <button 
-              onClick={() => setCurrentMode(AppMode.DASHBOARD)}
-              className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all"
-            >
-              Назад на почетна
-            </button>
-          </div>
-        );
+        return <AdminDashboard />;
       default:
         return <Dashboard setMode={setCurrentMode} />;
     }

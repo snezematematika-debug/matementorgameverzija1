@@ -2,6 +2,7 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { SYSTEM_PERSONA } from "../constants";
 import { QuizQuestion, GeneratedLesson, GeneratedScenario } from "../types";
+import { incrementDailyQuota, trackGeneration } from "./analyticsService";
 
 // Helper to safely get the API client
 const getAiClient = () => {
@@ -165,6 +166,15 @@ export const generateLessonContent = async (topic: string, grade: string, includ
       }
     });
 
+    // Track usage
+    await incrementDailyQuota();
+    await trackGeneration({
+      contentType: 'lesson',
+      topic,
+      grade,
+      model: 'gemini-3-flash-preview'
+    });
+
     const text = response.text;
     if (!text) throw new Error("No response content from AI");
     
@@ -284,6 +294,15 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
         }
       });
   
+      // Track usage
+      await incrementDailyQuota();
+      await trackGeneration({
+        contentType: 'scenario',
+        topic,
+        grade: 'N/A',
+        model: 'gemini-3-flash-preview'
+      });
+
       const text = response.text;
       if (!text) throw new Error("No response content");
       
@@ -367,6 +386,15 @@ export const generateQuizQuestions = async (topic: string, grade: string): Promi
       }
     });
 
+    // Track usage
+    await incrementDailyQuota();
+    await trackGeneration({
+      contentType: 'quiz',
+      topic,
+      grade,
+      model: 'gemini-3-flash-preview'
+    });
+
     const text = response.text;
     if (!text) return { questions: [], rubric: '' };
     const result = parseJsonSafe(text);
@@ -448,6 +476,15 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
       }
     });
 
+    // Track usage
+    await incrementDailyQuota();
+    await trackGeneration({
+      contentType: `worksheet_${type}`,
+      topic,
+      grade: 'N/A',
+      model: 'gemini-3-flash-preview'
+    });
+
     const text = response.text;
     if (!text) throw new Error("No response content");
     
@@ -501,6 +538,15 @@ export const generateProject = async (topic: string): Promise<string> => {
         }
       });
   
+      // Track usage
+      await incrementDailyQuota();
+      await trackGeneration({
+        contentType: 'project',
+        topic,
+        grade: 'N/A',
+        model: 'gemini-3-flash-preview'
+      });
+
       const text = response.text;
       if (!text) throw new Error("No response content");
       
@@ -572,6 +618,15 @@ export const generateBoardPlan = async (topic: string, grade: string): Promise<s
         }
       });
   
+      // Track usage
+      await incrementDailyQuota();
+      await trackGeneration({
+        contentType: 'board_plan',
+        topic,
+        grade,
+        model: 'gemini-3-flash-preview'
+      });
+
       const text = response.text;
       if (!text) throw new Error("No response content");
       
@@ -677,6 +732,15 @@ export const generateAdvancedProblem = async (category: string, grade: string): 
       }
     });
 
+    // Track usage
+    await incrementDailyQuota();
+    await trackGeneration({
+      contentType: 'advanced_problem',
+      topic: category,
+      grade,
+      model: 'gemini-3-flash-preview'
+    });
+
     const text = response.text;
     if (!text) throw new Error("No response content from AI");
     
@@ -708,6 +772,15 @@ export const generateTeacherTask = async (topic: string, grade: string): Promise
         systemInstruction: SYSTEM_PERSONA,
         responseMimeType: "application/json",
       }
+    });
+
+    // Track usage
+    await incrementDailyQuota();
+    await trackGeneration({
+      contentType: 'teacher_task',
+      topic,
+      grade,
+      model: 'gemini-3-flash-preview'
     });
 
     const text = response.text;
@@ -785,6 +858,15 @@ export const generateGameContent = async (topic: string, type: string, grade: st
         systemInstruction: SYSTEM_PERSONA,
         responseMimeType: "application/json",
       }
+    });
+
+    // Track usage
+    await incrementDailyQuota();
+    await trackGeneration({
+      contentType: `game_${type}`,
+      topic,
+      grade,
+      model: 'gemini-3-flash-preview'
     });
 
     return parseJsonSafe(response.text);

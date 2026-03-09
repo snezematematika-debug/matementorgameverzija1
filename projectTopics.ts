@@ -15,6 +15,16 @@ export const PROJECT_THEMES: CurriculumTheme[] = [
   { id: "vii-4", title: "Тема 4: Мерење", grade: GradeLevel.VII },
   { id: "vii-5", title: "Тема 5: Работа со податоци", grade: GradeLevel.VII },
 
+  // Grade VIII
+  { id: "viii-1", title: "Тема 1: Геометрија (Питагорова теорема и 3Д форми)", grade: GradeLevel.VIII },
+  { id: "viii-2", title: "Тема 2: Алгебра и линеарни функции", grade: GradeLevel.VIII },
+  { id: "viii-3", title: "Тема 3: Работа со податоци и статистика", grade: GradeLevel.VIII },
+
+  // Grade IX
+  { id: "ix-1", title: "Тема 1: Реални броеви и алгебра", grade: GradeLevel.IX },
+  { id: "ix-2", title: "Тема 2: Геометрија (Сличност и 3Д форми)", grade: GradeLevel.IX },
+  { id: "ix-3", title: "Тема 3: Веројатност и статистика", grade: GradeLevel.IX },
+
   // STEAM Projects (Keep as additional)
   { id: "steam-1", title: "Архитектура и Дизајн (STEAM)", grade: GradeLevel.VII },
   { id: "steam-2", title: "Финансиска Писменост (STEAM)", grade: GradeLevel.VII },
@@ -80,6 +90,34 @@ export const PROJECT_TOPICS: CurriculumTopic[] = [
   { id: "vii-5.1", themeId: "vii-5", name: "Планирање и собирање на податоци", grade: GradeLevel.VII },
   { id: "vii-5.2", themeId: "vii-5", name: "Обработка на податоци и толкување резултати од истражување", grade: GradeLevel.VII },
   { id: "vii-5.3", themeId: "vii-5", name: "Веројатност", grade: GradeLevel.VII },
+
+  // Grade VIII - Theme 1: Геометрија
+  { id: "viii-1.1", themeId: "viii-1", name: "Питагорова теорема", grade: GradeLevel.VIII },
+  { id: "viii-1.2", themeId: "viii-1", name: "Примена на Питагорова теорема", grade: GradeLevel.VIII },
+  { id: "viii-1.3", themeId: "viii-1", name: "Плоштина и волумен на призма", grade: GradeLevel.VIII },
+  { id: "viii-1.4", themeId: "viii-1", name: "Плоштина и волумен на пирамида", grade: GradeLevel.VIII },
+
+  // Grade VIII - Theme 2: Алгебра и линеарни функции
+  { id: "viii-2.1", themeId: "viii-2", name: "Линеарни равенки", grade: GradeLevel.VIII },
+  { id: "viii-2.2", themeId: "viii-2", name: "Линеарни функции и нивни графици", grade: GradeLevel.VIII },
+
+  // Grade VIII - Theme 3: Работа со податоци и статистика
+  { id: "viii-3.1", themeId: "viii-3", name: "Собирање и претставување на податоци", grade: GradeLevel.VIII },
+  { id: "viii-3.2", themeId: "viii-3", name: "Статистички параметри", grade: GradeLevel.VIII },
+
+  // Grade IX - Theme 1: Реални броеви и алгебра
+  { id: "ix-1.1", themeId: "ix-1", name: "Реални броеви", grade: GradeLevel.IX },
+  { id: "ix-1.2", themeId: "ix-1", name: "Операции со реални броеви", grade: GradeLevel.IX },
+  
+  // Grade IX - Theme 2: Геометрија
+  { id: "ix-2.1", themeId: "ix-2", name: "Сличност на триаголници", grade: GradeLevel.IX },
+  { id: "ix-2.2", themeId: "ix-2", name: "Примена на сличност", grade: GradeLevel.IX },
+  { id: "ix-2.3", themeId: "ix-2", name: "Плоштина и волумен на цилиндар", grade: GradeLevel.IX },
+  { id: "ix-2.4", themeId: "ix-2", name: "Плоштина и волумен на конус", grade: GradeLevel.IX },
+
+  // Grade IX - Theme 3: Веројатност и статистика
+  { id: "ix-3.1", themeId: "ix-3", name: "Веројатност на настан", grade: GradeLevel.IX },
+  { id: "ix-3.2", themeId: "ix-3", name: "Статистика и анализа на податоци", grade: GradeLevel.IX },
 
   // STEAM Projects
   { id: "p-1.1", themeId: "steam-1", name: "Дизајн на мојата соба (Плоштина и Периметар)", grade: GradeLevel.VII },

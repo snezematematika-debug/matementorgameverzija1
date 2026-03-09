@@ -15,6 +15,16 @@ export const THEMES: CurriculumTheme[] = [
   { id: "theme-3", title: "Тема 3: АЛГЕБРА", grade: GradeLevel.VII },
   { id: "theme-4", title: "Тема 4: МЕРЕЊЕ", grade: GradeLevel.VII },
   { id: "theme-5", title: "Тема 5: РАБОТА СО ПОДАТОЦИ", grade: GradeLevel.VII },
+
+  // --- VIII ОДДЕЛЕНИЕ ТЕМИ ---
+  { id: "viii-theme-1", title: "Тема 1: ГЕОМЕТРИЈА (Питагорова теорема и 3Д форми)", grade: GradeLevel.VIII },
+  { id: "viii-theme-2", title: "Тема 2: АЛГЕБРА И ЛИНЕАРНИ ФУНКЦИИ", grade: GradeLevel.VIII },
+  { id: "viii-theme-3", title: "Тема 3: РАБОТА СО ПОДАТОЦИ И СТАТИСТИКА", grade: GradeLevel.VIII },
+
+  // --- IX ОДДЕЛЕНИЕ ТЕМИ ---
+  { id: "ix-theme-1", title: "Тема 1: РЕАЛНИ БРОЕВИ И АЛГЕБРА", grade: GradeLevel.IX },
+  { id: "ix-theme-2", title: "Тема 2: ГЕОМЕТРИЈА (Сличност и 3Д форми)", grade: GradeLevel.IX },
+  { id: "ix-theme-3", title: "Тема 3: ВЕРОЈАТНОСТ И СТАТИСТИКА", grade: GradeLevel.IX },
 ];
 
 export const CURRICULUM: CurriculumTopic[] = [
@@ -247,6 +257,42 @@ export const CURRICULUM: CurriculumTopic[] = [
   { id: "5.6", themeId: "theme-5", name: "5.6 Процена и пресметка на аритметичка средина", grade: GradeLevel.VII },
   { id: "5.7", themeId: "theme-5", name: "5.7 Веројатност", grade: GradeLevel.VII },
   { id: "5.8", themeId: "theme-5", name: "5.8 Експериментална и теоретска веројатност", grade: GradeLevel.VII },
+
+  // ==========================================
+  // VIII ОДДЕЛЕНИЕ (8th Grade)
+  // ==========================================
+  
+  // --- ТЕМА 1: ГЕОМЕТРИЈА (VIII) ---
+  { id: "viii-1.1", themeId: "viii-theme-1", name: "1.1 Питагорова теорема", grade: GradeLevel.VIII },
+  { id: "viii-1.2", themeId: "viii-theme-1", name: "1.2 Примена на Питагорова теорема", grade: GradeLevel.VIII },
+  { id: "viii-1.3", themeId: "viii-theme-1", name: "1.3 Плоштина и волумен на призма", grade: GradeLevel.VIII },
+  { id: "viii-1.4", themeId: "viii-theme-1", name: "1.4 Плоштина и волумен на пирамида", grade: GradeLevel.VIII },
+
+  // --- ТЕМА 2: АЛГЕБРА И ЛИНЕАРНИ ФУНКЦИИ (VIII) ---
+  { id: "viii-2.1", themeId: "viii-theme-2", name: "2.1 Линеарни равенки", grade: GradeLevel.VIII },
+  { id: "viii-2.2", themeId: "viii-theme-2", name: "2.2 Линеарни функции и нивни графици", grade: GradeLevel.VIII },
+
+  // --- ТЕМА 3: РАБОТА СО ПОДАТОЦИ И СТАТИСТИКА (VIII) ---
+  { id: "viii-3.1", themeId: "viii-theme-3", name: "3.1 Собирање и претставување на податоци", grade: GradeLevel.VIII },
+  { id: "viii-3.2", themeId: "viii-theme-3", name: "3.2 Статистички параметри", grade: GradeLevel.VIII },
+
+  // ==========================================
+  // IX ОДДЕЛЕНИЕ (9th Grade)
+  // ==========================================
+  
+  // --- ТЕМА 1: РЕАЛНИ БРОЕВИ И АЛГЕБРА (IX) ---
+  { id: "ix-1.1", themeId: "ix-theme-1", name: "1.1 Реални броеви", grade: GradeLevel.IX },
+  { id: "ix-1.2", themeId: "ix-theme-1", name: "1.2 Операции со реални броеви", grade: GradeLevel.IX },
+  
+  // --- ТЕМА 2: ГЕОМЕТРИЈА (IX) ---
+  { id: "ix-2.1", themeId: "ix-theme-2", name: "2.1 Сличност на триаголници", grade: GradeLevel.IX },
+  { id: "ix-2.2", themeId: "ix-theme-2", name: "2.2 Примена на сличност", grade: GradeLevel.IX },
+  { id: "ix-2.3", themeId: "ix-theme-2", name: "2.3 Плоштина и волумен на цилиндар", grade: GradeLevel.IX },
+  { id: "ix-2.4", themeId: "ix-theme-2", name: "2.4 Плоштина и волумен на конус", grade: GradeLevel.IX },
+
+  // --- ТЕМА 3: ВЕРОЈАТНОСТ И СТАТИСТИКА (IX) ---
+  { id: "ix-3.1", themeId: "ix-theme-3", name: "3.1 Веројатност на настан", grade: GradeLevel.IX },
+  { id: "ix-3.2", themeId: "ix-theme-3", name: "3.2 Статистика и анализа на податоци", grade: GradeLevel.IX },
 ];
 
 export const SYSTEM_PERSONA = `

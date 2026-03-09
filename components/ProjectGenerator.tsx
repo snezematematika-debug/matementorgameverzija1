@@ -2,13 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { PROJECT_THEMES, PROJECT_TOPICS } from '../projectTopics';
 import { generateProject } from '../services/geminiService';
-import { CurriculumTopic } from '../types';
+import { CurriculumTopic, GradeLevel } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
 import { parse } from 'marked';
 
-const ProjectGenerator: React.FC = () => {
-  const [selectedThemeId, setSelectedThemeId] = useState<string>(PROJECT_THEMES[0].id);
+interface ProjectGeneratorProps {
+  grade: GradeLevel;
+}
+
+const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
+  const availableThemes = PROJECT_THEMES.filter(theme => theme.grade === grade);
+  const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   
   const [projectContent, setProjectContent] = useState<string | null>(null);
@@ -21,6 +26,15 @@ const ProjectGenerator: React.FC = () => {
 
   const availableTopics = PROJECT_TOPICS.filter(topic => topic.themeId === selectedThemeId);
   const currentTopic: CurriculumTopic | undefined = PROJECT_TOPICS.find(t => t.id === selectedTopicId);
+
+  // Set default theme when grade changes
+  useEffect(() => {
+    if (availableThemes.length > 0) {
+      setSelectedThemeId(availableThemes[0].id);
+    } else {
+      setSelectedThemeId("");
+    }
+  }, [grade]);
 
   // Set default topic when theme changes
   useEffect(() => {
@@ -97,7 +111,7 @@ const ProjectGenerator: React.FC = () => {
         <table>
           <tr>
             <td class="header-cell">Предмет:</td>
-            <td>Математика за VII одделение</td>
+            <td>Математика за ${grade} одделение</td>
           </tr>
           <tr>
             <td class="header-cell">Категорија:</td>
@@ -163,7 +177,7 @@ const ProjectGenerator: React.FC = () => {
         <div className="border-b pb-4 mb-6">
             <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                 🚀 Проектни задачи (STEAM)
-                <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">VII Одд.</span>
+                <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>
             </h2>
             <p className="text-slate-500 mt-1">Генерирајте креативни истражувачки проекти поврзани со реалниот живот.</p>
         </div>
@@ -193,7 +207,7 @@ const ProjectGenerator: React.FC = () => {
                         onChange={(e) => setSelectedThemeId(e.target.value)}
                         className="w-full p-3 border-2 border-indigo-300 rounded-lg focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 focus:outline-none bg-white font-bold text-slate-700 transition-all shadow-sm"
                     >
-                        {PROJECT_THEMES.map(theme => (
+                        {availableThemes.map(theme => (
                         <option key={theme.id} value={theme.id}>{theme.title}</option>
                         ))}
                     </select>

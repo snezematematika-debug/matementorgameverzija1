@@ -116,15 +116,15 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
                 <BarChart3 className="text-indigo-300" />
                 <span className="text-sm font-bold uppercase tracking-widest text-indigo-300">Аналитика на постигањата</span>
               </div>
-              <h3 className="text-3xl font-black mb-4">Наскоро: Детални статистички извештаи</h3>
+              <h3 className="text-3xl font-black mb-4">Детални статистички извештаи</h3>
               <p className="text-indigo-200 text-lg font-medium max-w-xl leading-relaxed mb-8">
                 Следи го напредокот на секој ученик и секое одделение преку автоматски генерирани графикони и извештаи.
               </p>
               <button 
                 onClick={() => setMode(AppMode.ANALYTICS)}
-                className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-2xl font-bold transition-all flex items-center gap-2 border border-white/10"
+                className="bg-white text-indigo-900 hover:bg-indigo-50 px-8 py-4 rounded-2xl font-bold transition-all flex items-center gap-2 shadow-lg"
               >
-                Дознај повеќе <ArrowRight className="w-5 h-5" />
+                Отвори аналитика <ArrowRight className="w-5 h-5" />
               </button>
             </div>
             {/* Decorative elements */}

@@ -54,6 +54,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
   const [timeLeft, setTimeLeft] = useState(0);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [lastAnswerResult, setLastAnswerResult] = useState<{ correct: boolean, points: number } | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const [isJoined, setIsJoined] = useState(false);
 
@@ -157,12 +158,12 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
   // Auto-advance when all players have answered
   useEffect(() => {
     if (role === 'TEACHER' && gameState?.status === 'QUESTION' && gameState.players.length > 0) {
-      const answeredCount = gameState.players.filter(p => p.lastAnswer?.timestamp > (gameState.questionStartTime || 0)).length;
+      const answeredCount = gameState.players.filter(p => p.lastAnswer?.questionIndex === gameState.currentQuestionIndex).length;
       if (answeredCount === gameState.players.length) {
         handleTimeUp();
       }
     }
-  }, [gameState?.players, gameState?.status, role, gameState?.pin, gameState?.questionStartTime]);
+  }, [gameState?.players, gameState?.status, role, gameState?.pin, gameState?.currentQuestionIndex]);
 
   const handleTimeUp = async () => {
     if (!gameState?.pin) return;
@@ -257,28 +258,33 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
   };
 
   const nextStep = async () => {
-    if (!gameState?.pin) return;
+    if (!gameState?.pin || isTransitioning) return;
+    setIsTransitioning(true);
     const currentStatus = gameState.status;
     const currentIndex = gameState.currentQuestionIndex || 0;
     const totalQuestions = gameState.content.questions.length;
 
-    if (currentStatus === 'RESULT') {
-      await update(ref(db, `games/${gameState.pin}`), {
-        status: 'LEADERBOARD'
-      });
-    } else if (currentStatus === 'LEADERBOARD') {
-      if (currentIndex + 1 < totalQuestions) {
+    try {
+      if (currentStatus === 'RESULT') {
         await update(ref(db, `games/${gameState.pin}`), {
-          status: 'QUESTION',
-          currentQuestionIndex: currentIndex + 1,
-          questionStartTime: Date.now(),
-          showCorrectAnswer: false
+          status: 'LEADERBOARD'
         });
-      } else {
-        await update(ref(db, `games/${gameState.pin}`), {
-          status: 'FINISHED'
-        });
+      } else if (currentStatus === 'LEADERBOARD') {
+        if (currentIndex + 1 < totalQuestions) {
+          await update(ref(db, `games/${gameState.pin}`), {
+            status: 'QUESTION',
+            currentQuestionIndex: currentIndex + 1,
+            questionStartTime: Date.now(),
+            showCorrectAnswer: false
+          });
+        } else {
+          await update(ref(db, `games/${gameState.pin}`), {
+            status: 'FINISHED'
+          });
+        }
       }
+    } finally {
+      setIsTransitioning(false);
     }
   };
 
@@ -308,7 +314,8 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
         optionIndex,
         isCorrect,
         points,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        questionIndex: gameState.currentQuestionIndex || 0
       }
     });
   };
@@ -600,7 +607,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-4 text-slate-600 font-bold">
                 <Users className="w-6 h-6" />
-                <span>{gameState.players.filter(p => p.lastAnswer?.timestamp > (gameState.questionStartTime || 0)).length} одговориле</span>
+                <span>{gameState.players.filter(p => p.lastAnswer?.questionIndex === gameState.currentQuestionIndex).length} одговориле</span>
               </div>
 
               {gameState.status === 'QUESTION' && (
