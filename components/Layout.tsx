@@ -11,6 +11,23 @@ interface LayoutProps {
   hideSidebar?: boolean;
 }
 
+const Logo: React.FC<{ size?: string }> = ({ size = "w-8 h-8" }) => (
+  <div className={`${size} bg-white rounded-full p-1 flex items-center justify-center shadow-md border border-white`}>
+    <svg viewBox="0 0 512 512" className="w-full h-full">
+      <path 
+        d="M100 380 L200 180 L256 300 L312 180 L412 380" 
+        fill="none" 
+        stroke="#4f46e5" 
+        strokeWidth="54" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+      />
+      <circle cx="256" cy="300" r="32" fill="white" stroke="#4f46e5" strokeWidth="18" />
+      <circle cx="400" cy="180" r="52" fill="white" stroke="#4f46e5" strokeWidth="18" />
+    </svg>
+  </div>
+);
+
 const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, setGrade, children, hideSidebar = false }) => {
   const [isGradeMenuOpen, setIsGradeMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -51,8 +68,8 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
       {/* Mobile Header - Only visible on small screens */}
       {!hideSidebar && (
         <div className="md:hidden bg-indigo-950 text-white p-4 flex justify-between items-center sticky top-0 z-30 shadow-md">
-          <h1 className="text-lg font-bold flex items-center gap-2">
-            <span className="text-xl">📐</span> Мате-Ментор
+          <h1 className="text-lg font-bold flex items-center gap-3">
+            <Logo size="w-7 h-7" /> Мате-Ментор
           </h1>
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -89,8 +106,8 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
           
           {/* Compact Header - Hidden on mobile because we have the sticky mobile header */}
           <div className="hidden md:flex p-4 border-b border-indigo-800 bg-indigo-950/50 justify-between items-center shadow-sm">
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <span className="text-2xl">📐</span> Мате-Ментор
+            <h1 className="text-xl font-bold flex items-center gap-3">
+              <Logo size="w-9 h-9" /> Мате-Ментор
             </h1>
             {/* Small Badge for Current Grade */}
             <span className="text-xs font-mono font-bold bg-indigo-600 text-indigo-100 px-2 py-1 rounded border border-indigo-500">

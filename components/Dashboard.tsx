@@ -19,11 +19,24 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
+  const quotes = [
+    { text: "Математиката е јазикот на кој Бог го напишал универзумот.", author: "Галилео Галилеј" },
+    { text: "Суштината на математиката не е да ги направи едноставните работи комплицирани, туку да ги направи комплицираните работи едноставни.", author: "С. Гудер" },
+    { text: "Математиката е најмоќниот инструмент на знаењето.", author: "Рене Декарт" },
+    { text: "Чистата математика е, на свој начин, поезија на логичките идеи.", author: "Алберт Ајнштајн" },
+    { text: "Математиката е музика на разумот.", author: "Џејмс Џозеф Силвестер" },
+    { text: "Без математика, нема ништо што можете да направите. Сè околу вас е математика. Сè околу вас се бројки.", author: "Шакунтала Деви" }
+  ];
+
+  // Pick a quote based on the day of the month to keep it stable for a day
+  const quoteIndex = new Date().getDate() % quotes.length;
+  const dailyQuote = quotes[quoteIndex];
+
   const stats = [
-    { label: 'Генерирани лекции', value: '12', icon: BookOpen, color: 'text-blue-500', bg: 'bg-blue-50' },
-    { label: 'Одиграни квизови', value: '48', icon: Play, color: 'text-pink-500', bg: 'bg-pink-50' },
-    { label: 'Активни ученици', value: '32', icon: Users, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-    { label: 'Успешност', value: '84%', icon: Star, color: 'text-amber-500', bg: 'bg-amber-50' },
+    { label: 'Лекции', value: '12', icon: BookOpen, color: 'text-blue-500', bg: 'bg-blue-50' },
+    { label: 'Квизови', value: '48', icon: Play, color: 'text-pink-500', bg: 'bg-pink-50' },
+    { label: 'Ученици', value: '32', icon: Users, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+    { label: 'Успех', value: '84%', icon: Star, color: 'text-amber-500', bg: 'bg-amber-50' },
   ];
 
   const quickActions = [
@@ -64,22 +77,45 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
         </div>
       </header>
 
+      {/* Inspirational Quote Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-indigo-50 to-blue-50 p-6 md:p-8 rounded-[2.5rem] border border-indigo-100/50 relative overflow-hidden"
+      >
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+          <div className="bg-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm text-indigo-500 shrink-0">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <div className="text-center md:text-left">
+            <p className="text-indigo-900 font-serif italic text-lg md:text-xl leading-relaxed mb-2">
+              "{dailyQuote.text}"
+            </p>
+            <p className="text-indigo-500 font-bold text-sm tracking-widest uppercase">
+              — {dailyQuote.author}
+            </p>
+          </div>
+        </div>
+        {/* Decorative background circle */}
+        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-200/20 rounded-full blur-3xl"></div>
+      </motion.div>
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {stats.map((stat, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.1 }}
-            className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-center gap-5"
+            className="bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center gap-3 md:gap-5"
           >
-            <div className={`${stat.bg} w-14 h-14 rounded-2xl flex items-center justify-center`}>
-              <stat.icon className={`w-7 h-7 ${stat.color}`} />
+            <div className={`${stat.bg} w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0`}>
+              <stat.icon className={`w-5 h-5 md:w-7 md:h-7 ${stat.color}`} />
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
-              <p className="text-2xl font-black text-slate-900">{stat.value}</p>
+            <div className="text-center sm:text-left">
+              <p className="text-[10px] md:text-sm font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
+              <p className="text-lg md:text-2xl font-black text-slate-900">{stat.value}</p>
             </div>
           </motion.div>
         ))}
