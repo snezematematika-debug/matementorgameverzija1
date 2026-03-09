@@ -8,27 +8,27 @@ import { incrementDailyQuota, trackGeneration } from "./analyticsService";
 const getAiClient = () => {
   let apiKey = '';
 
-  // 1. Try process.env (Standard Node/Webpack/Vite define)
-  if (typeof process !== 'undefined' && process.env) {
-    apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || '';
+  // Try all possible ways to get the API key in Vite/Vercel environments
+  try {
+    // @ts-ignore
+    apiKey = (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || 
+             // @ts-ignore
+             (typeof process !== 'undefined' && process.env?.API_KEY) ||
+             // @ts-ignore
+             (typeof process !== 'undefined' && process.env?.VITE_API_KEY) ||
+             // @ts-ignore
+             import.meta.env?.VITE_API_KEY || 
+             // @ts-ignore
+             import.meta.env?.GEMINI_API_KEY ||
+             // @ts-ignore
+             import.meta.env?.API_KEY || '';
+  } catch (e) {
+    // Fallback
   }
 
-  // 2. Try import.meta.env (Vite Standard for Browser)
-  if (!apiKey || apiKey === 'undefined') {
-    try {
-      // @ts-ignore
-      const metaEnv = import.meta?.env;
-      if (metaEnv) {
-        apiKey = metaEnv.GEMINI_API_KEY || metaEnv.VITE_API_KEY || metaEnv.API_KEY || '';
-      }
-    } catch (e) {
-      // Ignore
-    }
-  }
-
-  if (!apiKey) {
-    console.error("API_KEY is missing. Ensure it is set in your Vercel Environment Variables.");
-    throw new Error("Не е пронајден API Key. Ве молиме додадете 'API_KEY' или 'VITE_API_KEY' во Vercel Environment Variables.");
+  if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
+    console.error("API_KEY is missing.");
+    throw new Error("Не е пронајден API Key. Ве молиме додадете 'GEMINI_API_KEY' во Vercel Environment Variables и направете Redeploy.");
   }
 
   return new GoogleGenAI({ apiKey });
@@ -54,8 +54,8 @@ const handleGeminiError = (error: any): never => {
         throw new Error("⚠️ Содржината беше блокирана од безбедносните филтри на Google. Обидете се со поинаква формулација.");
     }
 
-    // Default friendly message instead of raw JSON
-    throw new Error("Се појави техничка грешка при комуникација со AI. Ве молиме обидете се повторно.");
+    // Default friendly message with a hint of the actual error
+    throw new Error(`Техничка грешка при комуникација со AI: ${msg.substring(0, 50)}${msg.length > 50 ? '...' : ''}`);
 };
 
 // Common instruction for Math Formatting
@@ -285,17 +285,14 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
         - assessment: Начини на следење на напредокот.
       `;
   
-      const response = await Promise.race([
-        ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: prompt,
-          config: {
-            systemInstruction: SYSTEM_PERSONA,
-            responseMimeType: "application/json",
-          }
-        }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("AI моделот не одговори навреме. Ве молиме обидете се повторно.")), 30000))
-      ]) as any;
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          systemInstruction: SYSTEM_PERSONA,
+          responseMimeType: "application/json",
+        }
+      });
   
       // Track usage (non-blocking)
       incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
