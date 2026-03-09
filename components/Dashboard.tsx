@@ -52,7 +52,23 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 pb-10">
+    <div className="max-w-7xl mx-auto space-y-10 pb-10 relative isolate">
+      {/* Background Watermark Logo - Adjusted for visibility */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center z-0 opacity-[0.12] select-none">
+        <svg viewBox="0 0 512 512" className="w-[850px] h-[850px] transform -rotate-12 text-indigo-500">
+          <path 
+            d="M100 380 L200 180 L256 300 L312 180 L412 380" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="50" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+          />
+          <circle cx="256" cy="300" r="28" fill="none" stroke="currentColor" strokeWidth="16" />
+          <circle cx="400" cy="180" r="48" fill="none" stroke="currentColor" strokeWidth="16" />
+        </svg>
+      </div>
+
       {/* Welcome Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
