@@ -10,19 +10,19 @@ const getAiClient = () => {
 
   // 1. Try process.env (Standard Node/Webpack/Vite define)
   if (typeof process !== 'undefined' && process.env) {
-    apiKey = process.env.API_KEY || process.env.VITE_API_KEY || '';
+    apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || '';
   }
 
   // 2. Try import.meta.env (Vite Standard for Browser)
-  if (!apiKey) {
+  if (!apiKey || apiKey === 'undefined') {
     try {
       // @ts-ignore
       const metaEnv = import.meta?.env;
       if (metaEnv) {
-        apiKey = metaEnv.VITE_API_KEY || metaEnv.API_KEY || '';
+        apiKey = metaEnv.GEMINI_API_KEY || metaEnv.VITE_API_KEY || metaEnv.API_KEY || '';
       }
     } catch (e) {
-      // Ignore errors if import.meta is not available
+      // Ignore
     }
   }
 
@@ -285,14 +285,17 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
         - assessment: Начини на следење на напредокот.
       `;
   
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
-          systemInstruction: SYSTEM_PERSONA,
-          responseMimeType: "application/json",
-        }
-      });
+      const response = await Promise.race([
+        ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: prompt,
+          config: {
+            systemInstruction: SYSTEM_PERSONA,
+            responseMimeType: "application/json",
+          }
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("AI моделот не одговори навреме. Ве молиме обидете се повторно.")), 30000))
+      ]) as any;
   
       // Track usage (non-blocking)
       incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
