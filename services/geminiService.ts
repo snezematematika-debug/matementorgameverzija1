@@ -45,8 +45,8 @@ const handleGeminiError = (error: any): never => {
     }
     
     // Check for Overloaded (503)
-    if (msg.includes("503") || msg.includes("Overloaded")) {
-        throw new Error("⚠️ Серверот на Google е преоптоварен. Ве молиме обидете се повторно за неколку минути.");
+    if (msg.includes("503") || msg.includes("Overloaded") || msg.includes("Service Unavailable")) {
+        throw new Error("⚠️ Серверот на Google е моментално преоптоварен. Ве молиме почекајте неколку секунди и обидете се повторно.");
     }
 
     // Check for Safety/Policy blocking
@@ -56,6 +56,24 @@ const handleGeminiError = (error: any): never => {
 
     // Default friendly message with a hint of the actual error
     throw new Error(`Техничка грешка при комуникација со AI: ${msg.substring(0, 50)}${msg.length > 50 ? '...' : ''}`);
+};
+
+/**
+ * Helper to call Gemini with automatic retry for 503 errors
+ */
+const callGeminiWithRetry = async (params: any, retries = 2): Promise<any> => {
+  try {
+    const ai = getAiClient();
+    return await ai.models.generateContent(params);
+  } catch (error: any) {
+    const msg = error?.message || "";
+    if ((msg.includes("503") || msg.includes("Overloaded")) && retries > 0) {
+      console.log(`Server overloaded, retrying... (${retries} attempts left)`);
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+      return callGeminiWithRetry(params, retries - 1);
+    }
+    throw error;
+  }
 };
 
 // Common instruction for Math Formatting
@@ -157,7 +175,7 @@ export const generateLessonContent = async (topic: string, grade: string, includ
       }
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
@@ -243,7 +261,7 @@ export const generateLessonConnectivity = async (topic: string, grade: string): 
         Биди концизен. По 1-2 реченици за секој дел.
       `;
   
-      const response = await ai.models.generateContent({
+      const response = await callGeminiWithRetry({
         model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
@@ -285,7 +303,7 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
         - assessment: Начини на следење на напредокот.
       `;
   
-      const response = await ai.models.generateContent({
+      const response = await callGeminiWithRetry({
         model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
@@ -376,7 +394,7 @@ export const generateQuizQuestions = async (topic: string, grade: string): Promi
       required: ['questions', 'rubric']
     };
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
@@ -468,7 +486,7 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
       Користи Unicode за математички симболи.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
@@ -530,7 +548,7 @@ export const generateProject = async (topic: string): Promise<string> => {
         Do not include intro/outro conversational text, just the project content.
       `;
   
-      const response = await ai.models.generateContent({
+      const response = await callGeminiWithRetry({
         model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
@@ -610,7 +628,7 @@ export const generateBoardPlan = async (topic: string, grade: string): Promise<s
         $c = \\sqrt{25} = 5$
       `;
   
-      const response = await ai.models.generateContent({
+      const response = await callGeminiWithRetry({
         model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
@@ -723,7 +741,7 @@ export const generateAdvancedProblem = async (category: string, grade: string): 
       ${MATH_INSTRUCTION}
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
@@ -765,7 +783,7 @@ export const generateTeacherTask = async (topic: string, grade: string): Promise
       ${MATH_INSTRUCTION}
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
@@ -851,7 +869,7 @@ export const generateGameContent = async (topic: string, type: string, grade: st
       Врати го ОДГОВОРОТ ИСКЛУЧИВО КАКО JSON ОБЈЕКТ.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await callGeminiWithRetry({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
