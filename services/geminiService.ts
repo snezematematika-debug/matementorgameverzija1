@@ -166,14 +166,14 @@ export const generateLessonContent = async (topic: string, grade: string, includ
       }
     });
 
-    // Track usage
-    await incrementDailyQuota();
-    await trackGeneration({
+    // Track usage (non-blocking)
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
       contentType: 'lesson',
       topic,
       grade,
       model: 'gemini-3-flash-preview'
-    });
+    }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
     if (!text) throw new Error("No response content from AI");
@@ -294,14 +294,14 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
         }
       });
   
-      // Track usage
-      await incrementDailyQuota();
-      await trackGeneration({
+      // Track usage (non-blocking)
+      incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+      trackGeneration({
         contentType: 'scenario',
         topic,
         grade: 'N/A',
         model: 'gemini-3-flash-preview'
-      });
+      }).catch(e => console.error("Generation tracking failed:", e));
 
       const text = response.text;
       if (!text) throw new Error("No response content");
@@ -386,14 +386,14 @@ export const generateQuizQuestions = async (topic: string, grade: string): Promi
       }
     });
 
-    // Track usage
-    await incrementDailyQuota();
-    await trackGeneration({
+    // Track usage (non-blocking)
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
       contentType: 'quiz',
       topic,
       grade,
       model: 'gemini-3-flash-preview'
-    });
+    }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
     if (!text) return { questions: [], rubric: '' };
@@ -476,14 +476,14 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
       }
     });
 
-    // Track usage
-    await incrementDailyQuota();
-    await trackGeneration({
+    // Track usage (non-blocking)
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
       contentType: `worksheet_${type}`,
       topic,
       grade: 'N/A',
       model: 'gemini-3-flash-preview'
-    });
+    }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
     if (!text) throw new Error("No response content");
@@ -538,14 +538,14 @@ export const generateProject = async (topic: string): Promise<string> => {
         }
       });
   
-      // Track usage
-      await incrementDailyQuota();
-      await trackGeneration({
+      // Track usage (non-blocking)
+      incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+      trackGeneration({
         contentType: 'project',
         topic,
         grade: 'N/A',
         model: 'gemini-3-flash-preview'
-      });
+      }).catch(e => console.error("Generation tracking failed:", e));
 
       const text = response.text;
       if (!text) throw new Error("No response content");
@@ -618,14 +618,14 @@ export const generateBoardPlan = async (topic: string, grade: string): Promise<s
         }
       });
   
-      // Track usage
-      await incrementDailyQuota();
-      await trackGeneration({
+      // Track usage (non-blocking)
+      incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+      trackGeneration({
         contentType: 'board_plan',
         topic,
         grade,
         model: 'gemini-3-flash-preview'
-      });
+      }).catch(e => console.error("Generation tracking failed:", e));
 
       const text = response.text;
       if (!text) throw new Error("No response content");
@@ -732,14 +732,14 @@ export const generateAdvancedProblem = async (category: string, grade: string): 
       }
     });
 
-    // Track usage
-    await incrementDailyQuota();
-    await trackGeneration({
+    // Track usage (non-blocking)
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
       contentType: 'advanced_problem',
       topic: category,
       grade,
       model: 'gemini-3-flash-preview'
-    });
+    }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
     if (!text) throw new Error("No response content from AI");
@@ -774,14 +774,14 @@ export const generateTeacherTask = async (topic: string, grade: string): Promise
       }
     });
 
-    // Track usage
-    await incrementDailyQuota();
-    await trackGeneration({
+    // Track usage (non-blocking)
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
       contentType: 'teacher_task',
       topic,
       grade,
       model: 'gemini-3-flash-preview'
-    });
+    }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
     if (!text) throw new Error("No response content");
@@ -860,14 +860,14 @@ export const generateGameContent = async (topic: string, type: string, grade: st
       }
     });
 
-    // Track usage
-    await incrementDailyQuota();
-    await trackGeneration({
+    // Track usage (non-blocking)
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
       contentType: `game_${type}`,
       topic,
       grade,
       model: 'gemini-3-flash-preview'
-    });
+    }).catch(e => console.error("Generation tracking failed:", e));
 
     return parseJsonSafe(response.text);
   } catch (error: any) {
