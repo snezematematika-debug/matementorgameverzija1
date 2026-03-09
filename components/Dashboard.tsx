@@ -107,10 +107,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
             key={idx}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ y: -8, transition: { duration: 0.2 } }}
             transition={{ delay: idx * 0.1 }}
-            className="bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center gap-3 md:gap-5"
+            className="bg-white p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-md border-2 border-slate-100 flex flex-col sm:flex-row items-center gap-3 md:gap-5 transition-all hover:shadow-2xl hover:border-indigo-200 group cursor-default"
           >
-            <div className={`${stat.bg} w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0`}>
+            <div className={`${stat.bg} w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-inner`}>
               <stat.icon className={`w-5 h-5 md:w-7 md:h-7 ${stat.color}`} />
             </div>
             <div className="text-center sm:text-left">
@@ -132,15 +133,17 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
             {quickActions.map((action, idx) => (
               <motion.button
                 key={idx}
-                whileHover={{ y: -5 }}
+                whileHover={{ y: -12, transition: { duration: 0.2 } }}
                 onClick={() => setMode(action.mode)}
-                className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left group transition-all hover:shadow-xl hover:border-indigo-100"
+                className="bg-white p-8 rounded-[2.5rem] shadow-md border-2 border-slate-100 text-left group transition-all hover:shadow-2xl hover:border-indigo-200 relative overflow-hidden"
               >
                 <div className={`${action.color} w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
                   <action.icon className="w-7 h-7" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">{action.title}</h3>
                 <p className="text-slate-500 text-sm font-medium leading-relaxed">{action.desc}</p>
+                {/* Subtle 3D bottom highlight */}
+                <div className="absolute bottom-0 left-0 w-full h-1.5 bg-slate-100 group-hover:bg-indigo-100 transition-colors"></div>
               </motion.button>
             ))}
           </div>
