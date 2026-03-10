@@ -25,10 +25,13 @@ interface MathPathProps {
 interface Player {
   id: number;
   name: string;
+  avatar: string;
   position: number;
   color: string;
   skipNextTurn: boolean;
 }
+
+const AVATARS = ['🦊', '🐼', '🦁', '🐯', '🐨', '🐸', '🐙', '🦄'];
 
 const BOARD_SIZE = 5;
 const TOTAL_CELLS = BOARD_SIZE * BOARD_SIZE;
@@ -48,8 +51,8 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [questions, setQuestions] = useState<any[]>([]);
   const [players, setPlayers] = useState<Player[]>([
-    { id: 1, name: 'Играч 1', position: 0, color: 'bg-indigo-500', skipNextTurn: false },
-    { id: 2, name: 'Играч 2', position: 0, color: 'bg-pink-500', skipNextTurn: false },
+    { id: 1, name: '', avatar: '🦊', position: 0, color: 'bg-indigo-500', skipNextTurn: false },
+    { id: 2, name: '', avatar: '🐼', position: 0, color: 'bg-pink-500', skipNextTurn: false },
   ]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [diceValue, setDiceValue] = useState<number | null>(null);
@@ -61,7 +64,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
   const [winner, setWinner] = useState<Player | null>(null);
 
   const startGame = async () => {
-    if (!topic.trim()) return;
+    if (!topic.trim() || !players[0].name.trim() || !players[1].name.trim()) return;
     setIsLoading(true);
     try {
       const content = await generateGameContent(topic, 'BINGO', grade); // Reuse BINGO content for tasks
@@ -74,6 +77,12 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const updatePlayer = (index: number, updates: Partial<Player>) => {
+    const newPlayers = [...players];
+    newPlayers[index] = { ...newPlayers[index], ...updates };
+    setPlayers(newPlayers);
   };
 
   const rollDice = () => {
@@ -132,11 +141,11 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
     if (isCorrect) {
       setFeedback('CORRECT');
       setTimeout(() => {
+        setShowTask(false); // Close the modal in both cases
         if (players[currentPlayerIndex].position === PATH.length - 1) {
           setWinner(players[currentPlayerIndex]);
           setGameState('FINISHED');
         } else {
-          setShowTask(false);
           setCurrentPlayerIndex((currentPlayerIndex + 1) % players.length);
         }
       }, 1500);
@@ -179,7 +188,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
                   currentPlayerIndex === idx ? 'border-indigo-500 bg-indigo-50 ring-4 ring-indigo-100' : 'border-slate-100 bg-white opacity-60'
                 }`}
               >
-                <div className={`w-4 h-4 rounded-full ${p.color}`} />
+                <span className="text-2xl">{p.avatar}</span>
                 <span className="font-bold text-slate-700">{p.name}</span>
                 {p.skipNextTurn && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase">Казна</span>}
               </div>
@@ -192,16 +201,44 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl mx-auto bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 text-center space-y-8"
+          className="max-w-3xl mx-auto bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 text-center space-y-8"
         >
           <div className="w-20 h-20 bg-indigo-100 rounded-[2rem] flex items-center justify-center mx-auto text-indigo-600">
             <Users className="w-10 h-10" />
           </div>
           <div className="space-y-4">
             <h2 className="text-3xl font-black text-slate-900">Нова Игра</h2>
-            <p className="text-slate-500 font-medium">Внесете тема за задачите на патеката</p>
+            <p className="text-slate-500 font-medium">Внесете имиња и изберете аватари</p>
           </div>
-          <div className="space-y-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {players.map((p, idx) => (
+              <div key={p.id} className="p-6 rounded-[2rem] bg-slate-50 border-2 border-slate-100 space-y-4">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Играч {p.id}</p>
+                <input
+                  type="text"
+                  placeholder="Име на играч..."
+                  value={p.name}
+                  onChange={(e) => updatePlayer(idx, { name: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-white focus:border-indigo-500 outline-none transition-all font-bold text-center"
+                />
+                <div className="grid grid-cols-4 gap-2">
+                  {AVATARS.map(avatar => (
+                    <button
+                      key={avatar}
+                      onClick={() => updatePlayer(idx, { avatar })}
+                      className={`text-2xl p-2 rounded-xl transition-all ${p.avatar === avatar ? 'bg-white shadow-md scale-110 border-2 border-indigo-500' : 'hover:bg-white/50'}`}
+                    >
+                      {avatar}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4 pt-4 border-t border-slate-100">
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Тема на задачите</p>
             <input
               type="text"
               placeholder="На пр. Собирање до 100, Равенки..."
@@ -211,7 +248,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
             />
             <button
               onClick={startGame}
-              disabled={!topic.trim()}
+              disabled={!topic.trim() || !players[0].name.trim() || !players[1].name.trim()}
               className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-5 rounded-2xl font-black text-xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-3"
             >
               <Play className="w-6 h-6 fill-current" /> ЗАПОЧНИ ИГРА
@@ -251,8 +288,15 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
                         <motion.div
                           key={p.id}
                           layoutId={`player-${p.id}`}
-                          className={`w-6 h-6 rounded-full ${p.color} shadow-lg border-2 border-white`}
-                        />
+                          className="relative flex flex-col items-center"
+                        >
+                          <span className="absolute -top-8 bg-white/90 backdrop-blur px-2 py-0.5 rounded-lg text-[10px] font-black shadow-sm border border-slate-100 whitespace-nowrap z-10">
+                            {p.name}
+                          </span>
+                          <span className="text-3xl drop-shadow-lg filter">
+                            {p.avatar}
+                          </span>
+                        </motion.div>
                       ))}
                     </div>
                   </div>
@@ -265,10 +309,8 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
           <div className="space-y-6">
             <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 text-center space-y-6">
               <h3 className="text-lg font-black text-slate-400 uppercase tracking-widest">На ред е</h3>
-              <div className="flex items-center justify-center gap-4">
-                <div className={`w-12 h-12 rounded-2xl ${players[currentPlayerIndex].color} flex items-center justify-center text-white shadow-lg`}>
-                  <Users className="w-6 h-6" />
-                </div>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <span className="text-6xl mb-2">{players[currentPlayerIndex].avatar}</span>
                 <span className="text-2xl font-black text-slate-900">{players[currentPlayerIndex].name}</span>
               </div>
 
@@ -328,9 +370,12 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
             <h2 className="text-4xl font-black text-slate-900">ПОБЕДА!</h2>
             <p className="text-xl text-slate-500 font-medium">Честитки за {winner?.name}</p>
           </div>
-          <div className={`p-6 rounded-3xl ${winner?.color} text-white shadow-xl`}>
-            <p className="text-sm font-bold uppercase tracking-widest opacity-80 mb-1">Победник</p>
-            <p className="text-3xl font-black">{winner?.name}</p>
+          <div className="p-8 rounded-[2.5rem] bg-amber-50 border-2 border-amber-100 shadow-xl space-y-4">
+            <span className="text-7xl block">{winner?.avatar}</span>
+            <div>
+              <p className="text-sm font-bold uppercase tracking-widest text-amber-600 mb-1">Победник</p>
+              <p className="text-3xl font-black text-slate-900">{winner?.name}</p>
+            </div>
           </div>
           <button
             onClick={() => setGameState('SETUP')}
@@ -353,7 +398,8 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
             >
               <div className={`${players[currentPlayerIndex].color} p-8 text-white text-center relative`}>
                 <div className="absolute top-4 left-4 bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Задача</div>
-                <h3 className="text-2xl font-black mt-4">{players[currentPlayerIndex].name} е на ред</h3>
+                <div className="text-5xl mb-4">{players[currentPlayerIndex].avatar}</div>
+                <h3 className="text-2xl font-black">{players[currentPlayerIndex].name} е на ред</h3>
               </div>
               
               <div className="p-10 space-y-8">
