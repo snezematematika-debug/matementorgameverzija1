@@ -552,12 +552,14 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
         {/* Header */}
         <div className="flex items-center justify-between bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={onBack}
-              className="p-3 hover:bg-slate-50 rounded-2xl transition-colors text-slate-400"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </button>
+            {role === 'TEACHER' && (
+              <button 
+                onClick={onBack}
+                className="p-3 hover:bg-slate-50 rounded-2xl transition-colors text-slate-400"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+            )}
             <div>
               <h1 className="text-2xl font-black text-emerald-950">Мате - Пат</h1>
               <p className="text-slate-500 font-medium">Тема: {gameState.topic}</p>
@@ -698,20 +700,20 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
         {/* Task Modal */}
         <AnimatePresence>
           {showTask && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden"
+                className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
               >
-                <div className={`${currentPlayer.color} p-8 text-white text-center relative`}>
+                <div className={`${currentPlayer.color} p-8 text-white text-center relative flex-shrink-0`}>
                   <div className="absolute top-4 left-4 bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Задача</div>
                   <div className="text-5xl mb-4">{currentPlayer.avatar}</div>
                   <h3 className="text-2xl font-black">{currentPlayer.name} е на ред</h3>
                 </div>
                 
-                <div className="p-10 space-y-8">
+                <div className="p-6 sm:p-10 space-y-8 overflow-y-auto flex-1">
                   <div className="bg-slate-50 p-8 rounded-3xl border-2 border-slate-100 text-center">
                     <p className="text-2xl font-bold text-slate-800 leading-relaxed">
                       {gameState.currentQuestion?.question}
@@ -784,20 +786,22 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
             <p className="text-3xl font-black text-slate-900">{gameState.winner?.name}</p>
           </div>
         </div>
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={closeRoom}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-200"
-          >
-            <RotateCcw className="w-6 h-6" /> НОВА ИГРА
-          </button>
-          <button
-            onClick={onBack}
-            className="w-full bg-slate-900 hover:bg-black text-white py-5 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3"
-          >
-            <LogOut className="w-6 h-6" /> ЗАТВОРИ ИГРА
-          </button>
-        </div>
+        {role === 'TEACHER' && (
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={closeRoom}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-200"
+            >
+              <RotateCcw className="w-6 h-6" /> НОВА ИГРА
+            </button>
+            <button
+              onClick={onBack}
+              className="w-full bg-slate-900 hover:bg-black text-white py-5 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3"
+            >
+              <LogOut className="w-6 h-6" /> ЗАТВОРИ ИГРА
+            </button>
+          </div>
+        )}
       </motion.div>
     );
   }

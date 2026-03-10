@@ -818,23 +818,24 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               {role === 'TEACHER' && (
-                <button
-                  onClick={resetToStart}
-                  className="px-10 py-5 bg-amber-500 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-amber-600 transition-all flex items-center gap-2"
-                >
-                  <Play className="w-6 h-6" /> НОВА ИГРА
-                </button>
+                <>
+                  <button
+                    onClick={resetToStart}
+                    className="px-10 py-5 bg-amber-500 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-amber-600 transition-all flex items-center gap-2"
+                  >
+                    <Play className="w-6 h-6" /> НОВА ИГРА
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await closeRoom();
+                      onBack();
+                    }}
+                    className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-indigo-700 transition-all"
+                  >
+                    НАЗАД ВО МЕНИТО
+                  </button>
+                </>
               )}
-              
-              <button
-                onClick={async () => {
-                  if (role === 'TEACHER') await closeRoom();
-                  onBack();
-                }}
-                className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl hover:bg-indigo-700 transition-all"
-              >
-                НАЗАД ВО МЕНИТО
-              </button>
             </div>
           </div>
         </motion.div>

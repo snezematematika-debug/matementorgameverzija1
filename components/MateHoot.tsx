@@ -852,12 +852,14 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
             </div>
           )}
 
-          <button
-            onClick={closeRoom}
-            className="px-12 py-6 bg-indigo-600 text-white rounded-3xl font-black text-2xl shadow-xl hover:bg-indigo-700 transition-all"
-          >
-            ЗАТВОРИ И ИЗЛЕЗИ
-          </button>
+          {role === 'TEACHER' && (
+            <button
+              onClick={closeRoom}
+              className="px-12 py-6 bg-indigo-600 text-white rounded-3xl font-black text-2xl shadow-xl hover:bg-indigo-700 transition-all"
+            >
+              ЗАТВОРИ И ИЗЛЕЗИ
+            </button>
+          )}
         </motion.div>
       </div>
     );
