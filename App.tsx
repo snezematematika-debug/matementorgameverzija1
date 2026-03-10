@@ -16,6 +16,7 @@ import Dashboard from './components/Dashboard';
 import GeoGebra from './components/GeoGebra';
 import Mathigon from './components/Mathigon';
 import AdminDashboard from './components/AdminDashboard';
+import RemedialTeaching from './components/RemedialTeaching';
 import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
@@ -124,6 +125,8 @@ const App: React.FC = () => {
         return <Dashboard setMode={setCurrentMode} />;
       case AppMode.ANALYTICS:
         return <AdminDashboard />;
+      case AppMode.REMEDIAL_TEACHING:
+        return <RemedialTeaching grade={selectedGrade} />;
       default:
         return <Dashboard setMode={setCurrentMode} />;
     }
