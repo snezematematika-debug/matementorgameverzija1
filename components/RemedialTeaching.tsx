@@ -89,7 +89,7 @@ const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
       }
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
+        model: "gemini-3-flash-preview",
         contents: `Разложи ја следнава математичка задача/концепт на најмали можни чекори за ученик од ${grade} одделение кој има потешкотии со математика. 
         Користи едноставен јазик, визуелни описи и охрабрувачки тон.
         

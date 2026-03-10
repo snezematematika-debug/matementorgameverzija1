@@ -59,7 +59,7 @@ const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
       }
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
+        model: "gemini-3-flash-preview",
         contents: `Создади математички случај за „Детектив за грешки“ за ${grade} одделение. 
         Тема: ${topic}
         
