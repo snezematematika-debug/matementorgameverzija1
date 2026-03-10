@@ -68,7 +68,7 @@ const AdminDashboard: React.FC = () => {
       <div className="flex items-center justify-center h-screen bg-slate-50">
         <div className="flex flex-col items-center gap-4">
           <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin" />
-          <p className="text-slate-600 font-medium">Се вчитаваат податоците...</p>
+          <p className="text-slate-600 font-medium">Се вчитуваат податоците...</p>
         </div>
       </div>
     );
