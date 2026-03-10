@@ -36,7 +36,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
     if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) return 'MATERIALS';
     if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GEOGEBRA, AppMode.MATHIGON, AppMode.ERROR_DETECTIVE].includes(currentMode)) return 'INTERACTIVE';
     if (currentMode === AppMode.GAMES || currentMode === AppMode.BINGO) return 'GAMIFICATION';
-    if ([AppMode.ADVANCED_PRACTICE, AppMode.REMEDIAL_TEACHING].includes(currentMode)) return 'SUPPORT';
+    if ([AppMode.ADVANCED_PRACTICE, AppMode.REMEDIAL_TEACHING, AppMode.INCLUSION].includes(currentMode)) return 'SUPPORT';
     if (currentMode === AppMode.ANALYTICS) return 'ANALYTICS';
     return null;
   });
@@ -50,7 +50,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
     else if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) setOpenCategory('MATERIALS');
     else if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GEOGEBRA, AppMode.MATHIGON, AppMode.ERROR_DETECTIVE].includes(currentMode)) setOpenCategory('INTERACTIVE');
     else if (currentMode === AppMode.GAMES || currentMode === AppMode.BINGO) setOpenCategory('GAMIFICATION');
-    else if ([AppMode.ADVANCED_PRACTICE, AppMode.REMEDIAL_TEACHING].includes(currentMode)) setOpenCategory('SUPPORT');
+    else if ([AppMode.ADVANCED_PRACTICE, AppMode.REMEDIAL_TEACHING, AppMode.INCLUSION].includes(currentMode)) setOpenCategory('SUPPORT');
     else if (currentMode === AppMode.ANALYTICS) setOpenCategory('ANALYTICS');
     else if (currentMode === AppMode.DASHBOARD) setOpenCategory(null);
   }, [currentMode]);
@@ -519,6 +519,19 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }`}
                   >
                     <span>🤝</span> Дополнителна настава
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMode(AppMode.INCLUSION);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.INCLUSION 
+                        ? 'bg-purple-500/30 text-purple-100 shadow-lg border-purple-400' 
+                        : 'text-purple-200/80 hover:bg-indigo-800/40 hover:text-purple-100 border-transparent'
+                    }`}
+                  >
+                    <span>✨</span> Инклузија
                   </button>
                 </div>
               </div>

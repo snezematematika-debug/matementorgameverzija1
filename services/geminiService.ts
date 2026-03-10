@@ -769,6 +769,73 @@ export const generateAdvancedProblem = async (category: string, grade: string): 
   }
 };
 
+export const generateIEPPlan = async (params: {
+  topic: string;
+  grade: string;
+  disabilityType: string;
+  adaptationLevel: string;
+  learningStyles: string[];
+  interests: string;
+}): Promise<string> => {
+  try {
+    const ai = getAiClient();
+    
+    const prompt = `
+      ТИ СИ ИСКУСЕН СПЕЦИЈАЛЕН ЕДУКАТОР И ДЕФЕКТОЛОГ ВО МАКЕДОНСКИОТ ОБРАЗОВЕН СИСТЕМ.
+      Твоја задача е да креираш прилагоден ИОП (Индивидуализиран образовен план) за час по Математика, следејќи ги насоките на БРО (Биро за развој на образованието).
+      
+      ПОДАТОЦИ ЗА УЧЕНИКОТ:
+      - Тема/Лекција: ${params.topic}
+      - Одделение: ${params.grade}
+      - Тип на попреченост/потешкотија: ${params.disabilityType}
+      - Ниво на прилагодување: ${params.adaptationLevel}
+      - Стилови на учење: ${params.learningStyles.join(', ')}
+      - Специфични интереси: ${params.interests || 'Не се наведени'}
+      
+      ИНСТРУКЦИИ ЗА СОДРЖИНАТА:
+      1. Јазикот мора да биде инклузивен, охрабрувачки и педагошки прецизен.
+      2. Планот треба да содржи:
+         - Општа цел на часот прилагодена за ученикот.
+         - Специфични очекувани резултати.
+         - Методи и стратегии за работа (соодветни на нивото на прилагодување).
+         - Потребни нагледни средства и асистивна технологија.
+         - Активности за ученикот (чекор-по-чекор).
+         - Начини на евалуација на постигнувањата.
+      3. Користи ги интересите на ученикот ("${params.interests}") за да ги мотивираш задачите.
+      
+      ФОРМАТИРАЊЕ:
+      Врати го текстот директно во Markdown формат. Користи наслови (#, ##), болдирање и листи.
+      
+      ${MATH_INSTRUCTION}
+    `;
+
+    const response = await callGeminiWithRetry({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        systemInstruction: "Ти си специјален едукатор и дефектолог. Твојот јазик е инклузивен и професионален.",
+      }
+    });
+
+    // Track usage
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
+      contentType: 'iep_plan',
+      topic: params.topic,
+      grade: params.grade,
+      model: 'gemini-3-flash-preview'
+    }).catch(e => console.error("Generation tracking failed:", e));
+
+    const text = response.text;
+    if (!text) throw new Error("No response content");
+    
+    return text;
+  } catch (error: any) {
+    handleGeminiError(error);
+    return "";
+  }
+};
+
 export const generateTeacherTask = async (topic: string, grade: string): Promise<{problem: string, hint: string, solution: string}> => {
   try {
     const ai = getAiClient();
