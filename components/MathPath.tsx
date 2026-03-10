@@ -166,17 +166,8 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
         pin,
         topic,
         status: 'WAITING',
-        players: {
-          [playerId]: {
-            name: playerName,
-            avatar: AVATARS[0],
-            position: 0,
-            color: COLORS[0],
-            skipNextTurn: false,
-            isHost: true,
-            joinedAt: Date.now()
-          }
-        },
+        players: {},
+        hostId: playerId,
         questions: content.questions,
         currentPlayerIndex: 0,
         createdAt: Date.now()
@@ -184,7 +175,10 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
       
       await set(ref(db, `mathpath/${pin}`), newGameState);
       
-      setGameState(newGameState);
+      setGameState({
+        ...newGameState,
+        players: []
+      });
       setPinInput(pin);
       sessionStorage.setItem('mathpath_pin', pin);
       setIsJoined(true);
@@ -213,8 +207,8 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
       }
 
       const playersCount = Object.keys(roomData.players || {}).length;
-      if (playersCount >= 2) {
-        setError('Играта е веќе полна (макс. 2 играчи).');
+      if (playersCount >= 8) {
+        setError('Играта е веќе полна (макс. 8 играчи).');
         return;
       }
 
@@ -361,8 +355,8 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
             <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Users className="w-8 h-8 text-indigo-600" />
             </div>
-            <h2 className="text-2xl font-bold text-indigo-900 mb-2">Креирај Игра</h2>
-            <p className="text-slate-500 font-medium">Започни нова трка и покани пријател.</p>
+            <h2 className="text-2xl font-bold text-indigo-900 mb-2">Креирај Пат</h2>
+            <p className="text-slate-500 font-medium">Започни нова трка за целата училница.</p>
           </button>
 
           <button
@@ -446,7 +440,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
             } text-white disabled:opacity-50`}
           >
             {isLoading ? <Loader2 className="animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
-            {role === 'TEACHER' ? 'КРЕИРАЈ СОБА' : 'ВЛЕЗИ ВО ТРКАТА'}
+            {role === 'TEACHER' ? 'КРЕИРАЈ ПАТ' : 'ВЛЕЗИ ВО ТРКАТА'}
           </button>
 
           {error && <p className="text-red-500 font-bold bg-red-50 p-3 rounded-xl">{error}</p>}
@@ -474,57 +468,51 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               <h2 className="text-8xl font-black tracking-tighter mb-4">{gameState.pin}</h2>
               <div className="flex items-center gap-2 text-indigo-200 font-medium bg-white/10 px-4 py-2 rounded-xl inline-flex">
                 <Users className="w-5 h-5" />
-                <span>{gameState.players.length} / 2 играчи</span>
+                <span>{gameState.players.length} ученици се приклучија</span>
               </div>
             </div>
 
             <div className="flex flex-col items-center gap-6">
-              <div className="bg-white p-4 rounded-3xl shadow-2xl border-4 border-indigo-400/30">
-                <QRCodeCanvas value={joinUrl} size={180} level="H" includeMargin={true} />
-                <p className="text-indigo-900 text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Скенирај за влез</p>
-              </div>
-              
-              {me?.isHost && (
-                <button
-                  onClick={startGame}
-                  disabled={gameState.players.length < 2}
-                  className="px-12 py-6 bg-white text-indigo-900 rounded-3xl font-black text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
-                >
-                  ЗАПОЧНИ ТРКА <ArrowRight className="w-8 h-8" />
-                </button>
+              {role === 'TEACHER' && (
+                <>
+                  <div className="bg-white p-4 rounded-3xl shadow-2xl border-4 border-indigo-400/30">
+                    <QRCodeCanvas value={joinUrl} size={180} level="H" includeMargin={true} />
+                    <p className="text-indigo-900 text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Скенирај за влез</p>
+                  </div>
+                  
+                  <button
+                    onClick={startGame}
+                    disabled={gameState.players.length < 1}
+                    className="px-12 py-6 bg-white text-indigo-900 rounded-3xl font-black text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
+                  >
+                    ЗАПОЧНИ ТРКА <ArrowRight className="w-8 h-8" />
+                  </button>
+                </>
+              )}
+
+              {role === 'STUDENT' && (
+                <div className="text-center bg-white/10 p-8 rounded-3xl backdrop-blur-md border border-white/10">
+                  <p className="text-xl font-bold mb-2">Здраво, {playerName}!</p>
+                  <p className="text-indigo-200">Чекаме наставникот да ја започне играта...</p>
+                  <div className="mt-4 flex justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-white/50" />
+                  </div>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {gameState.players.map((p: any) => (
-            <div key={p.id} className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <span className="text-6xl">{p.avatar}</span>
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900">{p.name}</h3>
-                  <p className="text-slate-500 font-medium">{p.isHost ? 'Домаќин' : 'Гостин'}</p>
-                </div>
-              </div>
-              {p.id === playerId && (
-                <div className="grid grid-cols-4 gap-2">
-                  {AVATARS.map(avatar => (
-                    <button
-                      key={avatar}
-                      onClick={() => updatePlayerAvatar(avatar)}
-                      className={`text-2xl p-2 rounded-xl transition-all ${p.avatar === avatar ? 'bg-indigo-50 shadow-md scale-110 border-2 border-indigo-500' : 'hover:bg-slate-50'}`}
-                    >
-                      {avatar}
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div key={p.id} className="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 flex flex-col items-center gap-3">
+              <span className="text-5xl">{p.avatar}</span>
+              <h3 className="text-lg font-black text-slate-900 truncate w-full text-center">{p.name}</h3>
             </div>
           ))}
-          {gameState.players.length < 2 && (
-            <div className="bg-slate-50 p-8 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-400 font-bold">
-              Се чека втор играч...
+          {gameState.players.length === 0 && (
+            <div className="col-span-full bg-slate-50 p-8 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-400 font-bold">
+              Се чекаат ученици...
             </div>
           )}
         </div>
@@ -552,7 +540,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               <p className="text-slate-500 font-medium">Тема: {gameState.topic}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4 justify-end">
             {gameState.players.map((p: any, idx: number) => (
               <div 
                 key={p.id}
@@ -565,6 +553,19 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
                 {p.skipNextTurn && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase">Казна</span>}
               </div>
             ))}
+            {role === 'TEACHER' && (
+              <button
+                onClick={() => {
+                  if (confirm('Дали сте сигурни дека сакате да ја прекинете играта?')) {
+                    closeRoom();
+                  }
+                }}
+                className="p-3 text-slate-400 hover:text-red-500 transition-colors"
+                title="Прекини игра"
+              >
+                <LogOut className="w-6 h-6" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -595,17 +596,17 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
                     )}
 
                     {/* Players */}
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap justify-center gap-0.5 p-1">
                       {gameState.players.map((p: any) => p.position === pathIndex && (
                         <motion.div
                           key={p.id}
                           layoutId={`player-${p.id}`}
-                          className="relative flex flex-col items-center"
+                          className="relative flex flex-col items-center group"
                         >
-                          <span className="absolute -top-8 bg-white/90 backdrop-blur px-2 py-0.5 rounded-lg text-[10px] font-black shadow-sm border border-slate-100 whitespace-nowrap z-10">
+                          <span className="absolute -top-8 bg-white/90 backdrop-blur px-2 py-0.5 rounded-lg text-[10px] font-black shadow-sm border border-slate-100 whitespace-nowrap z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                             {p.name}
                           </span>
-                          <span className="text-3xl drop-shadow-lg filter">
+                          <span className="text-2xl sm:text-3xl drop-shadow-lg filter cursor-help">
                             {p.avatar}
                           </span>
                         </motion.div>
