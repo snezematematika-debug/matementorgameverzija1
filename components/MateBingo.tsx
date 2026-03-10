@@ -209,7 +209,24 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
     const questions = gameState.content.questions;
     const currentQuestion = questions[localQuestionIndex % questions.length];
     
-    const isCorrect = answerInput.trim().toLowerCase() === currentQuestion.answer.trim().toLowerCase();
+    // Normalize function to handle spaces, case, and Cyrillic/Latin look-alikes
+    const normalize = (str: string) => {
+      return str
+        .toLowerCase()
+        .replace(/\s+/g, '') // Remove all spaces
+        .replace(/х/g, 'x')  // Cyrillic to Latin
+        .replace(/а/g, 'a')
+        .replace(/у/g, 'y')
+        .replace(/е/g, 'e')
+        .replace(/р/g, 'p')
+        .replace(/с/g, 'c')
+        .replace(/о/g, 'o')
+        .replace(/к/g, 'k')
+        .replace(/м/g, 'm')
+        .replace(/в/g, 'b');
+    };
+    
+    const isCorrect = normalize(answerInput) === normalize(currentQuestion.answer);
     
     if (isCorrect) {
       setIsCorrectFeedback(true);
