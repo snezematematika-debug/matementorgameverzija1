@@ -341,22 +341,22 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-indigo-600 text-white rounded-3xl mb-6 shadow-xl shadow-indigo-200">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-600 text-white rounded-3xl mb-6 shadow-xl shadow-emerald-200">
             <Flag className="w-10 h-10" />
           </div>
-          <h1 className="text-5xl font-black text-indigo-900 tracking-tight mb-4">Мате - Пат! 🏁</h1>
+          <h1 className="text-5xl font-black text-emerald-900 tracking-tight mb-4">Мате - Пат! 🏁</h1>
           <p className="text-slate-500 text-lg font-medium">Тркај се со твојот другар низ математичките предизвици.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <button
             onClick={() => setRole('TEACHER')}
-            className="group bg-white p-10 rounded-[2.5rem] shadow-xl border-2 border-transparent hover:border-indigo-500 transition-all duration-500 text-left"
+            className="group bg-white p-10 rounded-[2.5rem] shadow-xl border-2 border-transparent hover:border-emerald-500 transition-all duration-500 text-left"
           >
-            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <Users className="w-8 h-8 text-indigo-600" />
+            <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Users className="w-8 h-8 text-emerald-600" />
             </div>
-            <h2 className="text-2xl font-bold text-indigo-900 mb-2">Креирај Пат</h2>
+            <h2 className="text-2xl font-bold text-emerald-900 mb-2">Креирај Пат</h2>
             <p className="text-slate-500 font-medium">Започни нова трка за целата училница.</p>
           </button>
 
@@ -373,7 +373,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
         </div>
         
         <div className="mt-12 text-center">
-          <button onClick={onBack} className="text-slate-400 hover:text-indigo-600 font-bold transition-colors">
+          <button onClick={onBack} className="text-slate-400 hover:text-emerald-600 font-bold transition-colors">
             ← Назад во менито
           </button>
         </div>
@@ -384,7 +384,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
   if (role === 'TEACHER' && !isJoined) {
     return (
       <div className="max-w-2xl mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100">
-        <h2 className="text-3xl font-black text-indigo-900 mb-8 flex items-center gap-3">
+        <h2 className="text-3xl font-black text-emerald-900 mb-8 flex items-center gap-3">
           <Zap className="text-amber-500" /> Поставки за Мате-Пат
         </h2>
         
@@ -396,14 +396,14 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="пр. Равенки, Плоштина на круг..."
-              className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:ring-0 transition-all font-medium"
+              className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:ring-0 transition-all font-medium"
             />
           </div>
 
           <button
             onClick={handleCreateGame}
             disabled={isLoading || !topic.trim()}
-            className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
+            className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-emerald-200 hover:bg-emerald-700 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
           >
             {isLoading ? <Loader2 className="animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
             ГЕНЕРИРАЈ ПАТ
@@ -416,7 +416,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
             </div>
           )}
 
-          <button onClick={() => setRole(null)} className="w-full text-slate-400 font-bold hover:text-indigo-600 transition-colors">
+          <button onClick={() => setRole(null)} className="w-full text-slate-400 font-bold hover:text-emerald-600 transition-colors">
             Откажи
           </button>
         </div>
@@ -430,13 +430,13 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
 
     return (
       <div className="max-w-md mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 text-center">
-        <h2 className="text-4xl font-black text-indigo-900 mb-8">Мате-Пат! 🎲</h2>
+        <h2 className="text-4xl font-black text-emerald-900 mb-8">Мате-Пат! 🎲</h2>
         
         <div className="space-y-6">
           {hasUrlPin ? (
-            <div className="bg-indigo-50 p-6 rounded-3xl border-2 border-indigo-100 mb-4">
-              <p className="text-indigo-600 font-bold uppercase tracking-widest text-xs mb-1">Приклучување на игра</p>
-              <p className="text-3xl font-black text-indigo-900 tracking-widest">{pinInput}</p>
+            <div className="bg-emerald-50 p-6 rounded-3xl border-2 border-emerald-100 mb-4">
+              <p className="text-emerald-600 font-bold uppercase tracking-widest text-xs mb-1">Приклучување на игра</p>
+              <p className="text-3xl font-black text-emerald-900 tracking-widest">{pinInput}</p>
             </div>
           ) : (
             <input
@@ -445,7 +445,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
               placeholder="Внеси PIN код"
-              className="w-full p-6 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-4 border-slate-100 rounded-3xl focus:border-indigo-500 focus:ring-0 transition-all placeholder:tracking-normal placeholder:text-lg"
+              className="w-full p-6 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-4 border-slate-100 rounded-3xl focus:border-emerald-500 focus:ring-0 transition-all placeholder:tracking-normal placeholder:text-lg"
             />
           )}
           
@@ -455,20 +455,20 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
             autoFocus={hasUrlPin}
             onChange={(e) => setPlayerName(e.target.value)}
             placeholder="Твоето име"
-            className="w-full p-5 text-center text-xl font-bold bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:ring-0 transition-all"
+            className="w-full p-5 text-center text-xl font-bold bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:ring-0 transition-all"
           />
 
           <button
             onClick={handleJoinGame}
             disabled={isLoading || pinInput.length < 6 || !playerName.trim()}
-            className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-50 transition-all"
+            className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-xl shadow-xl shadow-emerald-200 hover:bg-emerald-700 disabled:opacity-50 transition-all"
           >
             ВЛЕЗИ ВО ТРКАТА!
           </button>
 
           {error && <p className="text-red-500 font-bold bg-red-50 p-3 rounded-xl">{error}</p>}
 
-          <button onClick={() => setRole(null)} className="text-slate-400 font-bold hover:text-indigo-600 transition-colors">
+          <button onClick={() => setRole(null)} className="text-slate-400 font-bold hover:text-emerald-600 transition-colors">
             Откажи
           </button>
         </div>
@@ -482,14 +482,14 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
 
     return (
       <div className="max-w-5xl mx-auto">
-        <div className="bg-indigo-900 text-white p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden mb-8">
+        <div className="bg-emerald-600 text-white p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden mb-8">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
           
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left flex-1">
-              <p className="text-indigo-300 font-bold uppercase tracking-widest mb-2">Приклучи се на трката</p>
+              <p className="text-emerald-100 font-bold uppercase tracking-widest mb-2">Приклучи се на трката</p>
               <h2 className="text-8xl font-black tracking-tighter mb-4">{gameState.pin}</h2>
-              <div className="flex items-center gap-2 text-indigo-200 font-medium bg-white/10 px-4 py-2 rounded-xl inline-flex">
+              <div className="flex items-center gap-2 text-emerald-50 font-medium bg-white/10 px-4 py-2 rounded-xl inline-flex">
                 <Users className="w-5 h-5" />
                 <span>{gameState.players.length} ученици се приклучија</span>
               </div>
@@ -498,15 +498,15 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
             <div className="flex flex-col items-center gap-6">
               {role === 'TEACHER' && (
                 <>
-                  <div className="bg-white p-4 rounded-3xl shadow-2xl border-4 border-indigo-400/30">
+                  <div className="bg-white p-4 rounded-3xl shadow-2xl border-4 border-emerald-400/30">
                     <QRCodeCanvas value={joinUrl} size={180} level="H" includeMargin={true} />
-                    <p className="text-indigo-900 text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Скенирај за влез</p>
+                    <p className="text-emerald-900 text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Скенирај за влез</p>
                   </div>
                   
                   <button
                     onClick={startGame}
                     disabled={gameState.players.length < 1}
-                    className="px-12 py-6 bg-white text-indigo-900 rounded-3xl font-black text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
+                    className="px-12 py-6 bg-white text-emerald-900 rounded-3xl font-black text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
                   >
                     ЗАПОЧНИ ТРКА <ArrowRight className="w-8 h-8" />
                   </button>
@@ -516,7 +516,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               {role === 'STUDENT' && (
                 <div className="text-center bg-white/10 p-8 rounded-3xl backdrop-blur-md border border-white/10">
                   <p className="text-xl font-bold mb-2">Здраво, {playerName}!</p>
-                  <p className="text-indigo-200">Чекаме наставникот да ја започне играта...</p>
+                  <p className="text-emerald-100">Чекаме наставникот да ја започне играта...</p>
                   <div className="mt-4 flex justify-center">
                     <Loader2 className="w-8 h-8 animate-spin text-white/50" />
                   </div>
@@ -559,7 +559,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               <ArrowLeft className="w-6 h-6" />
             </button>
             <div>
-              <h1 className="text-2xl font-black text-indigo-950">Мате - Пат</h1>
+              <h1 className="text-2xl font-black text-emerald-950">Мате - Пат</h1>
               <p className="text-slate-500 font-medium">Тема: {gameState.topic}</p>
             </div>
           </div>
@@ -568,7 +568,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               <div 
                 key={p.id}
                 className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${
-                  gameState.currentPlayerIndex === idx ? 'border-indigo-500 bg-indigo-50 ring-4 ring-indigo-100' : 'border-slate-100 bg-white opacity-60'
+                  gameState.currentPlayerIndex === idx ? 'border-emerald-500 bg-emerald-50 ring-4 ring-emerald-100' : 'border-slate-100 bg-white opacity-60'
                 }`}
               >
                 <span className="text-2xl">{p.avatar}</span>
@@ -648,7 +648,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               <div className="flex flex-col items-center justify-center gap-2">
                 <span className="text-6xl mb-2">{currentPlayer.avatar}</span>
                 <span className="text-2xl font-black text-slate-900">{currentPlayer.name}</span>
-                {isMyTurn && <span className="text-xs font-black text-indigo-600 animate-pulse uppercase tracking-widest">Твој ред е!</span>}
+                {isMyTurn && <span className="text-xs font-black text-emerald-600 animate-pulse uppercase tracking-widest">Твој ред е!</span>}
               </div>
 
               <div className="py-10">
@@ -658,7 +658,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
                   className="w-24 h-24 bg-slate-50 rounded-3xl border-4 border-slate-100 flex items-center justify-center mx-auto shadow-inner"
                 >
                   {diceValue ? (
-                    <span className="text-5xl font-black text-indigo-600">{diceValue}</span>
+                    <span className="text-5xl font-black text-emerald-600">{diceValue}</span>
                   ) : (
                     <Dice5 className="w-12 h-12 text-slate-300" />
                   )}
@@ -668,7 +668,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               <button
                 onClick={rollDice}
                 disabled={isRolling || showTask || !isMyTurn}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-5 rounded-2xl font-black text-xl shadow-lg shadow-indigo-200 transition-all"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-5 rounded-2xl font-black text-xl shadow-lg shadow-emerald-200 transition-all"
               >
                 {isMyTurn ? 'ВРТИ КОЦКА' : 'ЧЕКАЈ...'}
               </button>
@@ -679,11 +679,11 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Инструкции</h4>
               <ul className="space-y-3 text-sm font-medium text-slate-600">
                 <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5" />
                   Врти коцка за да се придвижиш.
                 </li>
                 <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5" />
                   Реши ја задачата за да го завршиш потегот.
                 </li>
                 <li className="flex items-start gap-2">
@@ -727,7 +727,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
                         value={answerInput}
                         onChange={(e) => setAnswerInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && checkAnswer()}
-                        className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all text-center text-xl font-bold"
+                        className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none transition-all text-center text-xl font-bold"
                       />
                       
                       {feedback === 'CORRECT' ? (
@@ -787,7 +787,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
         <div className="flex flex-col gap-4">
           <button
             onClick={closeRoom}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-200"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-200"
           >
             <RotateCcw className="w-6 h-6" /> НОВА ИГРА
           </button>
