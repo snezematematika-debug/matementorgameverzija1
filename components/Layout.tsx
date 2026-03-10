@@ -454,6 +454,19 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                   >
                     <span>🎯</span> Мате-Бинго
                   </button>
+                  <button
+                    onClick={() => {
+                      setMode(AppMode.BOARD_GAME);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.BOARD_GAME 
+                        ? 'bg-emerald-500/30 text-emerald-100 shadow-lg border-emerald-400' 
+                        : 'text-emerald-200/80 hover:bg-indigo-800/40 hover:text-emerald-100 border-transparent'
+                    }`}
+                  >
+                    <span>🏁</span> Мате - Пат
+                  </button>
                 </div>
               </div>
             </div>

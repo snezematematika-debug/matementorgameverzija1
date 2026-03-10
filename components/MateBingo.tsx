@@ -112,6 +112,21 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
     return () => unsubscribe();
   }, [pinInput, role, gameState?.pin, playerId, playerName]);
 
+  // Persist PIN and Name
+  useEffect(() => {
+    if (pinInput) sessionStorage.setItem('matebingo_pin', pinInput);
+    if (playerName) sessionStorage.setItem('matebingo_player_name', playerName);
+  }, [pinInput, playerName]);
+
+  // Auto-join if PIN is in URL and name is available
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPin = urlParams.get('pin');
+    if (urlPin && playerName && !isJoined && role === 'STUDENT' && playerId) {
+      handleJoinGame();
+    }
+  }, [playerName, isJoined, role, playerId]);
+
   const generatePin = () => Math.floor(100000 + Math.random() * 900000).toString();
 
   const handleCreateGame = async () => {

@@ -124,6 +124,15 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     if (playerName) sessionStorage.setItem('matehoot_player_name', playerName);
   }, [pinInput, playerName]);
 
+  // Auto-join if PIN is in URL and name is available
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPin = urlParams.get('pin');
+    if (urlPin && playerName && !isJoined && role === 'STUDENT' && playerId) {
+      handleJoinGame();
+    }
+  }, [playerName, isJoined, role, playerId]);
+
   // Timer Logic
   useEffect(() => {
     if (gameState?.status === 'QUESTION' && gameState.questionStartTime) {

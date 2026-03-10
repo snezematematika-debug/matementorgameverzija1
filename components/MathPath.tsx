@@ -1,37 +1,47 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Dice5, 
   Trophy, 
   ArrowLeft, 
+  ArrowRight,
   Users, 
   Play, 
   CheckCircle2, 
   XCircle,
   Flag,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  QrCode,
+  Loader2,
+  LogOut
 } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
+import { db } from '../services/firebase';
+import { ref, set, onValue, update, remove, get } from "firebase/database";
 import { GradeLevel } from '../types';
 import { generateGameContent } from '../services/geminiService';
 import Loading from './Loading';
 
 interface MathPathProps {
   grade: GradeLevel;
+  initialRole?: 'TEACHER' | 'STUDENT' | null;
   onBack: () => void;
 }
 
 interface Player {
-  id: number;
+  id: string;
   name: string;
   avatar: string;
   position: number;
   color: string;
   skipNextTurn: boolean;
+  isHost: boolean;
 }
 
 const AVATARS = ['🦊', '🐼', '🦁', '🐯', '🐨', '🐸', '🐙', '🦄'];
+const COLORS = ['bg-indigo-500', 'bg-pink-500', 'bg-emerald-500', 'bg-amber-500'];
 
 const BOARD_SIZE = 5;
 const TOTAL_CELLS = BOARD_SIZE * BOARD_SIZE;
@@ -45,147 +55,509 @@ const PATH = [
   24, 23, 22, 21, 20
 ];
 
-const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
-  const [gameState, setGameState] = useState<'SETUP' | 'PLAYING' | 'FINISHED'>('SETUP');
+const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }) => {
+  const [role, setRole] = useState<'TEACHER' | 'STUDENT' | null>(initialRole);
+  const [gameState, setGameState] = useState<any>(null);
+  const [pinInput, setPinInput] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('pin') || sessionStorage.getItem('mathpath_pin') || '';
+  });
+  const [playerName, setPlayerName] = useState(() => sessionStorage.getItem('mathpath_player_name') || '');
+  const [playerId, setPlayerId] = useState<string | null>(null);
   const [topic, setTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [players, setPlayers] = useState<Player[]>([
-    { id: 1, name: '', avatar: '🦊', position: 0, color: 'bg-indigo-500', skipNextTurn: false },
-    { id: 2, name: '', avatar: '🐼', position: 0, color: 'bg-pink-500', skipNextTurn: false },
-  ]);
-  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [isJoined, setIsJoined] = useState(false);
+
   const [diceValue, setDiceValue] = useState<number | null>(null);
   const [isRolling, setIsRolling] = useState(false);
   const [showTask, setShowTask] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState<any>(null);
   const [answerInput, setAnswerInput] = useState('');
   const [feedback, setFeedback] = useState<'CORRECT' | 'WRONG' | null>(null);
-  const [winner, setWinner] = useState<Player | null>(null);
 
-  const startGame = async () => {
-    if (!topic.trim() || !players[0].name.trim() || !players[1].name.trim()) return;
-    setIsLoading(true);
-    try {
-      const content = await generateGameContent(topic, 'BINGO', grade); // Reuse BINGO content for tasks
-      if (content && content.questions) {
-        setQuestions(content.questions);
-        setGameState('PLAYING');
+  // Initialize Player ID
+  useEffect(() => {
+    const savedId = sessionStorage.getItem('mathpath_player_id');
+    if (savedId) {
+      setPlayerId(savedId);
+    } else {
+      const newId = 'pp_' + Math.random().toString(36).substr(2, 9);
+      sessionStorage.setItem('mathpath_player_id', newId);
+      setPlayerId(newId);
+    }
+  }, []);
+
+  // Listen for Game State
+  useEffect(() => {
+    const activePin = gameState?.pin || pinInput;
+    if (!activePin || activePin.length < 6 || !role) return;
+
+    const roomRef = ref(db, `mathpath/${activePin}`);
+    const unsubscribe = onValue(roomRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const playersObj = data.players || {};
+        const playersArray = Object.entries(playersObj).map(([id, p]: [string, any]) => ({
+          id,
+          ...p
+        })).sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+
+        setGameState({
+          ...data,
+          players: playersArray
+        });
+
+        if (role === 'STUDENT' && playerId) {
+          const me = playersArray.find(p => p.id === playerId);
+          if (me) {
+            if (!playerName) setPlayerName(me.name);
+            setIsJoined(true);
+          }
+        }
+      } else if (role === 'STUDENT') {
+        setGameState(null);
+        setRole(null);
+        setError('Играта беше завршена.');
       }
-    } catch (error) {
-      console.error("Failed to start game:", error);
+    });
+
+    return () => unsubscribe();
+  }, [pinInput, role, gameState?.pin, playerId, playerName]);
+
+  // Persist PIN and Name
+  useEffect(() => {
+    if (pinInput) sessionStorage.setItem('mathpath_pin', pinInput);
+    if (playerName) sessionStorage.setItem('mathpath_player_name', playerName);
+  }, [pinInput, playerName]);
+
+  // Auto-join if PIN is in URL and name is available
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPin = urlParams.get('pin');
+    if (urlPin && playerName && !isJoined && role === 'STUDENT' && playerId) {
+      handleJoinGame();
+    }
+  }, [playerName, isJoined, role, playerId]);
+
+  // Sync dice and task state for all players
+  useEffect(() => {
+    if (gameState?.status === 'PLAYING') {
+      setDiceValue(gameState.diceValue || null);
+      setIsRolling(gameState.isRolling || false);
+      setShowTask(gameState.showTask || false);
+      if (!gameState.showTask) {
+        setAnswerInput('');
+        setFeedback(null);
+      }
+    }
+  }, [gameState?.diceValue, gameState?.isRolling, gameState?.showTask]);
+
+  const generatePin = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+  const handleCreateGame = async () => {
+    if (!topic.trim() || !playerName.trim() || !playerId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const content = await generateGameContent(topic, 'BINGO', grade);
+      const pin = generatePin();
+      
+      const newGameState = {
+        pin,
+        topic,
+        status: 'WAITING',
+        players: {
+          [playerId]: {
+            name: playerName,
+            avatar: AVATARS[0],
+            position: 0,
+            color: COLORS[0],
+            skipNextTurn: false,
+            isHost: true,
+            joinedAt: Date.now()
+          }
+        },
+        questions: content.questions,
+        currentPlayerIndex: 0,
+        createdAt: Date.now()
+      };
+      
+      await set(ref(db, `mathpath/${pin}`), newGameState);
+      
+      setGameState(newGameState);
+      setPinInput(pin);
+      sessionStorage.setItem('mathpath_pin', pin);
+      setIsJoined(true);
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updatePlayer = (index: number, updates: Partial<Player>) => {
-    const newPlayers = [...players];
-    newPlayers[index] = { ...newPlayers[index], ...updates };
-    setPlayers(newPlayers);
+  const handleJoinGame = async () => {
+    if (!pinInput || !playerName || !playerId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const roomRef = ref(db, `mathpath/${pinInput}`);
+      const snapshot = await get(roomRef);
+      if (!snapshot.exists()) {
+        setError('Невалиден PIN код.');
+        return;
+      }
+      const roomData = snapshot.val();
+      if (roomData.status !== 'WAITING') {
+        setError('Оваа игра веќе започна или заврши.');
+        return;
+      }
+
+      const playersCount = Object.keys(roomData.players || {}).length;
+      if (playersCount >= 2) {
+        setError('Играта е веќе полна (макс. 2 играчи).');
+        return;
+      }
+
+      const playerRef = ref(db, `mathpath/${pinInput}/players/${playerId}`);
+      await set(playerRef, {
+        name: playerName,
+        avatar: AVATARS[playersCount % AVATARS.length],
+        position: 0,
+        color: COLORS[playersCount % COLORS.length],
+        skipNextTurn: false,
+        isHost: false,
+        joinedAt: Date.now()
+      });
+      
+      setIsJoined(true);
+      sessionStorage.setItem('mathpath_pin', pinInput);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const rollDice = () => {
-    if (isRolling || showTask || winner) return;
+  const startGame = async () => {
+    if (!gameState?.pin) return;
+    await update(ref(db, `mathpath/${gameState.pin}`), {
+      status: 'PLAYING'
+    });
+  };
+
+  const updatePlayerAvatar = async (avatar: string) => {
+    if (!gameState?.pin || !playerId) return;
+    await update(ref(db, `mathpath/${gameState.pin}/players/${playerId}`), { avatar });
+  };
+
+  const rollDice = async () => {
+    if (isRolling || showTask || gameState?.winner || !gameState?.pin) return;
     
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    if (currentPlayer.id !== playerId) return; // Only current player can roll
+
     // Check for penalty
-    if (players[currentPlayerIndex].skipNextTurn) {
-      const newPlayers = [...players];
-      newPlayers[currentPlayerIndex].skipNextTurn = false;
-      setPlayers(newPlayers);
-      setCurrentPlayerIndex((currentPlayerIndex + 1) % players.length);
+    if (currentPlayer.skipNextTurn) {
+      await update(ref(db, `mathpath/${gameState.pin}/players/${playerId}`), { skipNextTurn: false });
+      await update(ref(db, `mathpath/${gameState.pin}`), {
+        currentPlayerIndex: (gameState.currentPlayerIndex + 1) % gameState.players.length
+      });
       return;
     }
 
-    setIsRolling(true);
-    let rolls = 0;
-    const interval = setInterval(() => {
-      setDiceValue(Math.floor(Math.random() * 6) + 1);
-      rolls++;
-      if (rolls > 10) {
-        clearInterval(interval);
-        setIsRolling(false);
-        const finalValue = Math.floor(Math.random() * 6) + 1;
-        setDiceValue(finalValue);
-        handleMove(finalValue);
-      }
-    }, 100);
+    await update(ref(db, `mathpath/${gameState.pin}`), { isRolling: true });
+
+    // Simulate rolling locally then update final
+    setTimeout(async () => {
+      const finalValue = Math.floor(Math.random() * 6) + 1;
+      
+      let newPos = currentPlayer.position + finalValue;
+      if (newPos >= PATH.length - 1) newPos = PATH.length - 1;
+
+      const qIndex = Math.floor(Math.random() * gameState.questions.length);
+      const currentQuestion = gameState.questions[qIndex];
+
+      await update(ref(db, `mathpath/${gameState.pin}`), {
+        isRolling: false,
+        diceValue: finalValue,
+        showTask: true,
+        currentQuestion,
+        currentQuestionIndex: qIndex
+      });
+
+      await update(ref(db, `mathpath/${gameState.pin}/players/${playerId}`), {
+        position: newPos
+      });
+    }, 1500);
   };
 
-  const handleMove = (steps: number) => {
-    const newPlayers = [...players];
-    const player = newPlayers[currentPlayerIndex];
-    
-    let newPos = player.position + steps;
-    if (newPos >= PATH.length - 1) {
-      newPos = PATH.length - 1;
-    }
-    
-    player.position = newPos;
-    setPlayers(newPlayers);
-
-    // Show task
-    const qIndex = Math.floor(Math.random() * questions.length);
-    setCurrentQuestion(questions[qIndex]);
-    setAnswerInput('');
-    setFeedback(null);
-    setTimeout(() => setShowTask(true), 1000);
-  };
-
-  const checkAnswer = () => {
-    if (!currentQuestion) return;
+  const checkAnswer = async () => {
+    if (!gameState?.currentQuestion || !gameState?.pin) return;
     
     const normalize = (str: string) => str.toLowerCase().replace(/\s+/g, '').replace(/х/g, 'x');
-    const isCorrect = normalize(answerInput) === normalize(currentQuestion.answer);
+    const isCorrect = normalize(answerInput) === normalize(gameState.currentQuestion.answer);
 
     if (isCorrect) {
       setFeedback('CORRECT');
-      setTimeout(() => {
-        setShowTask(false); // Close the modal in both cases
-        if (players[currentPlayerIndex].position === PATH.length - 1) {
-          setWinner(players[currentPlayerIndex]);
-          setGameState('FINISHED');
+      setTimeout(async () => {
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        if (currentPlayer.position === PATH.length - 1) {
+          await update(ref(db, `mathpath/${gameState.pin}`), {
+            status: 'FINISHED',
+            winner: currentPlayer,
+            showTask: false
+          });
         } else {
-          setCurrentPlayerIndex((currentPlayerIndex + 1) % players.length);
+          await update(ref(db, `mathpath/${gameState.pin}`), {
+            showTask: false,
+            currentPlayerIndex: (gameState.currentPlayerIndex + 1) % gameState.players.length
+          });
         }
       }, 1500);
     } else {
       setFeedback('WRONG');
-      const newPlayers = [...players];
-      newPlayers[currentPlayerIndex].skipNextTurn = true;
-      setPlayers(newPlayers);
-      setTimeout(() => {
-        setShowTask(false);
-        setCurrentPlayerIndex((currentPlayerIndex + 1) % players.length);
+      await update(ref(db, `mathpath/${gameState.pin}/players/${playerId}`), {
+        skipNextTurn: true
+      });
+      setTimeout(async () => {
+        await update(ref(db, `mathpath/${gameState.pin}`), {
+          showTask: false,
+          currentPlayerIndex: (gameState.currentPlayerIndex + 1) % gameState.players.length
+        });
       }, 1500);
     }
   };
 
+  const closeRoom = async () => {
+    if (gameState?.pin) {
+      await remove(ref(db, `mathpath/${gameState.pin}`));
+    }
+    setGameState(null);
+    setRole(null);
+    setIsJoined(false);
+    sessionStorage.removeItem('mathpath_pin');
+  };
+
   if (isLoading) return <Loading message="Се подготвува патеката..." />;
 
-  return (
-    <div className="max-w-6xl mx-auto p-4 space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={onBack}
-            className="p-3 hover:bg-slate-50 rounded-2xl transition-colors text-slate-400"
+  // --- RENDER HELPERS ---
+
+  if (!role) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-indigo-600 text-white rounded-3xl mb-6 shadow-xl shadow-indigo-200">
+            <Flag className="w-10 h-10" />
+          </div>
+          <h1 className="text-5xl font-black text-indigo-900 tracking-tight mb-4">Мате - Пат! 🏁</h1>
+          <p className="text-slate-500 text-lg font-medium">Тркај се со твојот другар низ математичките предизвици.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <button
+            onClick={() => setRole('TEACHER')}
+            className="group bg-white p-10 rounded-[2.5rem] shadow-xl border-2 border-transparent hover:border-indigo-500 transition-all duration-500 text-left"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Users className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-indigo-900 mb-2">Креирај Игра</h2>
+            <p className="text-slate-500 font-medium">Започни нова трка и покани пријател.</p>
           </button>
-          <div>
-            <h1 className="text-2xl font-black text-indigo-950">Математичка Патека</h1>
-            <p className="text-slate-500 font-medium">Трка до излезот преку решавање задачи</p>
+
+          <button
+            onClick={() => setRole('STUDENT')}
+            className="group bg-white p-10 rounded-[2.5rem] shadow-xl border-2 border-transparent hover:border-pink-500 transition-all duration-500 text-left"
+          >
+            <div className="w-16 h-16 bg-pink-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Play className="w-8 h-8 text-pink-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-pink-900 mb-2">Приклучи се</h2>
+            <p className="text-slate-500 font-medium">Внеси PIN и влези во трката.</p>
+          </button>
+        </div>
+        
+        <div className="mt-12 text-center">
+          <button onClick={onBack} className="text-slate-400 hover:text-indigo-600 font-bold transition-colors">
+            ← Назад во менито
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isJoined) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasUrlPin = !!urlParams.get('pin');
+
+    return (
+      <div className="max-w-2xl mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 text-center space-y-8">
+        <div className="w-20 h-20 bg-indigo-100 rounded-[2rem] flex items-center justify-center mx-auto text-indigo-600">
+          <Users className="w-10 h-10" />
+        </div>
+        <div className="space-y-4">
+          <h2 className="text-3xl font-black text-slate-900">{role === 'TEACHER' ? 'Нова Игра' : 'Приклучи се'}</h2>
+          <p className="text-slate-500 font-medium">Внесете ги потребните податоци</p>
+        </div>
+
+        <div className="space-y-6">
+          {role === 'STUDENT' && (
+            hasUrlPin ? (
+              <div className="bg-pink-50 p-6 rounded-3xl border-2 border-pink-100">
+                <p className="text-pink-600 font-bold uppercase tracking-widest text-xs mb-1">Приклучување на игра</p>
+                <p className="text-3xl font-black text-pink-900 tracking-widest">{pinInput}</p>
+              </div>
+            ) : (
+              <input
+                type="text"
+                maxLength={6}
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
+                placeholder="Внеси PIN код"
+                className="w-full p-6 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-4 border-slate-100 rounded-3xl focus:border-pink-500 focus:ring-0 transition-all placeholder:tracking-normal placeholder:text-lg"
+              />
+            )
+          )}
+
+          <input
+            type="text"
+            placeholder="Твоето име..."
+            value={playerName}
+            autoFocus={hasUrlPin}
+            onChange={(e) => setPlayerName(e.target.value)}
+            className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all text-center text-lg font-bold"
+          />
+
+          {role === 'TEACHER' && (
+            <input
+              type="text"
+              placeholder="Тема на задачите..."
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all text-center text-lg font-bold"
+            />
+          )}
+
+          <button
+            onClick={role === 'TEACHER' ? handleCreateGame : handleJoinGame}
+            disabled={isLoading || !playerName.trim() || (role === 'TEACHER' && !topic.trim()) || (role === 'STUDENT' && pinInput.length < 6)}
+            className={`w-full py-5 rounded-2xl font-black text-xl shadow-lg transition-all flex items-center justify-center gap-3 ${
+              role === 'TEACHER' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' : 'bg-pink-600 hover:bg-pink-700 shadow-pink-200'
+            } text-white disabled:opacity-50`}
+          >
+            {isLoading ? <Loader2 className="animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
+            {role === 'TEACHER' ? 'КРЕИРАЈ СОБА' : 'ВЛЕЗИ ВО ТРКАТА'}
+          </button>
+
+          {error && <p className="text-red-500 font-bold bg-red-50 p-3 rounded-xl">{error}</p>}
+
+          <button onClick={() => setRole(null)} className="text-slate-400 font-bold hover:text-indigo-600 transition-colors">
+            Откажи
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState?.status === 'WAITING') {
+    const joinUrl = `${window.location.origin}/?pin=${gameState.pin}&type=BOARD_GAME`;
+    const me = gameState.players.find((p: any) => p.id === playerId);
+
+    return (
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-indigo-900 text-white p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden mb-8">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+          
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="text-center md:text-left flex-1">
+              <p className="text-indigo-300 font-bold uppercase tracking-widest mb-2">Приклучи се на трката</p>
+              <h2 className="text-8xl font-black tracking-tighter mb-4">{gameState.pin}</h2>
+              <div className="flex items-center gap-2 text-indigo-200 font-medium bg-white/10 px-4 py-2 rounded-xl inline-flex">
+                <Users className="w-5 h-5" />
+                <span>{gameState.players.length} / 2 играчи</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-6">
+              <div className="bg-white p-4 rounded-3xl shadow-2xl border-4 border-indigo-400/30">
+                <QRCodeCanvas value={joinUrl} size={180} level="H" includeMargin={true} />
+                <p className="text-indigo-900 text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Скенирај за влез</p>
+              </div>
+              
+              {me?.isHost && (
+                <button
+                  onClick={startGame}
+                  disabled={gameState.players.length < 2}
+                  className="px-12 py-6 bg-white text-indigo-900 rounded-3xl font-black text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
+                >
+                  ЗАПОЧНИ ТРКА <ArrowRight className="w-8 h-8" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
-        {gameState === 'PLAYING' && (
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {gameState.players.map((p: any) => (
+            <div key={p.id} className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <span className="text-6xl">{p.avatar}</span>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900">{p.name}</h3>
+                  <p className="text-slate-500 font-medium">{p.isHost ? 'Домаќин' : 'Гостин'}</p>
+                </div>
+              </div>
+              {p.id === playerId && (
+                <div className="grid grid-cols-4 gap-2">
+                  {AVATARS.map(avatar => (
+                    <button
+                      key={avatar}
+                      onClick={() => updatePlayerAvatar(avatar)}
+                      className={`text-2xl p-2 rounded-xl transition-all ${p.avatar === avatar ? 'bg-indigo-50 shadow-md scale-110 border-2 border-indigo-500' : 'hover:bg-slate-50'}`}
+                    >
+                      {avatar}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          {gameState.players.length < 2 && (
+            <div className="bg-slate-50 p-8 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-400 font-bold">
+              Се чека втор играч...
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState?.status === 'PLAYING') {
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    const isMyTurn = currentPlayer.id === playerId;
+
+    return (
+      <div className="max-w-6xl mx-auto p-4 space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
           <div className="flex items-center gap-4">
-            {players.map((p, idx) => (
+            <button 
+              onClick={onBack}
+              className="p-3 hover:bg-slate-50 rounded-2xl transition-colors text-slate-400"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-black text-indigo-950">Мате - Пат</h1>
+              <p className="text-slate-500 font-medium">Тема: {gameState.topic}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            {gameState.players.map((p: any, idx: number) => (
               <div 
                 key={p.id}
                 className={`flex items-center gap-3 px-4 py-2 rounded-2xl border-2 transition-all ${
-                  currentPlayerIndex === idx ? 'border-indigo-500 bg-indigo-50 ring-4 ring-indigo-100' : 'border-slate-100 bg-white opacity-60'
+                  gameState.currentPlayerIndex === idx ? 'border-indigo-500 bg-indigo-50 ring-4 ring-indigo-100' : 'border-slate-100 bg-white opacity-60'
                 }`}
               >
                 <span className="text-2xl">{p.avatar}</span>
@@ -194,68 +566,8 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
 
-      {gameState === 'SETUP' ? (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-3xl mx-auto bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 text-center space-y-8"
-        >
-          <div className="w-20 h-20 bg-indigo-100 rounded-[2rem] flex items-center justify-center mx-auto text-indigo-600">
-            <Users className="w-10 h-10" />
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-3xl font-black text-slate-900">Нова Игра</h2>
-            <p className="text-slate-500 font-medium">Внесете имиња и изберете аватари</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {players.map((p, idx) => (
-              <div key={p.id} className="p-6 rounded-[2rem] bg-slate-50 border-2 border-slate-100 space-y-4">
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Играч {p.id}</p>
-                <input
-                  type="text"
-                  placeholder="Име на играч..."
-                  value={p.name}
-                  onChange={(e) => updatePlayer(idx, { name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-white focus:border-indigo-500 outline-none transition-all font-bold text-center"
-                />
-                <div className="grid grid-cols-4 gap-2">
-                  {AVATARS.map(avatar => (
-                    <button
-                      key={avatar}
-                      onClick={() => updatePlayer(idx, { avatar })}
-                      className={`text-2xl p-2 rounded-xl transition-all ${p.avatar === avatar ? 'bg-white shadow-md scale-110 border-2 border-indigo-500' : 'hover:bg-white/50'}`}
-                    >
-                      {avatar}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Тема на задачите</p>
-            <input
-              type="text"
-              placeholder="На пр. Собирање до 100, Равенки..."
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all text-center text-lg font-bold"
-            />
-            <button
-              onClick={startGame}
-              disabled={!topic.trim() || !players[0].name.trim() || !players[1].name.trim()}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-5 rounded-2xl font-black text-xl shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-3"
-            >
-              <Play className="w-6 h-6 fill-current" /> ЗАПОЧНИ ИГРА
-            </button>
-          </div>
-        </motion.div>
-      ) : gameState === 'PLAYING' ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Board */}
           <div className="lg:col-span-2 bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
@@ -284,7 +596,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
 
                     {/* Players */}
                     <div className="flex gap-1">
-                      {players.map(p => p.position === pathIndex && (
+                      {gameState.players.map((p: any) => p.position === pathIndex && (
                         <motion.div
                           key={p.id}
                           layoutId={`player-${p.id}`}
@@ -310,8 +622,9 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
             <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100 text-center space-y-6">
               <h3 className="text-lg font-black text-slate-400 uppercase tracking-widest">На ред е</h3>
               <div className="flex flex-col items-center justify-center gap-2">
-                <span className="text-6xl mb-2">{players[currentPlayerIndex].avatar}</span>
-                <span className="text-2xl font-black text-slate-900">{players[currentPlayerIndex].name}</span>
+                <span className="text-6xl mb-2">{currentPlayer.avatar}</span>
+                <span className="text-2xl font-black text-slate-900">{currentPlayer.name}</span>
+                {isMyTurn && <span className="text-xs font-black text-indigo-600 animate-pulse uppercase tracking-widest">Твој ред е!</span>}
               </div>
 
               <div className="py-10">
@@ -330,10 +643,10 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
 
               <button
                 onClick={rollDice}
-                disabled={isRolling || showTask}
+                disabled={isRolling || showTask || !isMyTurn}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-5 rounded-2xl font-black text-xl shadow-lg shadow-indigo-200 transition-all"
               >
-                ВРТИ КОЦКА
+                {isMyTurn ? 'ВРТИ КОЦКА' : 'ЧЕКАЈ...'}
               </button>
             </div>
 
@@ -357,94 +670,115 @@ const MathPath: React.FC<MathPathProps> = ({ grade, onBack }) => {
             </div>
           </div>
         </div>
-      ) : (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-2xl mx-auto bg-white p-12 rounded-[3rem] shadow-2xl border border-slate-100 text-center space-y-8"
-        >
-          <div className="w-24 h-24 bg-amber-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-amber-600">
-            <Trophy className="w-12 h-12" />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-4xl font-black text-slate-900">ПОБЕДА!</h2>
-            <p className="text-xl text-slate-500 font-medium">Честитки за {winner?.name}</p>
-          </div>
-          <div className="p-8 rounded-[2.5rem] bg-amber-50 border-2 border-amber-100 shadow-xl space-y-4">
-            <span className="text-7xl block">{winner?.avatar}</span>
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-amber-600 mb-1">Победник</p>
-              <p className="text-3xl font-black text-slate-900">{winner?.name}</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setGameState('SETUP')}
-            className="w-full bg-slate-900 hover:bg-black text-white py-5 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3"
-          >
-            <RotateCcw className="w-6 h-6" /> ИГРАЈ ПОВТОРНО
-          </button>
-        </motion.div>
-      )}
 
-      {/* Task Modal */}
-      <AnimatePresence>
-        {showTask && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden"
-            >
-              <div className={`${players[currentPlayerIndex].color} p-8 text-white text-center relative`}>
-                <div className="absolute top-4 left-4 bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Задача</div>
-                <div className="text-5xl mb-4">{players[currentPlayerIndex].avatar}</div>
-                <h3 className="text-2xl font-black">{players[currentPlayerIndex].name} е на ред</h3>
-              </div>
-              
-              <div className="p-10 space-y-8">
-                <div className="bg-slate-50 p-8 rounded-3xl border-2 border-slate-100 text-center">
-                  <p className="text-2xl font-bold text-slate-800 leading-relaxed">
-                    {currentQuestion?.question}
-                  </p>
+        {/* Task Modal */}
+        <AnimatePresence>
+          {showTask && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden"
+              >
+                <div className={`${currentPlayer.color} p-8 text-white text-center relative`}>
+                  <div className="absolute top-4 left-4 bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Задача</div>
+                  <div className="text-5xl mb-4">{currentPlayer.avatar}</div>
+                  <h3 className="text-2xl font-black">{currentPlayer.name} е на ред</h3>
                 </div>
+                
+                <div className="p-10 space-y-8">
+                  <div className="bg-slate-50 p-8 rounded-3xl border-2 border-slate-100 text-center">
+                    <p className="text-2xl font-bold text-slate-800 leading-relaxed">
+                      {gameState.currentQuestion?.question}
+                    </p>
+                  </div>
 
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder="Внеси го твојот одговор..."
-                    value={answerInput}
-                    onChange={(e) => setAnswerInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && checkAnswer()}
-                    className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all text-center text-xl font-bold"
-                  />
-                  
-                  {feedback === 'CORRECT' ? (
-                    <div className="flex items-center justify-center gap-3 text-emerald-600 font-black text-xl animate-bounce">
-                      <CheckCircle2 className="w-8 h-8" /> ТОЧНО!
-                    </div>
-                  ) : feedback === 'WRONG' ? (
-                    <div className="flex items-center justify-center gap-3 text-red-600 font-black text-xl animate-shake">
-                      <XCircle className="w-8 h-8" /> ПОГРЕШНО!
+                  {isMyTurn ? (
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Внеси го твојот одговор..."
+                        value={answerInput}
+                        onChange={(e) => setAnswerInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && checkAnswer()}
+                        className="w-full px-6 py-5 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all text-center text-xl font-bold"
+                      />
+                      
+                      {feedback === 'CORRECT' ? (
+                        <div className="flex items-center justify-center gap-3 text-emerald-600 font-black text-xl animate-bounce">
+                          <CheckCircle2 className="w-8 h-8" /> ТОЧНО!
+                        </div>
+                      ) : feedback === 'WRONG' ? (
+                        <div className="flex items-center justify-center gap-3 text-red-600 font-black text-xl animate-shake">
+                          <XCircle className="w-8 h-8" /> ПОГРЕШНО!
+                        </div>
+                      ) : (
+                        <button
+                          onClick={checkAnswer}
+                          disabled={!answerInput.trim()}
+                          className="w-full bg-slate-900 hover:bg-black text-white py-5 rounded-2xl font-black text-xl transition-all"
+                        >
+                          ПРОВЕРИ
+                        </button>
+                      )}
                     </div>
                   ) : (
-                    <button
-                      onClick={checkAnswer}
-                      disabled={!answerInput.trim()}
-                      className="w-full bg-slate-900 hover:bg-black text-white py-5 rounded-2xl font-black text-xl transition-all"
-                    >
-                      ПРОВЕРИ
-                    </button>
+                    <div className="text-center py-4">
+                      <p className="text-slate-500 font-bold">Чекаме {currentPlayer.name} да одговори...</p>
+                      <Loader2 className="w-8 h-8 animate-spin mx-auto mt-4 text-slate-300" />
+                    </div>
                   )}
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  if (gameState?.status === 'FINISHED') {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-2xl mx-auto bg-white p-12 rounded-[3rem] shadow-2xl border border-slate-100 text-center space-y-8"
+      >
+        <div className="w-24 h-24 bg-amber-100 rounded-[2.5rem] flex items-center justify-center mx-auto text-amber-600">
+          <Trophy className="w-12 h-12" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-4xl font-black text-slate-900">ПОБЕДА!</h2>
+          <p className="text-xl text-slate-500 font-medium">Честитки за {gameState.winner?.name}</p>
+        </div>
+        <div className="p-8 rounded-[2.5rem] bg-amber-50 border-2 border-amber-100 shadow-xl space-y-4">
+          <span className="text-7xl block">{gameState.winner?.avatar}</span>
+          <div>
+            <p className="text-sm font-bold uppercase tracking-widest text-amber-600 mb-1">Победник</p>
+            <p className="text-3xl font-black text-slate-900">{gameState.winner?.name}</p>
           </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+        </div>
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={closeRoom}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-200"
+          >
+            <RotateCcw className="w-6 h-6" /> НОВА ИГРА
+          </button>
+          <button
+            onClick={onBack}
+            className="w-full bg-slate-900 hover:bg-black text-white py-5 rounded-2xl font-black text-xl transition-all flex items-center justify-center gap-3"
+          >
+            <LogOut className="w-6 h-6" /> ЗАТВОРИ ИГРА
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return null;
 };
 
 export default MathPath;

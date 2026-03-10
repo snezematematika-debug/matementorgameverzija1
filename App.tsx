@@ -61,13 +61,15 @@ const App: React.FC = () => {
     const gameType = params.get('type');
     if (urlPin) {
       setUserRole('STUDENT');
-      setCurrentMode(gameType === 'BINGO' ? AppMode.BINGO : AppMode.GAMES);
+      if (gameType === 'BINGO') setCurrentMode(AppMode.BINGO);
+      else if (gameType === 'BOARD_GAME') setCurrentMode(AppMode.BOARD_GAME);
+      else setCurrentMode(AppMode.GAMES);
     }
   }, []);
 
   useEffect(() => {
     // Clear PIN from URL if we are not in GAMES or BINGO mode
-    if (currentMode !== AppMode.GAMES && currentMode !== AppMode.BINGO) {
+    if (currentMode !== AppMode.GAMES && currentMode !== AppMode.BINGO && currentMode !== AppMode.BOARD_GAME) {
       const url = new URL(window.location.href);
       if (url.searchParams.has('pin')) {
         url.searchParams.delete('pin');
@@ -123,7 +125,9 @@ const App: React.FC = () => {
         return (
           <MathPath 
             grade={selectedGrade} 
+            initialRole={userRole}
             onBack={() => {
+              setUserRole('TEACHER');
               setCurrentMode(AppMode.DASHBOARD);
             }} 
           />
