@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -10,7 +10,11 @@ import {
   Brain,
   MessageSquare,
   RefreshCw,
-  HelpCircle
+  HelpCircle,
+  BookOpen,
+  Search,
+  X,
+  Info
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import Markdown from 'react-markdown';
@@ -34,12 +38,39 @@ interface Decomposition {
   summary: string;
 }
 
+interface GlossaryTerm {
+  term: string;
+  definition: string;
+  visual: string; // Emoji or simple description
+  category: string;
+}
+
+const GLOSSARY_DATA: GlossaryTerm[] = [
+  { term: "Дропка", definition: "Дел од една целина. Се состои од броител (горе) и именител (долу).", visual: "🍕", category: "Броеви" },
+  { term: "Равенка", definition: "Математичка реченица со знак еднакво (=) каде бараме непознат број (x).", visual: "⚖️", category: "Алгебра" },
+  { term: "Агол", definition: "Простор помеѓу две линии кои се спојуваат во една точка.", visual: "📐", category: "Геометрија" },
+  { term: "Периметар", definition: "Должината на сите страни на една фигура собрани заедно. Како ограда околу двор.", visual: "📏", category: "Геометрија" },
+  { term: "Плоштина", definition: "Големината на површината што ја зафаќа една фигура. Како тепих во соба.", visual: "🟦", category: "Геометрија" },
+  { term: "Процент", definition: "Дел од сто. Се означува со симболот %.", visual: "💯", category: "Броеви" },
+  { term: "Паралелни линии", definition: "Линии кои секогаш се на исто растојание и никогаш не се сечат.", visual: "🛤️", category: "Геометрија" },
+  { term: "НЗС", definition: "Најмал заеднички содржател. Најмалиот број што може да се подели со два други броја.", visual: "🔢", category: "Броеви" },
+];
+
 const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [decomposition, setDecomposition] = useState<Decomposition | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [showHint, setShowHint] = useState(false);
+  const [showGlossary, setShowGlossary] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredGlossary = useMemo(() => {
+    return GLOSSARY_DATA.filter(item => 
+      item.term.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.definition.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm]);
 
   const generateDecomposition = async () => {
     if (!input.trim()) return;
@@ -122,7 +153,104 @@ const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-20">
+    <div className="max-w-4xl mx-auto space-y-8 pb-20 relative">
+      {/* Glossary Sidebar Toggle Button */}
+      <button
+        onClick={() => setShowGlossary(true)}
+        className="fixed bottom-8 right-8 bg-emerald-500 text-white p-4 rounded-full shadow-2xl hover:bg-emerald-600 transition-all z-40 flex items-center gap-2 group"
+      >
+        <BookOpen className="w-6 h-6" />
+        <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-bold whitespace-nowrap">Визуелен поимник</span>
+      </button>
+
+      {/* Glossary Sidebar Overlay */}
+      <AnimatePresence>
+        {showGlossary && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowGlossary(false)}
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-50">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-500 p-2 rounded-xl text-white">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900">Визуелен поимник</h2>
+                </div>
+                <button onClick={() => setShowGlossary(false)} className="p-2 hover:bg-white rounded-full transition-colors">
+                  <X className="w-6 h-6 text-slate-400" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Пребарај поим..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-400 focus:ring-0 transition-all font-medium"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  {filteredGlossary.length > 0 ? (
+                    filteredGlossary.map((item, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="p-4 rounded-2xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="text-3xl bg-white p-3 rounded-2xl shadow-sm group-hover:scale-110 transition-transform">
+                            {item.visual}
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-slate-900">{item.term}</h3>
+                              <span className="text-[10px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                {item.category}
+                              </span>
+                            </div>
+                            <p className="text-sm text-slate-600 leading-relaxed font-medium">{item.definition}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-10 space-y-3">
+                      <div className="text-4xl">🔍</div>
+                      <p className="text-slate-400 font-bold">Нема резултати за "{searchTerm}"</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 border-t border-slate-100">
+                <div className="flex items-center gap-3 text-slate-500 text-xs font-bold">
+                  <Info className="w-4 h-4" />
+                  <span>Поимникот постојано се дополнува со нови визуелни објаснувања.</span>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Header Section */}
       <header className="text-center space-y-4">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-emerald-600 rounded-3xl shadow-sm mb-2">
