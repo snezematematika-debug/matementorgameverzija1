@@ -10,7 +10,8 @@ import {
   ArrowRight,
   Zap,
   Star,
-  Users
+  Users,
+  Flag
 } from 'lucide-react';
 import { AppMode } from '../types';
 
@@ -42,7 +43,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
   const quickActions = [
     { title: 'Нов Мате-Хут', desc: 'Започни квиз во живо со учениците', mode: AppMode.GAMES, icon: Zap, color: 'bg-pink-600' },
     { title: 'Мате-Бинго', desc: 'Брза игра со 3х3 табла', mode: AppMode.BINGO, icon: Sparkles, color: 'bg-amber-500' },
-    { title: 'GeoGebra', desc: 'Интерактивна геометриска табла', mode: AppMode.GEOGEBRA, icon: Sparkles, color: 'bg-blue-600' },
+    { title: 'Математичка Патека', desc: 'Трка до излезот во парови', mode: AppMode.BOARD_GAME, icon: Flag, color: 'bg-emerald-600' },
   ];
 
   const recentActivity = [

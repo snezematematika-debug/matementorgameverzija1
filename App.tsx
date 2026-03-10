@@ -12,6 +12,7 @@ import AdvancedPractice from './components/AdvancedPractice';
 import TeacherPanel from './components/TeacherPanel';
 import MateHoot from './components/MateHoot';
 import MateBingo from './components/MateBingo';
+import MathPath from './components/MathPath';
 import Dashboard from './components/Dashboard';
 import GeoGebra from './components/GeoGebra';
 import Mathigon from './components/Mathigon';
@@ -114,6 +115,15 @@ const App: React.FC = () => {
             initialRole={userRole} 
             onBack={() => {
               setUserRole('TEACHER');
+              setCurrentMode(AppMode.DASHBOARD);
+            }} 
+          />
+        );
+      case AppMode.BOARD_GAME:
+        return (
+          <MathPath 
+            grade={selectedGrade} 
+            onBack={() => {
               setCurrentMode(AppMode.DASHBOARD);
             }} 
           />

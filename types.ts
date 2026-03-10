@@ -57,6 +57,7 @@ export enum AppMode {
   TEACHER_PANEL = 'TEACHER_PANEL',
   GAMES = 'GAMES',
   BINGO = 'BINGO',
+  BOARD_GAME = 'BOARD_GAME',
   GEOGEBRA = 'GEOGEBRA',
   MATHIGON = 'MATHIGON',
   ANALYTICS = 'ANALYTICS',
@@ -64,7 +65,7 @@ export enum AppMode {
   ERROR_DETECTIVE = 'ERROR_DETECTIVE'
 }
 
-export type GameType = 'BINGO' | 'ESCAPE_ROOM' | 'PASSWORD' | 'BALLOONS' | 'FLASHCARDS' | 'MATEHOOT';
+export type GameType = 'BINGO' | 'ESCAPE_ROOM' | 'PASSWORD' | 'BALLOONS' | 'FLASHCARDS' | 'MATEHOOT' | 'BOARD_GAME';
 
 export interface GameState {
   pin: string;
