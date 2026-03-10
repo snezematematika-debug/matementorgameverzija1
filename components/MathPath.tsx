@@ -607,17 +607,17 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
                 return (
                   <div 
                     key={idx}
-                    className={`relative rounded-2xl flex items-center justify-center border-2 transition-all ${
+                    className={`relative rounded-[1.5rem] flex items-center justify-center border-2 transition-all duration-300 ${
                       isPath 
-                        ? 'bg-slate-50 border-slate-200' 
-                        : 'bg-slate-100 border-transparent opacity-20'
-                    } ${isEntry ? 'bg-emerald-50 border-emerald-200' : ''} ${isExit ? 'bg-amber-50 border-amber-200' : ''}`}
+                        ? 'bg-white border-emerald-200 shadow-sm hover:border-emerald-400' 
+                        : 'bg-slate-50 border-transparent opacity-10'
+                    } ${isEntry ? 'bg-emerald-50 border-emerald-500 ring-4 ring-emerald-100/50' : ''} ${isExit ? 'bg-amber-50 border-amber-500 ring-4 ring-amber-100/50' : ''}`}
                   >
-                    {isEntry && <span className="absolute -top-6 text-[10px] font-black text-emerald-600 uppercase tracking-widest">Влез</span>}
-                    {isExit && <span className="absolute -bottom-6 text-[10px] font-black text-amber-600 uppercase tracking-widest">Излез</span>}
+                    {isEntry && <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-sm">Влез</span>}
+                    {isExit && <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-sm">Излез</span>}
                     
                     {isPath && (
-                      <span className="text-slate-300 font-black text-xs">{pathIndex + 1}</span>
+                      <span className="absolute top-2 left-2 text-emerald-200 font-black text-[10px]">{pathIndex + 1}</span>
                     )}
 
                     {/* Players */}
