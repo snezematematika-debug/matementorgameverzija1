@@ -10,6 +10,7 @@ import {
   Play, 
   CheckCircle2, 
   XCircle,
+  Zap,
   Flag,
   RotateCcw,
   Sparkles,
