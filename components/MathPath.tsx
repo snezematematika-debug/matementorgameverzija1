@@ -155,7 +155,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
   const generatePin = () => Math.floor(100000 + Math.random() * 900000).toString();
 
   const handleCreateGame = async () => {
-    if (!topic.trim() || !playerName.trim() || !playerId) return;
+    if (!topic.trim() || !playerId) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -380,67 +380,89 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
     );
   }
 
-  if (!isJoined) {
+  if (role === 'TEACHER' && !isJoined) {
+    return (
+      <div className="max-w-2xl mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100">
+        <h2 className="text-3xl font-black text-indigo-900 mb-8 flex items-center gap-3">
+          <Zap className="text-amber-500" /> Поставки за Мате-Пат
+        </h2>
+        
+        <div className="space-y-8">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Тема за Пат</label>
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="пр. Равенки, Плоштина на круг..."
+              className="w-full p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:ring-0 transition-all font-medium"
+            />
+          </div>
+
+          <button
+            onClick={handleCreateGame}
+            disabled={isLoading || !topic.trim()}
+            className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
+          >
+            {isLoading ? <Loader2 className="animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
+            ГЕНЕРИРАЈ ПАТ
+          </button>
+
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm font-bold flex items-center gap-3">
+              <XCircle className="w-5 h-5 flex-shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <button onClick={() => setRole(null)} className="w-full text-slate-400 font-bold hover:text-indigo-600 transition-colors">
+            Откажи
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (role === 'STUDENT' && !isJoined) {
     const urlParams = new URLSearchParams(window.location.search);
     const hasUrlPin = !!urlParams.get('pin');
 
     return (
-      <div className="max-w-2xl mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 text-center space-y-8">
-        <div className="w-20 h-20 bg-indigo-100 rounded-[2rem] flex items-center justify-center mx-auto text-indigo-600">
-          <Users className="w-10 h-10" />
-        </div>
-        <div className="space-y-4">
-          <h2 className="text-3xl font-black text-slate-900">{role === 'TEACHER' ? 'Нова Игра' : 'Приклучи се'}</h2>
-          <p className="text-slate-500 font-medium">Внесете ги потребните податоци</p>
-        </div>
-
+      <div className="max-w-md mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 text-center">
+        <h2 className="text-4xl font-black text-indigo-900 mb-8">Мате-Пат! 🎲</h2>
+        
         <div className="space-y-6">
-          {role === 'STUDENT' && (
-            hasUrlPin ? (
-              <div className="bg-pink-50 p-6 rounded-3xl border-2 border-pink-100">
-                <p className="text-pink-600 font-bold uppercase tracking-widest text-xs mb-1">Приклучување на игра</p>
-                <p className="text-3xl font-black text-pink-900 tracking-widest">{pinInput}</p>
-              </div>
-            ) : (
-              <input
-                type="text"
-                maxLength={6}
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
-                placeholder="Внеси PIN код"
-                className="w-full p-6 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-4 border-slate-100 rounded-3xl focus:border-pink-500 focus:ring-0 transition-all placeholder:tracking-normal placeholder:text-lg"
-              />
-            )
+          {hasUrlPin ? (
+            <div className="bg-indigo-50 p-6 rounded-3xl border-2 border-indigo-100 mb-4">
+              <p className="text-indigo-600 font-bold uppercase tracking-widest text-xs mb-1">Приклучување на игра</p>
+              <p className="text-3xl font-black text-indigo-900 tracking-widest">{pinInput}</p>
+            </div>
+          ) : (
+            <input
+              type="text"
+              maxLength={6}
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
+              placeholder="Внеси PIN код"
+              className="w-full p-6 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-4 border-slate-100 rounded-3xl focus:border-indigo-500 focus:ring-0 transition-all placeholder:tracking-normal placeholder:text-lg"
+            />
           )}
-
+          
           <input
             type="text"
-            placeholder="Твоето име..."
             value={playerName}
             autoFocus={hasUrlPin}
             onChange={(e) => setPlayerName(e.target.value)}
-            className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all text-center text-lg font-bold"
+            placeholder="Твоето име"
+            className="w-full p-5 text-center text-xl font-bold bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:ring-0 transition-all"
           />
 
-          {role === 'TEACHER' && (
-            <input
-              type="text"
-              placeholder="Тема на задачите..."
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 outline-none transition-all text-center text-lg font-bold"
-            />
-          )}
-
           <button
-            onClick={role === 'TEACHER' ? handleCreateGame : handleJoinGame}
-            disabled={isLoading || !playerName.trim() || (role === 'TEACHER' && !topic.trim()) || (role === 'STUDENT' && pinInput.length < 6)}
-            className={`w-full py-5 rounded-2xl font-black text-xl shadow-lg transition-all flex items-center justify-center gap-3 ${
-              role === 'TEACHER' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' : 'bg-pink-600 hover:bg-pink-700 shadow-pink-200'
-            } text-white disabled:opacity-50`}
+            onClick={handleJoinGame}
+            disabled={isLoading || pinInput.length < 6 || !playerName.trim()}
+            className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-50 transition-all"
           >
-            {isLoading ? <Loader2 className="animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
-            {role === 'TEACHER' ? 'КРЕИРАЈ ПАТ' : 'ВЛЕЗИ ВО ТРКАТА'}
+            ВЛЕЗИ ВО ТРКАТА!
           </button>
 
           {error && <p className="text-red-500 font-bold bg-red-50 p-3 rounded-xl">{error}</p>}
