@@ -18,7 +18,8 @@ import {
   QrCode,
   Lock,
   Unlock,
-  Zap
+  Zap,
+  HelpCircle
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { db } from '../services/firebase';
@@ -45,6 +46,7 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState('');
+  const [showQuestions, setShowQuestions] = useState(false);
   
   // Student specific state
   const [studentProgress, setStudentProgress] = useState<number[]>(new Array(9).fill(0)); // 0: locked, 1: open, 2: completed
@@ -530,6 +532,56 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
             <div className="bg-amber-100 text-amber-700 px-6 py-3 rounded-2xl font-black text-xl">
               PIN: {gameState.pin}
             </div>
+          </div>
+
+          {/* Teacher Question Preview */}
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+            <button 
+              onClick={() => setShowQuestions(!showQuestions)}
+              className="flex items-center justify-between w-full text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-indigo-100 p-2 rounded-xl text-indigo-600">
+                  <HelpCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Листа на прашања</h3>
+                  <p className="text-xs text-slate-500">Прегледај ги сите прашања во оваа игра</p>
+                </div>
+              </div>
+              <ChevronRight className={`w-6 h-6 text-slate-400 transition-transform ${showQuestions ? 'rotate-90' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {showQuestions && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-50">
+                    {gameState.content.questions.map((q: any, idx: number) => (
+                      <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="flex items-start gap-3">
+                          <span className="bg-white w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black text-indigo-600 shadow-sm shrink-0">
+                            {idx + 1}
+                          </span>
+                          <div className="space-y-1">
+                            <p className="text-sm font-bold text-slate-800">
+                              <FormattedText text={q.question} />
+                            </p>
+                            <p className="text-xs font-black text-emerald-600 uppercase tracking-wider">
+                              Одговор: {q.answer}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
