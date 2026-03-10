@@ -41,6 +41,7 @@ const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
   const [selectedStepIndex, setSelectedStepIndex] = useState<number | null>(null);
   const [isSolved, setIsSolved] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const generateCase = async () => {
     if (!topic.trim()) return;
@@ -49,9 +50,14 @@ const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
     setSelectedStepIndex(null);
     setIsSolved(false);
     setAttempts(0);
+    setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("Не е пронајден API клуч (GEMINI_API_KEY). Ве молиме проверете ги поставките на Vercel.");
+      }
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3.1-pro-preview",
         contents: `Создади математички случај за „Детектив за грешки“ за ${grade} одделение. 
@@ -101,8 +107,9 @@ const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
 
       const data = JSON.parse(response.text);
       setCurrentCase(data);
-    } catch (error) {
-      console.error("Error generating case:", error);
+    } catch (err: any) {
+      console.error("Error generating case:", err);
+      setError(err.message || "Се појави грешка при генерирање на случајот. Проверете ја интернет врската или API клучот.");
     } finally {
       setLoading(false);
     }
@@ -159,6 +166,20 @@ const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
             >
               Отвори нов случај <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
             </button>
+
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="p-4 bg-red-50 border-2 border-red-100 rounded-2xl flex items-start gap-3 text-red-700"
+              >
+                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                <div className="text-sm font-bold">
+                  <p>Грешка при истрагата:</p>
+                  <p className="font-medium opacity-80">{error}</p>
+                </div>
+              </motion.div>
+            )}
           </div>
         </motion.div>
       )}

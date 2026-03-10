@@ -14,7 +14,8 @@ import {
   BookOpen,
   Search,
   X,
-  Info
+  Info,
+  AlertTriangle
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 import Markdown from 'react-markdown';
@@ -64,6 +65,7 @@ const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
   const [showHint, setShowHint] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const filteredGlossary = useMemo(() => {
     return GLOSSARY_DATA.filter(item => 
@@ -78,9 +80,14 @@ const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
     setDecomposition(null);
     setCurrentStepIndex(0);
     setShowHint(false);
+    setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("Не е пронајден API клуч (GEMINI_API_KEY). Ве молиме проверете ги поставките на Vercel.");
+      }
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3.1-pro-preview",
         contents: `Разложи ја следнава математичка задача/концепт на најмали можни чекори за ученик од ${grade} одделение кој има потешкотии со математика. 
@@ -131,8 +138,9 @@ const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
 
       const data = JSON.parse(response.text);
       setDecomposition(data);
-    } catch (error) {
-      console.error("Error generating decomposition:", error);
+    } catch (err: any) {
+      console.error("Error generating decomposition:", err);
+      setError(err.message || "Се појави грешка при генерирање на чекорите. Проверете ја интернет врската или API клучот.");
     } finally {
       setLoading(false);
     }
@@ -287,6 +295,20 @@ const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
             >
               Започни со учење <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />
             </button>
+
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="p-4 bg-red-50 border-2 border-red-100 rounded-2xl flex items-start gap-3 text-red-700"
+              >
+                <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                <div className="text-sm font-bold">
+                  <p>Грешка при подготовката:</p>
+                  <p className="font-medium opacity-80">{error}</p>
+                </div>
+              </motion.div>
+            )}
           </div>
         </motion.div>
       )}
