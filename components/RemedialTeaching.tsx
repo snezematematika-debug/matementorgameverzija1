@@ -17,7 +17,7 @@ import {
   Info,
   AlertTriangle
 } from 'lucide-react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { generateRemedialDecomposition } from '../services/geminiService';
 import Markdown from 'react-markdown';
 import { GradeLevel } from '../types';
 
@@ -83,61 +83,12 @@ const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
     setError(null);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("Не е пронајден API клуч (GEMINI_API_KEY). Ве молиме проверете ги поставките на Vercel.");
+      const data = await generateRemedialDecomposition(input, grade);
+      if (data) {
+        setDecomposition(data);
+      } else {
+        throw new Error("Не успеавме да ја разложиме задачата. Обидете се повторно.");
       }
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Разложи ја следнава математичка задача/концепт на најмали можни чекори за ученик од ${grade} одделение кој има потешкотии со математика. 
-        Користи едноставен јазик, визуелни описи и охрабрувачки тон.
-        
-        Задача: ${input}
-        
-        Врати го одговорот во JSON формат со следнава структура:
-        {
-          "problem": "Оригиналната задача",
-          "prerequisites": ["Што треба да знае ученикот пред да почне"],
-          "steps": [
-            {
-              "title": "Краток наслов на чекорот",
-              "explanation": "Детално и едноставно објаснување на овој специфичен чекор",
-              "hint": "Суптилен совет ако ученикот заглави",
-              "visualAid": "Опис на тоа како ученикот може да го замисли ова визуелно"
-            }
-          ],
-          "summary": "Завршна порака за поддршка"
-        }`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              problem: { type: Type.STRING },
-              prerequisites: { type: Type.ARRAY, items: { type: Type.STRING } },
-              steps: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    explanation: { type: Type.STRING },
-                    hint: { type: Type.STRING },
-                    visualAid: { type: Type.STRING }
-                  },
-                  required: ["title", "explanation"]
-                }
-              },
-              summary: { type: Type.STRING }
-            },
-            required: ["problem", "prerequisites", "steps", "summary"]
-          }
-        }
-      });
-
-      const data = JSON.parse(response.text);
-      setDecomposition(data);
     } catch (err: any) {
       console.error("Error generating decomposition:", err);
       setError(err.message || "Се појави грешка при генерирање на чекорите. Проверете ја интернет врската или API клучот.");

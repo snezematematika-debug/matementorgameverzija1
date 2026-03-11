@@ -13,7 +13,7 @@ import {
   Fingerprint,
   FileText
 } from 'lucide-react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { generateErrorDetectiveCase } from '../services/geminiService';
 import Markdown from 'react-markdown';
 import { GradeLevel } from '../types';
 
@@ -53,60 +53,12 @@ const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
     setError(null);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("Не е пронајден API клуч (GEMINI_API_KEY). Ве молиме проверете ги поставките на Vercel.");
+      const data = await generateErrorDetectiveCase(topic, grade);
+      if (data) {
+        setCurrentCase(data);
+      } else {
+        throw new Error("Неуспешно генерирање на случајот.");
       }
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Создади математички случај за „Детектив за грешки“ за ${grade} одделение. 
-        Тема: ${topic}
-        
-        Сценарио: Еден замислен лик (на пр. Роботот Роби) решил задача, но направил ЕДНА карактеристична математичка грешка во еден од чекорите.
-        Ученикот треба да ја најде таа грешка.
-        
-        Врати го одговорот во JSON формат:
-        {
-          "title": "Интригантен наслов на случајот",
-          "problem": "Оригиналната задача што треба да се реши",
-          "steps": [
-            {
-              "content": "Математички израз или опис на чекорот",
-              "isCorrect": true или false (само еден чекор треба да биде false),
-              "errorExplanation": "Објаснување зошто овој чекор е погрешен (само за погрешниот чекор)"
-            }
-          ],
-          "finalAdvice": "Совет како да се избегне оваа грешка во иднина"
-        }`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              problem: { type: Type.STRING },
-              steps: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    content: { type: Type.STRING },
-                    isCorrect: { type: Type.BOOLEAN },
-                    errorExplanation: { type: Type.STRING }
-                  },
-                  required: ["content", "isCorrect"]
-                }
-              },
-              finalAdvice: { type: Type.STRING }
-            },
-            required: ["title", "problem", "steps", "finalAdvice"]
-          }
-        }
-      });
-
-      const data = JSON.parse(response.text);
-      setCurrentCase(data);
     } catch (err: any) {
       console.error("Error generating case:", err);
       setError(err.message || "Се појави грешка при генерирање на случајот. Проверете ја интернет врската или API клучот.");

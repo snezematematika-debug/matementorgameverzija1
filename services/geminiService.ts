@@ -769,6 +769,70 @@ export const generateAdvancedProblem = async (category: string, grade: string): 
   }
 };
 
+export const generateErrorDetectiveCase = async (topic: string, grade: string): Promise<any> => {
+  try {
+    const prompt = `Создади математички случај за „Детектив за грешки“ за ${grade} одделение. 
+    Тема: ${topic}
+    
+    Сценарио: Еден замислен лик (на пр. Роботот Роби) решил задача, но направил ЕДНА карактеристична математичка грешка во еден од чекорите.
+    Ученикот треба да ја најде таа грешка.
+    
+    Врати го одговорот во JSON формат:
+    {
+      "title": "Интригантен наслов на случајот",
+      "problem": "Оригиналната задача што треба да се реши",
+      "steps": [
+        {
+          "content": "Математички израз или опис на чекорот",
+          "isCorrect": true или false (само еден чекор треба да биде false),
+          "errorExplanation": "Објаснување зошто овој чекор е погрешен (само за погрешниот чекор)"
+        }
+      ],
+      "finalAdvice": "Совет како да се избегне оваа грешка во иднина"
+    }`;
+
+    const schema: Schema = {
+      type: Type.OBJECT,
+      properties: {
+        title: { type: Type.STRING },
+        problem: { type: Type.STRING },
+        steps: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              content: { type: Type.STRING },
+              isCorrect: { type: Type.BOOLEAN },
+              errorExplanation: { type: Type.STRING }
+            },
+            required: ["content", "isCorrect"]
+          }
+        },
+        finalAdvice: { type: Type.STRING }
+      },
+      required: ["title", "problem", "steps", "finalAdvice"]
+    };
+
+    const response = await callGeminiWithRetry({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: {
+        systemInstruction: SYSTEM_PERSONA,
+        responseMimeType: "application/json",
+        responseSchema: schema
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("No response content from AI");
+    
+    return parseJsonSafe(text);
+  } catch (error: any) {
+    handleGeminiError(error);
+    return null;
+  }
+};
+
 export const generateIEPPlan = async (params: {
   topic: string;
   grade: string;
@@ -965,3 +1029,72 @@ export const generateGameContent = async (topic: string, type: string, grade: st
     return null;
   }
 };
+
+export async function generateRemedialDecomposition(input: string, grade: string): Promise<any> {
+  try {
+    const prompt = `Разложи ја следнава математичка задача/концепт на најмали можни чекори за ученик од ${grade} одделение кој има потешкотии со математика. 
+    Користи едноставен јазик, визуелни описи и охрабрувачки тон.
+    
+    Задача: ${input}
+    
+    Врати го одговорот во JSON формат со следнава структура:
+    {
+      "problem": "Оригиналната задача",
+      "prerequisites": ["Што треба да знае ученикот пред да почне"],
+      "steps": [
+        {
+          "title": "Краток наслов на чекорот",
+          "explanation": "Детално и едноставно објаснување на овој специфичен чекор",
+          "hint": "Суптилен совет ако ученикот заглави",
+          "visualAid": "Опис на тоа како ученикот може да го замисли ова визуелно"
+        }
+      ],
+      "summary": "Завршна порака за поддршка"
+    }`;
+
+    const response = await callGeminiWithRetry({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: {
+        systemInstruction: SYSTEM_PERSONA,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            problem: { type: Type.STRING },
+            prerequisites: { type: Type.ARRAY, items: { type: Type.STRING } },
+            steps: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  explanation: { type: Type.STRING },
+                  hint: { type: Type.STRING },
+                  visualAid: { type: Type.STRING }
+                },
+                required: ["title", "explanation"]
+              }
+            },
+            summary: { type: Type.STRING }
+          },
+          required: ["problem", "prerequisites", "steps", "summary"]
+        }
+      }
+    });
+
+    // Track usage (non-blocking)
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
+      contentType: 'remedial_decomposition',
+      topic: input.substring(0, 50),
+      grade,
+      model: 'gemini-3-flash-preview'
+    }).catch(e => console.error("Generation tracking failed:", e));
+
+    return parseJsonSafe(response.text);
+  } catch (error: any) {
+    handleGeminiError(error);
+    return null;
+  }
+}

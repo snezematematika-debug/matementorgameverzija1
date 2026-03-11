@@ -155,6 +155,64 @@ const InclusionGenerator: React.FC<InclusionGeneratorProps> = ({ grade }) => {
     URL.revokeObjectURL(url);
   };
 
+  const handleDownloadWord = () => {
+    if (!iepPlan) return;
+    
+    // Simple HTML to Word conversion using a blob
+    const header = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+            xmlns:w='urn:schemas-microsoft-com:office:word' 
+            xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset="utf-8">
+        <title>ИОП План</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; }
+          h1 { color: #1e3a8a; text-align: center; }
+          h2 { color: #1e40af; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-top: 20px; }
+          h3 { color: #1d4ed8; }
+          ul, ol { margin-bottom: 15px; }
+          li { margin-bottom: 5px; }
+          .header-info { background: #f8fafc; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+          .footer-signatures { margin-top: 50px; }
+          .sig-box { display: inline-block; width: 30%; text-align: center; margin-right: 3%; }
+          .sig-line { border-bottom: 1px solid #000; margin-bottom: 5px; }
+        </style>
+      </head>
+      <body>
+        <h1>Индивидуализиран Образовен План (ИОП)</h1>
+        <div class="header-info">
+          <p><strong>Одделение:</strong> ${grade}</p>
+          <p><strong>Наставна тема:</strong> ${THEMES.find(t => t.id === selectedThemeId)?.title}</p>
+          <p><strong>Наставна единица:</strong> ${selectedTopic}</p>
+          <p><strong>Тип на поддршка:</strong> ${DISABILITY_TYPES.flatMap(d => d.subtypes).find(s => s.id === selectedDisability)?.label}</p>
+        </div>
+        <div>
+          ${iepPlan.replace(/\n/g, '<br>').replace(/### (.*)/g, '<h2>$1</h2>').replace(/## (.*)/g, '<h1>$1</h1>').replace(/\*\*(.*)\*\*/g, '<strong>$1</strong>')}
+        </div>
+        <div class="footer-signatures">
+          <div class="sig-box"><div class="sig-line"></div><p>Наставник</p></div>
+          <div class="sig-box"><div class="sig-line"></div><p>Стручен соработник</p></div>
+          <div class="sig-box"><div class="sig-line"></div><p>Родител/Старател</p></div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\ufeff', header], {
+      type: 'application/msword'
+    });
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `IOP_${selectedTopic.replace(/\s+/g, '_')}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="print:hidden">
@@ -328,10 +386,16 @@ const InclusionGenerator: React.FC<InclusionGeneratorProps> = ({ grade }) => {
         <div className="space-y-6 animate-slide-up">
           <div className="print:hidden flex justify-end gap-3">
             <button 
+              onClick={handleDownloadWord}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium shadow-sm"
+            >
+              <Download size={18} /> Преземи (Word)
+            </button>
+            <button 
               onClick={handleDownload}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-all font-medium"
             >
-              <Download size={18} /> Преземи (.md)
+              <FileText size={18} /> Преземи (.md)
             </button>
             <button 
               onClick={handlePrint}
