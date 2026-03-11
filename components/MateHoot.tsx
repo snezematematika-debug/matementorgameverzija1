@@ -20,7 +20,7 @@ import {
 import { QRCodeCanvas } from 'qrcode.react';
 import { db } from '../services/firebase';
 import { ref, set, onValue, update, remove, get } from "firebase/database";
-import { generateGameContent } from '../services/geminiService';
+import { getGameContent } from '../services/contentService';
 import { GameState, GradeLevel } from '../types';
 import FormattedText from './FormattedText';
 
@@ -189,7 +189,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     setLoading(true);
     setError(null);
     try {
-      const content = await generateGameContent(selectedTopic, 'MATEHOOT', grade);
+      const content = await getGameContent(grade, selectedTopic, 'MATEHOOT');
       const pin = generatePin();
       
       const newGameState: GameState = {

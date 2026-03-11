@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { CURRICULUM, THEMES } from '../constants';
-import { generateWorksheet } from '../services/geminiService';
-import { CurriculumTopic, GradeLevel } from '../types';
+import { getContentPackage } from '../services/contentService';
+import { CurriculumTopic, GradeLevel, LessonPackage } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
 import { parse } from 'marked';
@@ -18,7 +18,7 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [worksheetType, setWorksheetType] = useState<'STANDARD' | 'DIFFERENTIATED' | 'EXIT_TICKET'>('STANDARD');
   
-  const [worksheetContent, setWorksheetContent] = useState<string | null>(null);
+  const [fullPackage, setFullPackage] = useState<LessonPackage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +48,6 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
     } else {
       setSelectedThemeId("");
     }
-    setWorksheetContent(null);
   }, [grade]);
 
   // Set default topic when theme changes
@@ -203,9 +202,14 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
     if (!currentTopic) return;
     setLoading(true);
     setError(null);
+    setFullPackage(null);
     try {
-      const content = await generateWorksheet(currentTopic.name, worksheetType);
-      setWorksheetContent(content);
+      const result = await getContentPackage(grade, currentTopic.name);
+      if (result) {
+        setFullPackage(result);
+      } else {
+        throw new Error("Неуспешно генерирање на работен лист.");
+      }
     } catch (err: any) {
       setError(err.message || "Неуспешно генерирање на работен лист.");
     } finally {
@@ -216,8 +220,8 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
   const handlePrint = () => window.print();
 
   const handleDownloadMd = () => {
-    if (!worksheetContent) return;
-    const blob = new Blob([worksheetContent], { type: 'text/markdown' });
+    if (!fullPackage?.worksheet) return;
+    const blob = new Blob([fullPackage.worksheet], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -229,8 +233,8 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
   };
 
   const handleDownloadWord = () => {
-    if (!worksheetContent) return;
-    const htmlContent = parse(worksheetContent);
+    if (!fullPackage?.worksheet) return;
+    const htmlContent = parse(fullPackage.worksheet);
     const themeTitle = THEMES.find(t => t.id === selectedThemeId)?.title || "ГЕОМЕТРИЈА";
     const titleType = worksheetType === 'EXIT_TICKET' ? 'Излезни Ливчиња (Exit Tickets)' : 
                      worksheetType === 'DIFFERENTIATED' ? 'Диференциран Работен Лист' : 'Работен Лист';
@@ -335,14 +339,14 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
             
             <div className="mt-4 flex justify-end">
                 <button onClick={handleAiGenerate} disabled={loading || !selectedTopicId} className="w-full md:w-auto px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-bold shadow-md hover:bg-indigo-700 disabled:opacity-50">
-                    {loading ? 'Се генерира...' : (worksheetContent ? '🔄 Регенерирај' : '✨ Креирај')}
+                    {loading ? 'Се генерира...' : (fullPackage ? '🔄 Регенерирај' : '✨ Креирај')}
                 </button>
             </div>
         </div>
         {loading && <Loading message="Се генерира работниот лист..." />}
       </div>
 
-      {worksheetContent && !loading && (
+      {fullPackage?.worksheet && !loading && (
         <div className="mt-8 space-y-6 animate-slide-up print:mt-0">
           <div className="print:hidden flex flex-wrap justify-end gap-3 items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
              <button onClick={() => setIsBoardOpen(true)} className="px-5 py-2 bg-teal-600 text-white text-sm font-bold rounded-lg shadow-md hover:bg-teal-700 transition-all">
@@ -353,7 +357,7 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
           </div>
 
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm p-8 print:p-0 print:border-none">
-            <FormattedText text={worksheetContent} />
+            <FormattedText text={fullPackage.worksheet} />
           </div>
         </div>
       )}
@@ -391,7 +395,7 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
                             <span>📋</span> Задачи
                           </h4>
                           <div className="prose prose-sm prose-slate max-w-none">
-                            <FormattedText text={worksheetContent || ""} />
+                            <FormattedText text={fullPackage?.worksheet || ""} />
                           </div>
                       </div>
                     )}

@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { CURRICULUM, THEMES } from '../constants';
-import { generateScenarioContent } from '../services/geminiService';
-import { GeneratedScenario, GradeLevel } from '../types';
+import { getContentPackage } from '../services/contentService';
+import { GeneratedScenario, GradeLevel, LessonPackage } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
 import { parse } from 'marked';
@@ -15,7 +15,7 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ grade }) => {
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
 
-  const [scenario, setScenario] = useState<GeneratedScenario | null>(null);
+  const [fullPackage, setFullPackage] = useState<LessonPackage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -34,7 +34,6 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ grade }) => {
     } else {
       setSelectedThemeId("");
     }
-    setScenario(null);
   }, [grade]);
 
   // Update default topic when theme changes
@@ -50,10 +49,14 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ grade }) => {
     if (!selectedTopic) return;
     setLoading(true);
     setError(null);
-    setScenario(null);
+    setFullPackage(null);
     try {
-      const result = await generateScenarioContent(selectedTopic);
-      setScenario(result);
+      const result = await getContentPackage(grade, selectedTopic);
+      if (result) {
+        setFullPackage(result);
+      } else {
+        throw new Error("Неуспешно генерирање на сценариото.");
+      }
     } catch (err: any) {
       setError(err.message || "Се појави грешка при генерирање на сценариото.");
     } finally {
@@ -66,30 +69,30 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ grade }) => {
   };
 
   const getMarkdownContent = () => {
-    if (!scenario) return '';
+    if (!fullPackage?.scenario) return '';
     return `
-# Сценарио за час: ${scenario.topic}
+# Сценарио за час: ${fullPackage.scenario.topic}
 
 ## 1. Содржина и поими
-${scenario.content}
+${fullPackage.scenario.content}
 
 ## 2. Стандарди за оценување
-${scenario.standards}
+${fullPackage.scenario.standards}
 
 ## 3. Воведна активност (10 мин)
-${scenario.introActivity}
+${fullPackage.scenario.introActivity}
 
 ## 4. Главни активности (20-25 мин)
-${scenario.mainActivity}
+${fullPackage.scenario.mainActivity}
 
 ## 5. Завршна активност (10 мин)
-${scenario.finalActivity}
+${fullPackage.scenario.finalActivity}
 
 ## 6. Потребни средства
-${scenario.resources}
+${fullPackage.scenario.resources}
 
 ## 7. Следење на напредокот
-${scenario.assessment}
+${fullPackage.scenario.assessment}
     `.trim();
   };
 
@@ -99,7 +102,7 @@ ${scenario.assessment}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Skenario_${scenario?.topic.replace(/\s+/g, '_')}.md`;
+    a.download = `Skenario_${fullPackage?.scenario.topic.replace(/\s+/g, '_')}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -107,16 +110,17 @@ ${scenario.assessment}
   };
 
   const handleDownloadWord = () => {
-    if (!scenario) return;
+    if (!fullPackage?.scenario) return;
+    const scenario = fullPackage.scenario;
 
     // Parse each section from Markdown to HTML
-    const contentHtml = parse(scenario.content);
-    const standardsHtml = parse(scenario.standards);
-    const introHtml = parse(scenario.introActivity);
-    const mainHtml = parse(scenario.mainActivity);
-    const finalHtml = parse(scenario.finalActivity);
-    const resourcesHtml = parse(scenario.resources);
-    const assessmentHtml = parse(scenario.assessment);
+    const contentHtml = parse(fullPackage.scenario.content);
+    const standardsHtml = parse(fullPackage.scenario.standards);
+    const introHtml = parse(fullPackage.scenario.introActivity);
+    const mainHtml = parse(fullPackage.scenario.mainActivity);
+    const finalHtml = parse(fullPackage.scenario.finalActivity);
+    const resourcesHtml = parse(fullPackage.scenario.resources);
+    const assessmentHtml = parse(fullPackage.scenario.assessment);
 
     const themeTitle = THEMES.find(t => t.id === selectedThemeId)?.title || "ГЕОМЕТРИЈА";
 
@@ -124,7 +128,7 @@ ${scenario.assessment}
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
         <meta charset='utf-8'>
-        <title>Сценарио - ${scenario.topic}</title>
+        <title>Сценарио - ${fullPackage.scenario.topic}</title>
         <style>
           /* Define page size specifically for Word */
           @page Section1 {
@@ -334,13 +338,13 @@ ${scenario.assessment}
                     disabled={loading || !selectedTopic}
                     className={`
                         w-full md:w-auto px-6 py-2.5 rounded-lg transition-all font-bold shadow-sm flex items-center justify-center gap-2
-                        ${scenario 
+                        ${fullPackage 
                             ? 'bg-white border-2 border-indigo-600 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50' // Strong Blue Outline
                             : 'bg-indigo-600 text-white hover:bg-indigo-700' // Solid
                         }
                     `}
                 >
-                    {loading ? 'Се генерира...' : (scenario ? '🔄 Регенерирај Сценарио' : '✨ Генерирај Сценарио')}
+                    {loading ? 'Се генерира...' : (fullPackage ? '🔄 Регенерирај Сценарио' : '✨ Генерирај Сценарио')}
                 </button>
             </div>
         </div>
@@ -355,7 +359,7 @@ ${scenario.assessment}
       </div>
 
       {/* Scenario Preview / Print View */}
-      {scenario && !loading && (
+      {fullPackage?.scenario && !loading && (
         <div className="animate-slide-up">
             
              {/* PROFESSIONAL TOOLBAR STYLE */}
@@ -416,7 +420,7 @@ ${scenario.assessment}
                         </tr>
                         <tr>
                             <td className="border border-black p-2 font-bold bg-slate-100 print:bg-gray-100">Наставна Единица:</td>
-                            <td className="border border-black p-2 font-bold">{scenario.topic}</td>
+                            <td className="border border-black p-2 font-bold">{fullPackage.scenario.topic}</td>
                         </tr>
                         <tr>
                             <td className="border border-black p-2 font-bold bg-slate-100 print:bg-gray-100">Време за реализација:</td>
@@ -447,32 +451,32 @@ ${scenario.assessment}
                     <tbody>
                         <tr>
                             <td className="border border-black p-3 align-top">
-                                <FormattedText text={scenario.content} />
+                                <FormattedText text={fullPackage.scenario.content} />
                             </td>
                             <td className="border border-black p-3 align-top">
-                                <FormattedText text={scenario.standards} />
+                                <FormattedText text={fullPackage.scenario.standards} />
                             </td>
                             <td className="border border-black p-3 align-top">
                                 <div className="space-y-4">
                                     <div>
                                         <p className="font-bold underline mb-1">Воведна активност (10 мин.)</p>
-                                        <FormattedText text={scenario.introActivity} className="text-justify" />
+                                        <FormattedText text={fullPackage.scenario.introActivity} className="text-justify" />
                                     </div>
                                     <div className="border-t border-dashed border-gray-400 pt-2">
                                         <p className="font-bold underline mb-1">Главни активности (20 мин.)</p>
-                                        <FormattedText text={scenario.mainActivity} className="text-justify" />
+                                        <FormattedText text={fullPackage.scenario.mainActivity} className="text-justify" />
                                     </div>
                                     <div className="border-t border-dashed border-gray-400 pt-2">
                                         <p className="font-bold underline mb-1">Завршна активност (10 мин.)</p>
-                                        <FormattedText text={scenario.finalActivity} className="text-justify" />
+                                        <FormattedText text={fullPackage.scenario.finalActivity} className="text-justify" />
                                     </div>
                                 </div>
                             </td>
                             <td className="border border-black p-3 align-top">
-                                <FormattedText text={scenario.resources} />
+                                <FormattedText text={fullPackage.scenario.resources} />
                             </td>
                             <td className="border border-black p-3 align-top">
-                                <FormattedText text={scenario.assessment} />
+                                <FormattedText text={fullPackage.scenario.assessment} />
                             </td>
                         </tr>
                     </tbody>

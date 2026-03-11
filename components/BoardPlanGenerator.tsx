@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { CURRICULUM, THEMES } from '../constants';
-import { generateBoardPlan } from '../services/geminiService';
-import { GradeLevel } from '../types';
+import { getContentPackage } from '../services/contentService';
+import { GradeLevel, LessonPackage } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
 
@@ -14,7 +14,7 @@ const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade }) => {
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
   
-  const [boardContent, setBoardContent] = useState<string | null>(null);
+  const [fullPackage, setFullPackage] = useState<LessonPackage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -29,7 +29,6 @@ const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade }) => {
     } else {
       setSelectedThemeId("");
     }
-    setBoardContent(null);
   }, [grade]);
 
   useEffect(() => {
@@ -44,9 +43,14 @@ const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade }) => {
     if (!selectedTopic) return;
     setLoading(true);
     setError(null);
+    setFullPackage(null);
     try {
-      const content = await generateBoardPlan(selectedTopic, grade);
-      setBoardContent(content);
+      const result = await getContentPackage(grade, selectedTopic);
+      if (result) {
+        setFullPackage(result);
+      } else {
+        throw new Error("Неуспешно генерирање на планот за табла.");
+      }
     } catch (err: any) {
       setError(err.message || "Грешка при креирање на планот.");
     } finally {
@@ -67,8 +71,8 @@ const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade }) => {
   };
 
   const handleCopy = () => {
-      if (boardContent) {
-          navigator.clipboard.writeText(boardContent);
+      if (fullPackage?.boardPlan) {
+          navigator.clipboard.writeText(fullPackage.boardPlan);
           alert("Текстот е копиран!");
       }
   };
@@ -123,13 +127,13 @@ const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade }) => {
                     disabled={loading || !selectedTopic}
                     className={`
                         w-full md:w-auto px-6 py-2.5 rounded-lg transition-all font-bold shadow-sm flex items-center justify-center gap-2
-                        ${boardContent 
+                        ${fullPackage 
                             ? 'bg-white border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50' 
                             : 'bg-emerald-600 text-white hover:bg-emerald-700'
                         }
                     `}
                 >
-                    {loading ? 'Се пишува на табла...' : (boardContent ? '🔄 Избриши и Напиши Повторно' : '✍️ Напиши План')}
+                    {loading ? 'Се пишува на табла...' : (fullPackage ? '🔄 Избриши и Напиши Повторно' : '✍️ Напиши План')}
                 </button>
             </div>
         </div>
@@ -144,7 +148,7 @@ const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade }) => {
       {loading && <Loading message="Наставникот го пишува планот на табла..." />}
 
       {/* The Blackboard View */}
-      {boardContent && !loading && (
+      {fullPackage?.boardPlan && !loading && (
         <div className="animate-fade-in space-y-4">
              {/* Toolbar */}
              <div className="flex justify-end gap-2">
@@ -184,7 +188,7 @@ const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade }) => {
 
                  {/* Content */}
                  <div className="relative z-10 font-mono text-3xl md:text-4xl leading-relaxed chalkboard-content">
-                    <FormattedText text={boardContent} theme="dark" />
+                    <FormattedText text={fullPackage.boardPlan} theme="dark" />
                  </div>
              </div>
         </div>
