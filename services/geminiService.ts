@@ -1149,7 +1149,6 @@ export const generateFullLessonPackage = async (topic: string, grade: string): P
       8. Дополнителна настава (Чекори за помош на ученици кои заостануваат).
       9. Инклузија (Прилагодувања за ученици со посебни потреби).
       10. Детектив за грешки (Еден математички случај со погрешни чекори што треба да се откријат).
-      11. Банка на задачи (20 задачи со различна тежина за користење во игри).
 
       ${MATH_INSTRUCTION}
 
@@ -1189,10 +1188,7 @@ export const generateFullLessonPackage = async (topic: string, grade: string): P
             { "content": "...", "isCorrect": false, "errorExplanation": "..." }
           ],
           "finalAdvice": "..."
-        },
-        "problems": [
-          { "question": "...", "options": ["...", "...", "...", "..."], "correctAnswerIndex": 0, "difficulty": "Лесно" }
-        ]
+        }
       }
     `;
 
@@ -1206,9 +1202,12 @@ export const generateFullLessonPackage = async (topic: string, grade: string): P
     });
 
     const packageData = parseJsonSafe(packageResponse.text);
+    if (!packageData) {
+      throw new Error("AI не успеа да генерира валиден образовен пакет.");
+    }
 
-    // 2. Generate 30 Batch Problems for Games
-    const problems = await generateBatchProblems(topic, grade, 30);
+    // 2. Generate 20 Batch Problems for Games (Reduced from 30 for stability)
+    const problems = await generateBatchProblems(topic, grade, 20);
 
     // Track usage (non-blocking)
     incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
@@ -1223,10 +1222,9 @@ export const generateFullLessonPackage = async (topic: string, grade: string): P
       grade,
       topic,
       ...packageData,
-      problems
+      problems: problems && problems.length > 0 ? problems : (packageData.problems || [])
     };
   } catch (error: any) {
     handleGeminiError(error);
-    return null as any;
   }
 };

@@ -28,14 +28,16 @@ export const getContentPackage = async (grade: string, topic: string): Promise<L
 
     if (newPackage) {
       // 3. Store the generated package in the database for future use
-      await saveLessonPackage(grade, topic, "main_package", newPackage);
+      // We don't await this to speed up the response, but we handle it
+      saveLessonPackage(grade, topic, "main_package", newPackage).catch(e => console.error("Async save failed:", e));
       return newPackage;
     }
 
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in getContentPackage:", error);
-    return null;
+    // Re-throw the error so the UI can display the descriptive message from handleGeminiError
+    throw error;
   }
 };
 

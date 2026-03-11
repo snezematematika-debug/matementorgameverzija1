@@ -26,6 +26,7 @@ const COLLECTIONS = {
  */
 export const getCachedLessonPackage = async (grade: string, topic: string, lessonTitle: string) => {
   try {
+    if (!firestore) return null;
     const docId = `${grade}_${topic}_${lessonTitle}`.replace(/\s+/g, '_').toLowerCase();
     const docRef = doc(firestore, COLLECTIONS.LESSON_PACKAGES, docId);
     const docSnap = await getDoc(docRef);
@@ -45,6 +46,7 @@ export const getCachedLessonPackage = async (grade: string, topic: string, lesso
  */
 export const saveLessonPackage = async (grade: string, topic: string, lessonTitle: string, data: any) => {
   try {
+    if (!firestore) return false;
     const docId = `${grade}_${topic}_${lessonTitle}`.replace(/\s+/g, '_').toLowerCase();
     const docRef = doc(firestore, COLLECTIONS.LESSON_PACKAGES, docId);
     
@@ -69,6 +71,7 @@ export const saveLessonPackage = async (grade: string, topic: string, lessonTitl
  */
 export const getProblemBank = async (grade: string, topic: string) => {
   try {
+    if (!firestore) return null;
     const docId = `${grade}_${topic}`.replace(/\s+/g, '_').toLowerCase();
     const docRef = doc(firestore, COLLECTIONS.PROBLEM_BANKS, docId);
     const docSnap = await getDoc(docRef);
@@ -88,6 +91,7 @@ export const getProblemBank = async (grade: string, topic: string) => {
  */
 export const saveProblemBank = async (grade: string, topic: string, problems: any[]) => {
   try {
+    if (!firestore) return false;
     const docId = `${grade}_${topic}`.replace(/\s+/g, '_').toLowerCase();
     const docRef = doc(firestore, COLLECTIONS.PROBLEM_BANKS, docId);
     
@@ -110,6 +114,7 @@ export const saveProblemBank = async (grade: string, topic: string, problems: an
  */
 export const cacheExplanation = async (problemId: string, explanation: string) => {
   try {
+    if (!firestore) return false;
     const docRef = doc(firestore, COLLECTIONS.EXPLANATIONS, problemId);
     await setDoc(docRef, {
       explanation,
@@ -127,6 +132,7 @@ export const cacheExplanation = async (problemId: string, explanation: string) =
  */
 export const getCachedExplanation = async (problemId: string) => {
   try {
+    if (!firestore) return null;
     const docRef = doc(firestore, COLLECTIONS.EXPLANATIONS, problemId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
