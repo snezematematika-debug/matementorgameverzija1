@@ -14,9 +14,8 @@ import {
   FileText
 } from 'lucide-react';
 import { generateErrorDetectiveCase } from '../services/geminiService';
-import { getContentPackage } from '../services/contentService';
 import Markdown from 'react-markdown';
-import { GradeLevel, LessonPackage } from '../types';
+import { GradeLevel } from '../types';
 
 interface ErrorDetectiveProps {
   grade: GradeLevel;
@@ -38,8 +37,7 @@ interface Case {
 const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
-  const [fullPackage, setFullPackage] = useState<LessonPackage | null>(null);
-  const currentCase = fullPackage?.errorDetective as Case | null;
+  const [currentCase, setCurrentCase] = useState<Case | null>(null);
   const [selectedStepIndex, setSelectedStepIndex] = useState<number | null>(null);
   const [isSolved, setIsSolved] = useState(false);
   const [attempts, setAttempts] = useState(0);
@@ -48,16 +46,16 @@ const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
   const generateCase = async () => {
     if (!topic.trim()) return;
     setLoading(true);
-    setFullPackage(null);
+    setCurrentCase(null);
     setSelectedStepIndex(null);
     setIsSolved(false);
     setAttempts(0);
     setError(null);
 
     try {
-      const data = await getContentPackage(grade, topic);
-      if (data && data.errorDetective) {
-        setFullPackage(data);
+      const data = await generateErrorDetectiveCase(topic, grade);
+      if (data) {
+        setCurrentCase(data);
       } else {
         throw new Error("Неуспешно генерирање на случајот.");
       }
@@ -276,7 +274,7 @@ const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
 
                     <button
                       onClick={() => {
-                        setFullPackage(null);
+                        setCurrentCase(null);
                         setTopic('');
                       }}
                       className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-xl hover:bg-slate-800 transition-all shadow-lg"

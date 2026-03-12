@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { CURRICULUM, THEMES } from '../constants';
-import { getContentPackage } from '../services/contentService';
-import { GradeLevel, GeneratedLesson, LessonPackage } from '../types';
+import { generateLessonContent, generateLessonConnectivity } from '../services/geminiService';
+import { GradeLevel, GeneratedLesson } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
 import { parse } from 'marked';
@@ -18,7 +18,7 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade }) => {
   const [includeRealWorldContext, setIncludeRealWorldContext] = useState<boolean>(false);
   
   // State for content
-  const [fullPackage, setFullPackage] = useState<LessonPackage | null>(null);
+  const [lesson, setLesson] = useState<GeneratedLesson | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +42,7 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade }) => {
     } else {
       setSelectedThemeId("");
     }
+    setLesson(null); // Clear previous lesson content on grade switch
     setConnectivityContent(null);
   }, [grade]);
 
@@ -58,14 +59,11 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade }) => {
     if (!selectedTopic) return;
     setLoading(true);
     setError(null);
-    setFullPackage(null);
+    setLesson(null);
     try {
-      const result = await getContentPackage(grade, selectedTopic);
-      if (result) {
-        setFullPackage(result);
-      } else {
-        throw new Error("Неуспешно генерирање на лекцијата.");
-      }
+      // We pass the prompt grade string (e.g. "VII" or "VI") to service
+      const result = await generateLessonContent(selectedTopic, grade, includeRealWorldContext);
+      setLesson(result);
     } catch (err: any) {
       setError(err.message || "Се појави грешка при генерирање на лекцијата.");
     } finally {
@@ -76,22 +74,13 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade }) => {
   const handleConnectivityCheck = async () => {
     if (!selectedTopic) return;
     setShowConnectivityModal(true);
-    
-    if (fullPackage && fullPackage.connectivity) {
-      setConnectivityContent(fullPackage.connectivity);
-      return;
-    }
-
+    // Avoid re-fetching if we already have it for this topic (optional optimization, 
+    // but for simplicity we can fetch fresh or check if content matches description logic)
     setLoadingConnectivity(true);
     setConnectivityContent(null);
     try {
-        const result = await getContentPackage(grade, selectedTopic);
-        if (result) {
-          setFullPackage(result);
-          setConnectivityContent(result.connectivity);
-        } else {
-          setConnectivityContent("Не успеавме да ги вчитаме податоците за поврзаност.");
-        }
+        const result = await generateLessonConnectivity(selectedTopic, grade);
+        setConnectivityContent(result);
     } catch (e) {
         setConnectivityContent("Не успеавме да ги вчитаме податоците за поврзаност.");
     } finally {
@@ -104,16 +93,16 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade }) => {
   };
 
   const getMarkdownContent = () => {
-    if (!fullPackage?.lesson) return '';
+    if (!lesson) return '';
     return `
-# ${fullPackage.lesson.title}
+# ${lesson.title}
 
 ## Цели на часот:
-${fullPackage.lesson.objectives.map(o => `- ${o}`).join('\n')}
+${lesson.objectives.map(o => `- ${o}`).join('\n')}
 
 ---
 
-${fullPackage.lesson.content}
+${lesson.content}
     `.trim();
   };
 
@@ -123,7 +112,7 @@ ${fullPackage.lesson.content}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${fullPackage?.lesson.title.replace(/\s+/g, '_')}.md`;
+    a.download = `${lesson?.title.replace(/\s+/g, '_')}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -131,10 +120,10 @@ ${fullPackage.lesson.content}
   };
 
   const handleDownloadWord = () => {
-    if (!fullPackage?.lesson) return;
+    if (!lesson) return;
 
-    const objectivesHtml = fullPackage.lesson.objectives.map(obj => `<li>${obj}</li>`).join('');
-    const contentHtml = parse(fullPackage.lesson.content);
+    const objectivesHtml = lesson.objectives.map(obj => `<li>${obj}</li>`).join('');
+    const contentHtml = parse(lesson.content);
     const themeTitle = THEMES.find(t => t.id === selectedThemeId)?.title || "ГЕОМЕТРИЈА";
     
     // Construct HTML with explicit tables to match the print view
@@ -142,7 +131,7 @@ ${fullPackage.lesson.content}
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
         <meta charset='utf-8'>
-        <title>${fullPackage.lesson.title}</title>
+        <title>${lesson.title}</title>
         <style>
           body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
@@ -168,7 +157,7 @@ ${fullPackage.lesson.content}
           </tr>
           <tr>
             <td class="header-cell">Лекција:</td>
-            <td style="font-weight: bold;">${fullPackage.lesson.title}</td>
+            <td style="font-weight: bold;">${lesson.title}</td>
           </tr>
           <tr>
             <td class="header-cell">Изготвил/-а:</td>
@@ -209,7 +198,7 @@ ${fullPackage.lesson.content}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${fullPackage.lesson.title.replace(/\s+/g, '_')}.doc`;
+    a.download = `${lesson?.title.replace(/\s+/g, '_')}.doc`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -340,13 +329,13 @@ ${fullPackage.lesson.content}
                     disabled={loading || !selectedTopic}
                     className={`
                         w-full md:w-auto px-6 py-2.5 rounded-lg transition-all font-bold shadow-sm flex items-center justify-center gap-2
-                        ${fullPackage 
+                        ${lesson 
                             ? 'bg-white border-2 border-indigo-600 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50' // Strong Blue Outline
                             : 'bg-indigo-600 text-white hover:bg-indigo-700' // Solid
                         }
                     `}
                 >
-                    {loading ? 'Се пишува...' : (fullPackage ? '🔄 Регенерирај Лекција' : '✨ Генерирај Лекција')}
+                    {loading ? 'Се пишува...' : (lesson ? '🔄 Регенерирај Лекција' : '✨ Генерирај Лекција')}
                 </button>
             </div>
         </div>
@@ -362,7 +351,7 @@ ${fullPackage.lesson.content}
         {loading && <Loading message="Наставникот ја подготвува лекцијата..." />}
       </div>
 
-      {fullPackage?.lesson && !loading && (
+      {lesson && !loading && (
         <div className="mt-8 space-y-6 animate-slide-up print:mt-0">
           
           {/* Action Buttons - Hidden on Print */}
@@ -410,11 +399,11 @@ ${fullPackage.lesson.content}
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm print:border-none print:shadow-none print:p-0">
             {/* Header for Screen View */}
             <div className="bg-gradient-to-r from-indigo-50 to-white p-6 border-b border-indigo-100 print:hidden">
-              <h3 className="text-2xl font-bold text-indigo-900 mb-4">{fullPackage.lesson.title}</h3>
+              <h3 className="text-2xl font-bold text-indigo-900 mb-4">{lesson.title}</h3>
               <div className="flex flex-col sm:flex-row gap-3">
                 <span className="text-sm font-bold text-slate-500 uppercase tracking-wide">Цели:</span>
                 <div className="flex flex-wrap gap-2">
-                    {fullPackage.lesson.objectives.map((obj, idx) => (
+                    {lesson.objectives.map((obj, idx) => (
                     <span key={idx} className="bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full font-medium border border-indigo-200">
                         {obj}
                     </span>
@@ -438,7 +427,7 @@ ${fullPackage.lesson.content}
                         </tr>
                         <tr>
                             <td className="border border-black p-2 font-bold bg-slate-100">Лекција:</td>
-                            <td className="border border-black p-2 font-bold">{fullPackage.lesson.title}</td>
+                            <td className="border border-black p-2 font-bold">{lesson.title}</td>
                         </tr>
                         <tr>
                             <td className="border border-black p-2 font-bold bg-slate-100">Изготвил/-а:</td>
@@ -453,7 +442,7 @@ ${fullPackage.lesson.content}
                 <div className="mb-4">
                     <p className="font-bold underline mb-2">Цели на часот:</p>
                     <ul className="list-disc pl-5">
-                        {fullPackage.lesson.objectives.map((obj, idx) => (
+                        {lesson.objectives.map((obj, idx) => (
                             <li key={idx} className="text-sm">{obj}</li>
                         ))}
                     </ul>
@@ -463,7 +452,7 @@ ${fullPackage.lesson.content}
 
             {/* CONTENT */}
             <div className="p-8 text-slate-700 leading-relaxed print:p-0 print:text-black">
-              <FormattedText text={fullPackage.lesson.content} />
+              <FormattedText text={lesson.content} />
             </div>
 
             {/* PRINT FOOTER */}

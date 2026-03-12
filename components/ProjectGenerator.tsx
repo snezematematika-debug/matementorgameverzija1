@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { PROJECT_THEMES, PROJECT_TOPICS } from '../projectTopics';
-import { getContentPackage } from '../services/contentService';
-import { CurriculumTopic, GradeLevel, LessonPackage } from '../types';
+import { generateProject } from '../services/geminiService';
+import { CurriculumTopic, GradeLevel } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
 import { parse } from 'marked';
@@ -16,7 +16,7 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   
-  const [fullPackage, setFullPackage] = useState<LessonPackage | null>(null);
+  const [projectContent, setProjectContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +47,7 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
 
   // Reset content when topic changes
   useEffect(() => {
-    setFullPackage(null);
+    setProjectContent(null);
     setError(null);
   }, [selectedTopicId]);
 
@@ -55,14 +55,9 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
     if (!currentTopic) return;
     setLoading(true);
     setError(null);
-    setFullPackage(null);
     try {
-      const result = await getContentPackage(grade, currentTopic.name);
-      if (result) {
-        setFullPackage(result);
-      } else {
-        throw new Error("Неуспешно генерирање на проект.");
-      }
+      const content = await generateProject(currentTopic.name);
+      setProjectContent(content);
     } catch (err: any) {
       setError(err.message || "Неуспешно генерирање на проект.");
     } finally {
@@ -75,9 +70,9 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
   };
 
   const handleDownloadMd = () => {
-    if (!fullPackage?.project) return;
+    if (!projectContent) return;
 
-    const blob = new Blob([fullPackage.project], { type: 'text/markdown' });
+    const blob = new Blob([projectContent], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -89,9 +84,9 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
   };
 
   const handleDownloadWord = () => {
-    if (!fullPackage?.project) return;
+    if (!projectContent) return;
     
-    const htmlContent = parse(fullPackage.project);
+    const htmlContent = parse(projectContent);
     const themeTitle = PROJECT_THEMES.find(t => t.id === selectedThemeId)?.title;
 
     const fullHtml = `
@@ -266,13 +261,13 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
                     disabled={loading || !selectedTopicId}
                     className={`
                         w-full md:w-auto px-6 py-2.5 rounded-lg transition-all font-bold shadow-sm flex items-center justify-center gap-2
-                        ${fullPackage 
+                        ${projectContent 
                             ? 'bg-white border-2 border-indigo-600 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50' // Strong Blue Outline
                             : 'bg-indigo-600 text-white hover:bg-indigo-700' // Solid
                         }
                     `}
                 >
-                    {loading ? 'Се креира...' : (fullPackage ? '🔄 Регенерирај Проект' : '🚀 Генерирај Проект')}
+                    {loading ? 'Се креира...' : (projectContent ? '🔄 Регенерирај Проект' : '🚀 Генерирај Проект')}
                 </button>
             </div>
         </div>
@@ -286,7 +281,7 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
         {loading && <Loading message="Се креира проектна задача..." />}
       </div>
 
-      {fullPackage?.project && !loading && (
+      {projectContent && !loading && (
         <div className="mt-8 space-y-6 animate-slide-up print:mt-0">
           
           {/* Action Buttons - Hidden on Print */}
@@ -364,7 +359,7 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
 
             {/* CONTENT */}
             <div className="p-8 text-slate-700 leading-relaxed print:p-0 print:text-black">
-              <FormattedText text={fullPackage.project} />
+              <FormattedText text={projectContent} />
             </div>
 
             {/* PRINT FOOTER */}

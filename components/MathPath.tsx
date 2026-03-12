@@ -22,7 +22,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { db } from '../services/firebase';
 import { ref, set, onValue, update, remove, get } from "firebase/database";
 import { GradeLevel } from '../types';
-import { getGameContent } from '../services/contentService';
+import { generateGameContent } from '../services/geminiService';
 import Loading from './Loading';
 
 interface MathPathProps {
@@ -160,7 +160,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
     setIsLoading(true);
     setError(null);
     try {
-      const content = await getGameContent(grade, topic, 'BOARD_GAME');
+      const content = await generateGameContent(topic, 'BINGO', grade);
       const pin = generatePin();
       
       const newGameState = {

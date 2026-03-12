@@ -18,9 +18,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { generateRemedialDecomposition } from '../services/geminiService';
-import { getContentPackage } from '../services/contentService';
 import Markdown from 'react-markdown';
-import { GradeLevel, LessonPackage } from '../types';
+import { GradeLevel } from '../types';
 
 interface RemedialTeachingProps {
   grade: GradeLevel;
@@ -61,8 +60,7 @@ const GLOSSARY_DATA: GlossaryTerm[] = [
 const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [fullPackage, setFullPackage] = useState<LessonPackage | null>(null);
-  const decomposition = fullPackage?.remedial as Decomposition | null;
+  const [decomposition, setDecomposition] = useState<Decomposition | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
@@ -79,15 +77,15 @@ const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
   const generateDecomposition = async () => {
     if (!input.trim()) return;
     setLoading(true);
-    setFullPackage(null);
+    setDecomposition(null);
     setCurrentStepIndex(0);
     setShowHint(false);
     setError(null);
 
     try {
-      const data = await getContentPackage(grade, input);
-      if (data && data.remedial) {
-        setFullPackage(data);
+      const data = await generateRemedialDecomposition(input, grade);
+      if (data) {
+        setDecomposition(data);
       } else {
         throw new Error("Не успеавме да ја разложиме задачата. Обидете се повторно.");
       }
@@ -387,7 +385,7 @@ const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
             ) : (
               <button
                 onClick={() => {
-                  setFullPackage(null);
+                  setDecomposition(null);
                   setInput('');
                 }}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-2xl font-black text-lg shadow-lg shadow-indigo-100 transition-all flex items-center gap-3"
