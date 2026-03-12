@@ -1,5 +1,5 @@
 
-import { firestore, analytics } from "./firebase";
+import { firestore, analytics, auth } from "./firebase";
 import { 
   collection, 
   addDoc, 
@@ -32,6 +32,7 @@ export const trackGeneration = async (metadata: GenerationMetadata) => {
   try {
     await addDoc(collection(firestore, "generations"), {
       ...metadata,
+      userId: auth.currentUser?.uid || metadata.userId || 'anonymous',
       timestamp: serverTimestamp(),
     });
   } catch (error) {

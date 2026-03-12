@@ -24,12 +24,45 @@
         }
       },
       "required": ["type", "params", "response", "timestamp"]
+    },
+    "Generation": {
+      "title": "Generation Metadata",
+      "description": "Metadata about an AI generation event",
+      "type": "object",
+      "properties": {
+        "contentType": { "type": "string" },
+        "topic": { "type": "string" },
+        "grade": { "type": "string" },
+        "tokens": { "type": "number" },
+        "model": { "type": "string" },
+        "userId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["contentType", "topic", "grade", "timestamp"]
+    },
+    "Quota": {
+      "title": "Daily Quota",
+      "description": "Daily usage tracking for AI generation",
+      "type": "object",
+      "properties": {
+        "count": { "type": "number" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["count", "lastUpdated"]
     }
   },
   "firestore": {
     "ai_cache/{cacheId}": {
       "schema": "CacheEntry",
       "description": "Collection for caching AI responses"
+    },
+    "generations/{genId}": {
+      "schema": "Generation",
+      "description": "Collection for tracking AI generations"
+    },
+    "quotas/{date}": {
+      "schema": "Quota",
+      "description": "Collection for tracking daily AI usage quotas"
     }
   }
 }

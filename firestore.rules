@@ -1,18 +1,103 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: ai_cache
+    // Document ID: hash of params
+    // Fields:
+    //   - type: string (required)
+    //   - params: map (required)
+    //   - response: map (required)
+    //   - timestamp: timestamp (required)
+    //
+    // Collection: generations
+    // Document ID: auto-generated
+    // Fields:
+    //   - contentType: string (required)
+    //   - topic: string (required)
+    //   - grade: string (required)
+    //   - tokens: number (optional)
+    //   - model: string (optional)
+    //   - userId: string (optional)
+    //   - timestamp: timestamp (required)
+    //
+    // Collection: quotas
+    // Document ID: date string (YYYY-MM-DD)
+    // Fields:
+    //   - count: number (required)
+    //   - lastUpdated: timestamp (required)
+    //
+    // Collection: users
+    // Document ID: uid
+    // Fields:
+    //   - role: string (admin/teacher)
+    //   - email: string
+    //
+    // ===============================================================
+
+    // Helper Functions
     function isAuthenticated() {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "snezematematika@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidCacheEntry(data) {
+      return data.keys().hasAll(['type', 'params', 'response', 'timestamp']) &&
+             data.type is string &&
+             data.params is map &&
+             data.response is map &&
+             (data.timestamp is timestamp || data.timestamp == null);
+    }
+
+    function isValidGeneration(data) {
+      return data.keys().hasAll(['contentType', 'topic', 'grade', 'timestamp']) &&
+             data.contentType is string &&
+             data.topic is string &&
+             data.grade is string &&
+             (data.timestamp is timestamp || data.timestamp == null);
+    }
+
+    function isValidQuota(data) {
+      return data.keys().hasAll(['count', 'lastUpdated']) &&
+             data.count is number &&
+             (data.lastUpdated is timestamp || data.lastUpdated == null);
+    }
+
     // AI Cache collection
     match /ai_cache/{cacheId} {
-      // For now, allow read/write if authenticated to enable the caching feature
-      // In a production app, you might want to restrict writes to a backend or specific roles
-      allow read, write: if true; 
+      allow read: if true; 
+      allow create: if isAuthenticated() && isValidCacheEntry(request.resource.data);
+      allow update, delete: if isAdmin();
     }
-    
+
+    // Generations collection
+    match /generations/{genId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && isValidGeneration(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    // Quotas collection
+    match /quotas/{date} {
+      allow read: if true; 
+      allow create, update: if isAuthenticated() && isValidQuota(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;

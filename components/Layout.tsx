@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { AppMode, GradeLevel } from '../types';
+import { useAuth, signInWithGoogle, logout } from '../services/firebase';
+import { LogIn, LogOut, User as UserIcon, ShieldCheck } from 'lucide-react';
 
 interface LayoutProps {
   currentMode: AppMode;
@@ -40,6 +42,8 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
     if (currentMode === AppMode.ANALYTICS) return 'ANALYTICS';
     return null;
   });
+
+  const { user, loading: authLoading } = useAuth();
 
   const toggleCategory = (cat: string) => {
     setOpenCategory(openCategory === cat ? null : cat);
@@ -538,45 +542,84 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
             </div>
 
             {/* АНАЛИТИКА */}
-            <div className="pt-2 border-t border-indigo-800/50 mt-4">
-              <button
-                onClick={() => toggleCategory('ANALYTICS')}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
-                  openCategory === 'ANALYTICS' 
-                    ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
-                    : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
-                }`}
-              >
-                <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
-                  <span>📊</span> Аналитика
-                </span>
-                <svg 
-                  className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'ANALYTICS' ? 'rotate-180' : ''}`} 
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            {user?.email === 'snezematematika@gmail.com' && (
+              <div className="pt-2 border-t border-indigo-800/50 mt-4">
+                <button
+                  onClick={() => toggleCategory('ANALYTICS')}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                    openCategory === 'ANALYTICS' 
+                      ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
+                      : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
+                  }`}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'ANALYTICS' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                <div className="flex flex-col gap-1 pl-4 pb-2">
-                  <button
-                    onClick={() => setMode(AppMode.ANALYTICS)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
-                      currentMode === AppMode.ANALYTICS 
-                        ? 'bg-slate-500/30 text-slate-100 shadow-lg border-slate-400' 
-                        : 'text-slate-400 hover:bg-indigo-800/40 hover:text-slate-100 border-transparent'
-                    }`}
+                  <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
+                    <span>📊</span> Аналитика
+                  </span>
+                  <svg 
+                    className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'ANALYTICS' ? 'rotate-180' : ''}`} 
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
                   >
-                    <span>📊</span> Статистички извештаи
-                  </button>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'ANALYTICS' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                  <div className="flex flex-col gap-1 pl-4 pb-2">
+                    <button
+                      onClick={() => setMode(AppMode.ANALYTICS)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                        currentMode === AppMode.ANALYTICS 
+                          ? 'bg-slate-500/30 text-slate-100 shadow-lg border-slate-400' 
+                          : 'text-slate-400 hover:bg-indigo-800/40 hover:text-slate-100 border-transparent'
+                      }`}
+                    >
+                      <span>📊</span> Статистички извештаи
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </nav>
 
-          {/* Footer Section - Copyright & Logout */}
-          <div className="p-4 mt-auto border-t border-indigo-800 bg-indigo-900/50 backdrop-blur-sm">
+          {/* Footer Section - User Profile & Logout */}
+          <div className="p-4 mt-auto border-t border-indigo-800 bg-indigo-950/50 backdrop-blur-sm">
+             {!authLoading && (
+               <div className="mb-4">
+                 {user ? (
+                   <div className="space-y-3">
+                     <div className="flex items-center gap-3 p-2 bg-indigo-800/50 rounded-xl border border-indigo-700/50">
+                       {user.photoURL ? (
+                         <img src={user.photoURL} alt={user.displayName || ''} className="w-10 h-10 rounded-full border-2 border-indigo-500 shadow-sm" referrerPolicy="no-referrer" />
+                       ) : (
+                         <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center border-2 border-indigo-500">
+                           <UserIcon className="w-5 h-5 text-indigo-100" />
+                         </div>
+                       )}
+                       <div className="flex-1 min-w-0">
+                         <p className="text-sm font-bold text-white truncate">{user.displayName || 'Корисник'}</p>
+                         <p className="text-[10px] text-indigo-300 truncate flex items-center gap-1">
+                           {user.email === 'snezematematika@gmail.com' && <ShieldCheck className="w-3 h-3 text-emerald-400" />}
+                           {user.email}
+                         </p>
+                       </div>
+                     </div>
+                     <button 
+                       onClick={() => logout()}
+                       className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-800/80 hover:bg-red-900/40 text-indigo-200 hover:text-red-200 rounded-lg text-xs font-bold transition-all border border-indigo-700 hover:border-red-800/50"
+                     >
+                       <LogOut className="w-3.5 h-3.5" /> Одјави се
+                     </button>
+                   </div>
+                 ) : (
+                   <button 
+                     onClick={() => signInWithGoogle()}
+                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-indigo-900 rounded-xl font-bold text-sm shadow-lg hover:bg-indigo-50 transition-all transform active:scale-95"
+                   >
+                     <LogIn className="w-4 h-4" /> Најави се со Google
+                   </button>
+                 )}
+               </div>
+             )}
              <div className="text-center">
                  <p className="text-[10px] uppercase tracking-widest text-indigo-400 font-semibold mb-1">АВТОР НА ПРОЕКТОТ</p>
                  <p className="text-base font-bold text-white mb-1">Снежана Златковска</p>
