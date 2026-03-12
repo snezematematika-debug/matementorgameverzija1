@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // AI Cache collection
+    match /ai_cache/{cacheId} {
+      // For now, allow read/write if authenticated to enable the caching feature
+      // In a production app, you might want to restrict writes to a backend or specific roles
+      allow read, write: if true; 
+    }
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "CacheEntry": {
+      "title": "AI Cache Entry",
+      "description": "Stored AI responses to avoid redundant generation",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of content (lesson, quiz, etc.)"
+        },
+        "params": {
+          "type": "object",
+          "description": "The parameters used for generation"
+        },
+        "response": {
+          "type": "object",
+          "description": "The cached AI response"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the entry was created"
+        }
+      },
+      "required": ["type", "params", "response", "timestamp"]
+    }
+  },
+  "firestore": {
+    "ai_cache/{cacheId}": {
+      "schema": "CacheEntry",
+      "description": "Collection for caching AI responses"
+    }
+  }
+}

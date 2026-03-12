@@ -3,6 +3,7 @@ import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { SYSTEM_PERSONA } from "../constants";
 import { QuizQuestion, GeneratedLesson, GeneratedScenario } from "../types";
 import { incrementDailyQuota, trackGeneration } from "./analyticsService";
+import { getCachedResponse, saveToCache } from "./cacheService";
 
 // Helper to safely get the API client
 const getAiClient = () => {
@@ -121,6 +122,9 @@ const parseJsonSafe = (text: string) => {
 };
 
 export const generateLessonContent = async (topic: string, grade: string, includeContext: boolean = false): Promise<GeneratedLesson> => {
+  const cached = await getCachedResponse('lesson', { topic, grade, includeContext });
+  if (cached) return cached;
+
   try {
     const ai = getAiClient();
     
@@ -196,7 +200,11 @@ export const generateLessonContent = async (topic: string, grade: string, includ
     const text = response.text;
     if (!text) throw new Error("No response content from AI");
     
-    return parseJsonSafe(text) as GeneratedLesson;
+    const result = parseJsonSafe(text) as GeneratedLesson;
+    if (result) {
+      await saveToCache('lesson', { topic, grade, includeContext }, result);
+    }
+    return result;
   } catch (error: any) {
     handleGeminiError(error);
     return null as any; // Unreachable due to throw
@@ -204,6 +212,9 @@ export const generateLessonContent = async (topic: string, grade: string, includ
 };
 
 export const generateLessonConnectivity = async (topic: string, grade: string): Promise<string> => {
+    const cached = await getCachedResponse('connectivity', { topic, grade });
+    if (cached) return cached;
+
     try {
       const ai = getAiClient();
       const prompt = `
@@ -273,7 +284,11 @@ export const generateLessonConnectivity = async (topic: string, grade: string): 
       if (!text) throw new Error("No response content");
       
       // Clean up markdown code blocks if AI adds them by mistake
-      return text.replace(/```html/g, '').replace(/```/g, '').trim();
+      const result = text.replace(/```html/g, '').replace(/```/g, '').trim();
+      if (result) {
+        await saveToCache('connectivity', { topic, grade }, result);
+      }
+      return result;
   
     } catch (error: any) {
       handleGeminiError(error);
@@ -282,6 +297,9 @@ export const generateLessonConnectivity = async (topic: string, grade: string): 
   };
 
 export const generateScenarioContent = async (topic: string): Promise<GeneratedScenario> => {
+    const cached = await getCachedResponse('scenario', { topic });
+    if (cached) return cached;
+
     try {
       const ai = getAiClient();
       
@@ -324,7 +342,11 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
       const text = response.text;
       if (!text) throw new Error("No response content");
       
-      return parseJsonSafe(text) as GeneratedScenario;
+      const result = parseJsonSafe(text) as GeneratedScenario;
+      if (result) {
+        await saveToCache('scenario', { topic }, result);
+      }
+      return result;
     } catch (error: any) {
       handleGeminiError(error);
       return null as any;
@@ -332,6 +354,9 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
   };
 
 export const generateQuizQuestions = async (topic: string, grade: string): Promise<{questions: QuizQuestion[], rubric: string}> => {
+  const cached = await getCachedResponse('quiz', { topic, grade });
+  if (cached) return cached;
+
   try {
     const ai = getAiClient();
 
@@ -415,8 +440,11 @@ export const generateQuizQuestions = async (topic: string, grade: string): Promi
 
     const text = response.text;
     if (!text) return { questions: [], rubric: '' };
-    const result = parseJsonSafe(text);
-    return result as {questions: QuizQuestion[], rubric: string};
+    const result = parseJsonSafe(text) as {questions: QuizQuestion[], rubric: string};
+    if (result) {
+      await saveToCache('quiz', { topic, grade }, result);
+    }
+    return result;
   } catch (error: any) {
     handleGeminiError(error);
     return { questions: [], rubric: '' };
@@ -424,6 +452,9 @@ export const generateQuizQuestions = async (topic: string, grade: string): Promi
 };
 
 export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFERENTIATED' | 'EXIT_TICKET' = 'STANDARD'): Promise<string> => {
+  const cached = await getCachedResponse('worksheet', { topic, type });
+  if (cached) return cached;
+
   try {
     const ai = getAiClient();
 
@@ -509,6 +540,10 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
     // Clean response before returning
     let clean = text.replace(/svg\s*<svg/gi, '<svg');
     clean = clean.replace(/svg\s*```/gi, '```');
+    
+    if (clean) {
+      await saveToCache('worksheet', { topic, type }, clean);
+    }
     return clean;
 
   } catch (error: any) {
@@ -518,6 +553,9 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
 };
 
 export const generateProject = async (topic: string): Promise<string> => {
+    const cached = await getCachedResponse('project', { topic });
+    if (cached) return cached;
+
     try {
       const ai = getAiClient();
   
@@ -568,6 +606,9 @@ export const generateProject = async (topic: string): Promise<string> => {
       const text = response.text;
       if (!text) throw new Error("No response content");
       
+      if (text) {
+        await saveToCache('project', { topic }, text);
+      }
       return text;
     } catch (error: any) {
       handleGeminiError(error);
@@ -576,6 +617,9 @@ export const generateProject = async (topic: string): Promise<string> => {
   };
 
 export const generateBoardPlan = async (topic: string, grade: string): Promise<string> => {
+    const cached = await getCachedResponse('board_plan', { topic, grade });
+    if (cached) return cached;
+
     try {
       const ai = getAiClient();
       
@@ -648,6 +692,9 @@ export const generateBoardPlan = async (topic: string, grade: string): Promise<s
       const text = response.text;
       if (!text) throw new Error("No response content");
       
+      if (text) {
+        await saveToCache('board_plan', { topic, grade }, text);
+      }
       return text;
     } catch (error: any) {
       handleGeminiError(error);
@@ -656,6 +703,9 @@ export const generateBoardPlan = async (topic: string, grade: string): Promise<s
   };
 
 export const generateCanvasAnimation = async (description: string): Promise<string> => {
+  const cached = await getCachedResponse('canvas_animation', { description });
+  if (cached) return cached;
+
   try {
     const ai = getAiClient();
 
@@ -693,6 +743,10 @@ export const generateCanvasAnimation = async (description: string): Promise<stri
     // Strip markdown code blocks if present
     let code = response.text || "";
     code = code.replace(/```javascript/g, "").replace(/```js/g, "").replace(/```/g, "");
+    
+    if (code) {
+      await saveToCache('canvas_animation', { description }, code);
+    }
     return code;
   } catch (error: any) {
     handleGeminiError(error);
@@ -701,6 +755,9 @@ export const generateCanvasAnimation = async (description: string): Promise<stri
 };
 
 export const generateAdvancedProblem = async (category: string, grade: string): Promise<{problem: string, solution: string}> => {
+  const cached = await getCachedResponse('advanced_problem', { category, grade });
+  if (cached) return cached;
+
   try {
     const ai = getAiClient();
     const prompt = `
@@ -762,7 +819,11 @@ export const generateAdvancedProblem = async (category: string, grade: string): 
     const text = response.text;
     if (!text) throw new Error("No response content from AI");
     
-    return parseJsonSafe(text) as {problem: string, solution: string};
+    const result = parseJsonSafe(text) as {problem: string, solution: string};
+    if (result) {
+      await saveToCache('advanced_problem', { category, grade }, result);
+    }
+    return result;
   } catch (error: any) {
     handleGeminiError(error);
     return {problem: "", solution: ""}; // unreachable
@@ -770,6 +831,9 @@ export const generateAdvancedProblem = async (category: string, grade: string): 
 };
 
 export const generateErrorDetectiveCase = async (topic: string, grade: string): Promise<any> => {
+  const cached = await getCachedResponse('error_detective', { topic, grade });
+  if (cached) return cached;
+
   try {
     const prompt = `Создади математички случај за „Детектив за грешки“ за ${grade} одделение. 
     Тема: ${topic}
@@ -826,7 +890,11 @@ export const generateErrorDetectiveCase = async (topic: string, grade: string): 
     const text = response.text;
     if (!text) throw new Error("No response content from AI");
     
-    return parseJsonSafe(text);
+    const result = parseJsonSafe(text);
+    if (result) {
+      await saveToCache('error_detective', { topic, grade }, result);
+    }
+    return result;
   } catch (error: any) {
     handleGeminiError(error);
     return null;
@@ -841,6 +909,9 @@ export const generateIEPPlan = async (params: {
   learningStyles: string[];
   interests: string;
 }): Promise<string> => {
+  const cached = await getCachedResponse('iep_plan', params);
+  if (cached) return cached;
+
   try {
     const ai = getAiClient();
     
@@ -893,6 +964,9 @@ export const generateIEPPlan = async (params: {
     const text = response.text;
     if (!text) throw new Error("No response content");
     
+    if (text) {
+      await saveToCache('iep_plan', params, text);
+    }
     return text;
   } catch (error: any) {
     handleGeminiError(error);
@@ -901,6 +975,9 @@ export const generateIEPPlan = async (params: {
 };
 
 export const generateTeacherTask = async (topic: string, grade: string): Promise<{problem: string, hint: string, solution: string}> => {
+  const cached = await getCachedResponse('teacher_task', { topic, grade });
+  if (cached) return cached;
+
   try {
     const ai = getAiClient();
     const prompt = `
@@ -935,7 +1012,11 @@ export const generateTeacherTask = async (topic: string, grade: string): Promise
     const text = response.text;
     if (!text) throw new Error("No response content");
     
-    return parseJsonSafe(text) as {problem: string, hint: string, solution: string};
+    const result = parseJsonSafe(text) as {problem: string, hint: string, solution: string};
+    if (result) {
+      await saveToCache('teacher_task', { topic, grade }, result);
+    }
+    return result;
   } catch (error: any) {
     handleGeminiError(error);
     return {problem: "", hint: "", solution: ""};
@@ -943,6 +1024,9 @@ export const generateTeacherTask = async (topic: string, grade: string): Promise
 };
 
 export const generateGameContent = async (topic: string, type: string, grade: string): Promise<any> => {
+  const cached = await getCachedResponse('game_content', { topic, type, grade });
+  if (cached) return cached;
+
   try {
     const ai = getAiClient();
     const prompt = `
@@ -1023,7 +1107,11 @@ export const generateGameContent = async (topic: string, type: string, grade: st
       model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
-    return parseJsonSafe(response.text);
+    const result = parseJsonSafe(response.text);
+    if (result) {
+      await saveToCache('game_content', { topic, type, grade }, result);
+    }
+    return result;
   } catch (error: any) {
     handleGeminiError(error);
     return null;
@@ -1031,6 +1119,9 @@ export const generateGameContent = async (topic: string, type: string, grade: st
 };
 
 export async function generateRemedialDecomposition(input: string, grade: string): Promise<any> {
+  const cached = await getCachedResponse('remedial_decomposition', { input, grade });
+  if (cached) return cached;
+
   try {
     const prompt = `Разложи ја следнава математичка задача/концепт на најмали можни чекори за ученик од ${grade} одделение кој има потешкотии со математика. 
     Користи едноставен јазик, визуелни описи и охрабрувачки тон.
@@ -1092,7 +1183,11 @@ export async function generateRemedialDecomposition(input: string, grade: string
       model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
-    return parseJsonSafe(response.text);
+    const result = parseJsonSafe(response.text);
+    if (result) {
+      await saveToCache('remedial_decomposition', { input, grade }, result);
+    }
+    return result;
   } catch (error: any) {
     handleGeminiError(error);
     return null;
