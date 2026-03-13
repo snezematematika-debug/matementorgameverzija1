@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AppMode, GradeLevel } from '../types';
 import { useAuth, signInWithGoogle, logout } from '../services/firebase';
-import { LogIn, LogOut, User as UserIcon, ShieldCheck } from 'lucide-react';
+import { LogIn, LogOut, User as UserIcon, ShieldCheck, Key } from 'lucide-react';
 
 interface LayoutProps {
   currentMode: AppMode;
@@ -612,14 +612,50 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                      >
                        <LogOut className="w-3.5 h-3.5" /> Одјави се
                      </button>
+
+                     {/* API Key Selection for AI Studio environment */}
+                     {typeof window !== 'undefined' && (window as any).aistudio && (
+                       <button 
+                         onClick={async () => {
+                           try {
+                             await (window as any).aistudio.openSelectKey();
+                           } catch (e) {
+                             console.error("Failed to open key selector:", e);
+                           }
+                         }}
+                         className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-200 rounded-lg text-[10px] font-bold transition-all border border-emerald-700/50 mt-2"
+                         title="Користи свој API клуч за да ги избегнеш лимитите"
+                       >
+                         <Key className="w-3 h-3" /> Користи свој API клуч
+                       </button>
+                     )}
                    </div>
                  ) : (
-                   <button 
-                     onClick={() => signInWithGoogle()}
-                     className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white text-indigo-900 rounded-lg font-bold text-xs shadow-md hover:bg-indigo-50 transition-all transform active:scale-95"
-                   >
-                     <LogIn className="w-3.5 h-3.5" /> Најави се со Google
-                   </button>
+                   <div className="space-y-2">
+                     <button 
+                       onClick={() => signInWithGoogle()}
+                       className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white text-indigo-900 rounded-lg font-bold text-xs shadow-md hover:bg-indigo-50 transition-all transform active:scale-95"
+                     >
+                       <LogIn className="w-3.5 h-3.5" /> Најави се со Google
+                     </button>
+
+                     {/* API Key Selection for AI Studio environment */}
+                     {typeof window !== 'undefined' && (window as any).aistudio && (
+                       <button 
+                         onClick={async () => {
+                           try {
+                             await (window as any).aistudio.openSelectKey();
+                           } catch (e) {
+                             console.error("Failed to open key selector:", e);
+                           }
+                         }}
+                         className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-200 rounded-lg text-[10px] font-bold transition-all border border-emerald-700/50"
+                         title="Користи свој API клуч за да ги избегнеш лимитите"
+                       >
+                         <Key className="w-3 h-3" /> Користи свој API клуч
+                       </button>
+                     )}
+                   </div>
                  )}
                </div>
              )}

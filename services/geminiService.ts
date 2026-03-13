@@ -6,30 +6,43 @@ import { incrementDailyQuota, trackGeneration } from "./analyticsService";
 import { getCachedResponse, saveToCache } from "./cacheService";
 
 // Helper to safely get the API client
-const getAiClient = () => {
+const getAiClient = async () => {
   let apiKey = '';
 
-  // Try all possible ways to get the API key in Vite/Vercel environments
+  // 1. Priority: Check if user has selected a key via AI Studio dialog
   try {
     // @ts-ignore
-    apiKey = (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || 
-             // @ts-ignore
-             (typeof process !== 'undefined' && process.env?.API_KEY) ||
-             // @ts-ignore
-             (typeof process !== 'undefined' && process.env?.VITE_API_KEY) ||
-             // @ts-ignore
-             import.meta.env?.VITE_API_KEY || 
-             // @ts-ignore
-             import.meta.env?.GEMINI_API_KEY ||
-             // @ts-ignore
-             import.meta.env?.API_KEY || '';
+    if (window.aistudio && await window.aistudio.hasSelectedApiKey()) {
+      // @ts-ignore
+      apiKey = process.env.API_KEY || '';
+    }
   } catch (e) {
-    // Fallback
+    console.warn("Error checking selected API key:", e);
+  }
+
+  // 2. Fallback: Check environment variables
+  if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
+    try {
+      // @ts-ignore
+      apiKey = (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || 
+               // @ts-ignore
+               (typeof process !== 'undefined' && process.env?.API_KEY) ||
+               // @ts-ignore
+               (typeof process !== 'undefined' && process.env?.VITE_API_KEY) ||
+               // @ts-ignore
+               import.meta.env?.VITE_API_KEY || 
+               // @ts-ignore
+               import.meta.env?.GEMINI_API_KEY ||
+               // @ts-ignore
+               import.meta.env?.API_KEY || '';
+    } catch (e) {
+      // Fallback
+    }
   }
 
   if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
     console.error("API_KEY is missing.");
-    throw new Error("Не е пронајден API Key. Ве молиме додадете 'GEMINI_API_KEY' во Vercel Environment Variables и направете Redeploy.");
+    throw new Error("API клучот не е пронајден. Ве молиме изберете свој клуч или контактирајте го администраторот.");
   }
 
   return new GoogleGenAI({ apiKey });
@@ -42,7 +55,9 @@ const handleGeminiError = (error: any): never => {
 
     // Check for Quota Exceeded (429)
     if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
-        throw new Error("⚠️ Надминат е дневниот лимит за бесплатни барања (Error 429). Google Gemini (Free Tier) има ограничувања. Ве молиме почекајте или обидете се утре.");
+        // @ts-ignore
+        const hasAistudio = typeof window !== 'undefined' && !!window.aistudio;
+        throw new Error(`⚠️ Надминат е дневниот лимит за бесплатни барања (Error 429). Google Gemini (Free Tier) има ограничувања. ${hasAistudio ? 'Ве молиме изберете свој API клуч преку копчето во менито за да продолжите без ограничувања.' : 'Ве молиме почекајте или обидете се утре.'}`);
     }
     
     // Check for Overloaded (503)
@@ -64,7 +79,7 @@ const handleGeminiError = (error: any): never => {
  */
 const callGeminiWithRetry = async (params: any, retries = 2): Promise<any> => {
   try {
-    const ai = getAiClient();
+    const ai = await getAiClient();
     return await ai.models.generateContent(params);
   } catch (error: any) {
     const msg = error?.message || "";
@@ -126,7 +141,7 @@ export const generateLessonContent = async (topic: string, grade: string, includ
   if (cached) return cached;
 
   try {
-    const ai = getAiClient();
+    const ai = await getAiClient();
     
     let contextInstruction = "";
     if (includeContext) {
@@ -216,7 +231,7 @@ export const generateLessonConnectivity = async (topic: string, grade: string): 
     if (cached) return cached;
 
     try {
-      const ai = getAiClient();
+      const ai = await getAiClient();
       const prompt = `
         ТИ СИ МЕТОДИЧКИ АСИСТЕНТ ЗА НАСТАВНИЦИ ПО МАТЕМАТИКА.
 
@@ -301,8 +316,6 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
     if (cached) return cached;
 
     try {
-      const ai = getAiClient();
-      
       const prompt = `
         Креирај детално Сценарио за час по математика на тема: "${topic}".
         Пополни ги полињата за да одговараат на официјалниот формат за подготовки.
@@ -358,8 +371,6 @@ export const generateQuizQuestions = async (topic: string, grade: string): Promi
   if (cached) return cached;
 
   try {
-    const ai = getAiClient();
-
     const prompt = `
       Генерирај 5 прашања за геометрија, тема: "${topic}" (${grade} одделение).
       Прашањата треба да бидат соодветни за возраста.
@@ -456,7 +467,7 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
   if (cached) return cached;
 
   try {
-    const ai = getAiClient();
+    const ai = await getAiClient();
 
     let structureInstruction = "";
 
@@ -557,7 +568,7 @@ export const generateProject = async (topic: string): Promise<string> => {
     if (cached) return cached;
 
     try {
-      const ai = getAiClient();
+      const ai = await getAiClient();
   
       const prompt = `
         You are a helpful teacher assistant. Generate the response STRICTLY IN MACEDONIAN LANGUAGE.
@@ -621,8 +632,6 @@ export const generateBoardPlan = async (topic: string, grade: string): Promise<s
     if (cached) return cached;
 
     try {
-      const ai = getAiClient();
-      
       const prompt = `
         ТИ СИ НАСТАВНИК ПО МАТЕМАТИКА КОЈ ПИШУВА ПЛАН НА ТАБЛА.
         
@@ -707,7 +716,7 @@ export const generateCanvasAnimation = async (description: string): Promise<stri
   if (cached) return cached;
 
   try {
-    const ai = getAiClient();
+    const ai = await getAiClient();
 
     const prompt = `
       Act as an expert Educational Math Visualizer.
@@ -759,7 +768,7 @@ export const generateAdvancedProblem = async (category: string, grade: string): 
   if (cached) return cached;
 
   try {
-    const ai = getAiClient();
+    const ai = await getAiClient();
     const prompt = `
       Генерирај една ТЕШКА натпреварувачка математичка задача за ученици од ${grade} одделение.
       Категорија: ${category}.
@@ -913,7 +922,7 @@ export const generateIEPPlan = async (params: {
   if (cached) return cached;
 
   try {
-    const ai = getAiClient();
+    const ai = await getAiClient();
     
     const prompt = `
       ТИ СИ ИСКУСЕН СПЕЦИЈАЛЕН ЕДУКАТОР И ДЕФЕКТОЛОГ ВО МАКЕДОНСКИОТ ОБРАЗОВЕН СИСТЕМ.
@@ -1032,7 +1041,7 @@ export const generateTeacherTask = async (topic: string, grade: string): Promise
   if (cached) return cached;
 
   try {
-    const ai = getAiClient();
+    const ai = await getAiClient();
     const prompt = `
       Генерирај интерактивна математичка задача за наставник, на тема: "${topic}" (${grade} одделение).
       
@@ -1081,7 +1090,7 @@ export const generateGameContent = async (topic: string, type: string, grade: st
   if (cached) return cached;
 
   try {
-    const ai = getAiClient();
+    const ai = await getAiClient();
     const prompt = `
       Генерирај содржина за математичка игра од типот "${type}" на тема "${topic}" за ${grade} одделение.
       
