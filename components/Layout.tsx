@@ -43,8 +43,8 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
     return null;
   });
 
-  const { user, loading: authLoading } = useAuth();
-  const isAdmin = user?.email === 'snezematematika@gmail.com';
+  const { user, loading: authLoading, userStatus } = useAuth();
+  const isAdmin = userStatus === 'admin';
 
   const toggleCategory = (cat: string) => {
     setOpenCategory(openCategory === cat ? null : cat);
@@ -601,11 +601,25 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                        <div className="flex-1 min-w-0">
                          <p className="text-sm font-bold text-white truncate">{user.displayName || 'Корисник'}</p>
                          <p className="text-[10px] text-indigo-300 truncate flex items-center gap-1">
-                           {user.email === 'snezematematika@gmail.com' && <ShieldCheck className="w-3 h-3 text-emerald-400" />}
+                           {isAdmin && <ShieldCheck className="w-3 h-3 text-emerald-400" />}
                            {user.email}
                          </p>
                        </div>
                      </div>
+
+                     {/* Статус пораки */}
+                     {userStatus === 'pending' && (
+                       <div className="bg-amber-900/40 border border-amber-600/50 rounded-lg p-2 text-center">
+                         <p className="text-amber-300 text-[10px] font-bold">⏳ Барањето е испратено</p>
+                         <p className="text-amber-400/80 text-[9px] mt-0.5">Администраторот ќе го одобри твојот пристап наскоро.</p>
+                       </div>
+                     )}
+                     {userStatus === 'rejected' && (
+                       <div className="bg-red-900/40 border border-red-600/50 rounded-lg p-2 text-center">
+                         <p className="text-red-300 text-[10px] font-bold">❌ Пристапот е одбиен</p>
+                         <p className="text-red-400/80 text-[9px] mt-0.5">Контактирај го администраторот за повеќе информации.</p>
+                       </div>
+                     )}
                      <button 
                        onClick={() => logout()}
                        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-800/80 hover:bg-red-900/40 text-indigo-200 hover:text-red-200 rounded-lg text-xs font-bold transition-all border border-indigo-700 hover:border-red-800/50"
@@ -632,7 +646,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                    </div>
                  ) : (
                    <div className="space-y-2">
-                     <button 
+                     <button
                        onClick={() => signInWithGoogle()}
                        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white text-indigo-900 rounded-lg font-bold text-xs shadow-md hover:bg-indigo-50 transition-all transform active:scale-95"
                      >

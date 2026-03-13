@@ -14,19 +14,23 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { 
-  getRecentGenerations, 
-  getWeeklyQuotas, 
-  getDailyUsage 
+import {
+  getRecentGenerations,
+  getWeeklyQuotas,
+  getDailyUsage
 } from '../services/analyticsService';
-import { 
-  LayoutDashboard, 
-  Activity, 
-  Clock, 
-  BarChart3, 
+import { getPendingTeachers, approveTeacher, rejectTeacher, PendingTeacher } from '../services/firebase';
+import {
+  LayoutDashboard,
+  Activity,
+  Clock,
+  BarChart3,
   AlertTriangle,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  UserCheck,
+  UserX,
+  Users
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -37,18 +41,36 @@ const AdminDashboard: React.FC = () => {
   const [weeklyQuotas, setWeeklyQuotas] = useState<any[]>([]);
   const [dailyUsage, setDailyUsage] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [pendingTeachers, setPendingTeachers] = useState<PendingTeacher[]>([]);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
-    const [recent, weekly, daily] = await Promise.all([
+    const [recent, weekly, daily, pending] = await Promise.all([
       getRecentGenerations(20),
       getWeeklyQuotas(),
-      getDailyUsage()
+      getDailyUsage(),
+      getPendingTeachers(),
     ]);
     setRecentGenerations(recent);
     setWeeklyQuotas(weekly);
     setDailyUsage(daily);
+    setPendingTeachers(pending);
     setLoading(false);
+  };
+
+  const handleApprove = async (uid: string) => {
+    setActionLoading(uid);
+    await approveTeacher(uid);
+    setPendingTeachers(prev => prev.filter(t => t.uid !== uid));
+    setActionLoading(null);
+  };
+
+  const handleReject = async (uid: string) => {
+    setActionLoading(uid);
+    await rejectTeacher(uid);
+    setPendingTeachers(prev => prev.filter(t => t.uid !== uid));
+    setActionLoading(null);
   };
 
   useEffect(() => {
@@ -94,6 +116,60 @@ const AdminDashboard: React.FC = () => {
             Освежи
           </button>
         </div>
+
+        {/* Pending Teachers */}
+        {pendingTeachers.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 bg-amber-50 border border-amber-200 rounded-2xl p-6 shadow-sm"
+          >
+            <h2 className="text-lg font-bold text-amber-800 flex items-center gap-2 mb-4">
+              <Users className="w-5 h-5" />
+              Барања за пристап ({pendingTeachers.length})
+            </h2>
+            <div className="space-y-3">
+              {pendingTeachers.map(t => (
+                <div key={t.uid} className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-amber-100 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    {t.photoURL ? (
+                      <img src={t.photoURL} alt={t.displayName} className="w-9 h-9 rounded-full border border-amber-200" referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-sm">
+                        {t.displayName.charAt(0)}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">{t.displayName}</p>
+                      <p className="text-xs text-slate-500">{t.email}</p>
+                      {t.registeredAt && (
+                        <p className="text-[10px] text-slate-400">
+                          {t.registeredAt.toLocaleDateString('mk-MK', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleApprove(t.uid)}
+                      disabled={actionLoading === t.uid}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                      <UserCheck className="w-3.5 h-3.5" /> Одобри
+                    </button>
+                    <button
+                      onClick={() => handleReject(t.uid)}
+                      disabled={actionLoading === t.uid}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                      <UserX className="w-3.5 h-3.5" /> Одбиј
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">

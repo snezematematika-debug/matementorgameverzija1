@@ -94,8 +94,15 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
+      // Корисникот може да го чита само своето, admin ги чита сите
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow write: if isAdmin();
+      // Self-registration: корисникот може да создаде само свој документ со статус "pending"
+      allow create: if isAuthenticated()
+        && request.auth.uid == userId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasAll(['email', 'displayName', 'status', 'registeredAt']);
+      // Само admin може да ажурира (одобри/одбие)
+      allow update, delete: if isAdmin();
     }
 
     // Default deny
