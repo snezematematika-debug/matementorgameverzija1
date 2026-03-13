@@ -13,8 +13,7 @@ import {
   Fingerprint,
   FileText
 } from 'lucide-react';
-import { generateErrorDetectiveCase } from '../services/geminiService';
-import { getContentPackage } from '../services/contentService';
+import { generateErrorDetectiveCase, getContentPackage } from '../services/geminiService';
 import Markdown from 'react-markdown';
 import { GradeLevel, LessonPackage } from '../types';
 

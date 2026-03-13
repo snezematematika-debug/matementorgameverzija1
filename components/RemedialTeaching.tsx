@@ -17,8 +17,7 @@ import {
   Info,
   AlertTriangle
 } from 'lucide-react';
-import { generateRemedialDecomposition } from '../services/geminiService';
-import { getContentPackage } from '../services/contentService';
+import { generateRemedialDecomposition, getContentPackage } from '../services/geminiService';
 import Markdown from 'react-markdown';
 import { GradeLevel, LessonPackage } from '../types';
 

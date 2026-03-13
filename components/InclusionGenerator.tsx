@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CURRICULUM, THEMES } from '../constants';
-import { getInclusionPlan } from '../services/contentService';
+import { generateIEPPlan } from '../services/geminiService';
 import { GradeLevel } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
@@ -122,7 +122,7 @@ const InclusionGenerator: React.FC<InclusionGeneratorProps> = ({ grade }) => {
       const adaptationLabel = ADAPTATION_LEVELS.find(a => a.id === selectedAdaptation)?.label || selectedAdaptation;
       const stylesLabels = LEARNING_STYLES.filter(s => selectedStyles.includes(s.id)).map(s => s.label);
 
-      const result = await getInclusionPlan({
+      const result = await generateIEPPlan({
         topic: selectedTopic,
         grade,
         disabilityType: disabilityLabel,

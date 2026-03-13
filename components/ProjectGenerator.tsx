@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PROJECT_THEMES, PROJECT_TOPICS } from '../projectTopics';
-import { getContentPackage } from '../services/contentService';
+import { getContentPackage } from '../services/geminiService';
 import { CurriculumTopic, GradeLevel, LessonPackage } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';

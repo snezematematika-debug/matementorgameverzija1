@@ -1,7 +1,7 @@
 
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { SYSTEM_PERSONA } from "../constants";
-import { QuizQuestion, GeneratedLesson, GeneratedScenario } from "../types";
+import { QuizQuestion, GeneratedLesson, GeneratedScenario, LessonPackage } from "../types";
 import { incrementDailyQuota, trackGeneration } from "./analyticsService";
 import { getCachedResponse, saveToCache } from "./cacheService";
 
@@ -971,6 +971,59 @@ export const generateIEPPlan = async (params: {
   } catch (error: any) {
     handleGeminiError(error);
     return "";
+  }
+};
+
+export const getContentPackage = async (grade: string, topic: string): Promise<LessonPackage> => {
+  const cached = await getCachedResponse('content_package', { grade, topic });
+  if (cached) return cached;
+
+  try {
+    const [
+      lesson,
+      quiz,
+      scenario,
+      boardPlan,
+      worksheet,
+      project,
+      connectivity,
+      inclusion,
+      errorDetective,
+      remedial
+    ] = await Promise.all([
+      generateLessonContent(topic, grade),
+      generateQuizQuestions(topic, grade),
+      generateScenarioContent(topic),
+      generateBoardPlan(topic, grade),
+      generateWorksheet(topic),
+      generateProject(topic),
+      generateLessonConnectivity(topic, grade),
+      generateIEPPlan({ topic, grade, disabilityType: 'general', adaptationLevel: 'standard', learningStyles: [], interests: '' }),
+      generateErrorDetectiveCase(topic, grade),
+      generateRemedialDecomposition(topic, grade)
+    ]);
+
+    const result: LessonPackage = {
+      grade,
+      topic,
+      lesson,
+      quiz,
+      problems: quiz.questions,
+      scenario,
+      boardPlan,
+      worksheet,
+      project,
+      connectivity,
+      remedial,
+      inclusion,
+      errorDetective
+    };
+
+    await saveToCache('content_package', { grade, topic }, result);
+    return result;
+  } catch (error: any) {
+    console.error("Error generating content package:", error);
+    throw error;
   }
 };
 

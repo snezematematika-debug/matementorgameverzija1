@@ -24,7 +24,7 @@ import {
 import { QRCodeCanvas } from 'qrcode.react';
 import { db } from '../services/firebase';
 import { ref, set, onValue, update, remove, get } from "firebase/database";
-import { getGameContent } from '../services/contentService';
+import { generateGameContent } from '../services/geminiService';
 import { GameState, GradeLevel } from '../types';
 import FormattedText from './FormattedText';
 
@@ -134,7 +134,7 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
     setLoading(true);
     setError(null);
     try {
-      const content = await getGameContent(grade, selectedTopic, 'BINGO');
+      const content = await generateGameContent(selectedTopic, grade, 'BINGO');
       if (!content || !content.questions) {
         throw new Error("Неуспешно генерирање на прашања. Ве молиме обидете се повторно.");
       }

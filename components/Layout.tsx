@@ -44,6 +44,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
   });
 
   const { user, loading: authLoading } = useAuth();
+  const isAdmin = user?.email === 'snezematematika@gmail.com';
 
   const toggleCategory = (cat: string) => {
     setOpenCategory(openCategory === cat ? null : cat);
@@ -542,10 +543,12 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
             </div>
 
             {/* АНАЛИТИКА */}
-            {user?.email === 'snezematematika@gmail.com' && (
+            {isAdmin && (
               <div className="pt-2 border-t border-indigo-800/50 mt-4">
                 <button
-                  onClick={() => toggleCategory('ANALYTICS')}
+                  onClick={() => {
+                    toggleCategory('ANALYTICS');
+                  }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
                     openCategory === 'ANALYTICS' 
                       ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
@@ -613,9 +616,9 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                  ) : (
                    <button 
                      onClick={() => signInWithGoogle()}
-                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-indigo-900 rounded-xl font-bold text-sm shadow-lg hover:bg-indigo-50 transition-all transform active:scale-95"
+                     className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white text-indigo-900 rounded-lg font-bold text-xs shadow-md hover:bg-indigo-50 transition-all transform active:scale-95"
                    >
-                     <LogIn className="w-4 h-4" /> Најави се со Google
+                     <LogIn className="w-3.5 h-3.5" /> Најави се со Google
                    </button>
                  )}
                </div>
