@@ -662,7 +662,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
              <div className="text-center">
                  <p className="text-[10px] uppercase tracking-widest text-indigo-400 font-semibold mb-1">АВТОР НА ПРОЕКТОТ</p>
                  <p className="text-base font-bold text-white mb-1">Снежана Златковска</p>
-                 <p className="text-[10px] text-indigo-300 font-mono">v1.0 • 2025</p>
+                 <p className="text-[10px] text-indigo-300 font-mono">v2.0 • 2026</p>
              </div>
           </div>
         </aside>
