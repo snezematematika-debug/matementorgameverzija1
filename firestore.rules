@@ -73,7 +73,7 @@ service cloud.firestore {
 
     // AI Cache collection
     match /ai_cache/{cacheId} {
-      allow read: if true; 
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isValidCacheEntry(request.resource.data);
       allow update, delete: if isAdmin();
     }

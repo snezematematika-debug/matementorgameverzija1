@@ -18,8 +18,11 @@ async function generateHash(text: string): Promise<string> {
   return hashHex;
 }
 
+const CACHE_TTL_DAYS = 30;
+
 /**
  * Checks if a response for the given prompt/parameters is already cached.
+ * Returns null if the cache entry is older than CACHE_TTL_DAYS days.
  */
 export const getCachedResponse = async (type: string, params: any): Promise<any | null> => {
   const key = await generateHash(JSON.stringify({ type, ...params }));
@@ -27,10 +30,20 @@ export const getCachedResponse = async (type: string, params: any): Promise<any 
   try {
     const cacheRef = doc(firestore, "ai_cache", key);
     const snap = await getDoc(cacheRef);
-    
+
     if (snap.exists()) {
+      const data = snap.data();
+      const timestamp = data.timestamp?.toDate?.();
+      if (timestamp) {
+        const ageMs = Date.now() - timestamp.getTime();
+        const ageDays = ageMs / (1000 * 60 * 60 * 24);
+        if (ageDays > CACHE_TTL_DAYS) {
+          console.log(`Cache expired (${Math.floor(ageDays)} days old) for ${type}:`, params);
+          return null;
+        }
+      }
       console.log(`Cache hit for ${type}:`, params);
-      return snap.data().response;
+      return data.response;
     }
     return null;
   } catch (error) {

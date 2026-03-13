@@ -44,16 +44,32 @@ interface Player {
 const AVATARS = ['🦊', '🐼', '🦁', '🐯', '🐨', '🐸', '🐙', '🦄'];
 const COLORS = ['bg-indigo-500', 'bg-pink-500', 'bg-emerald-500', 'bg-amber-500'];
 
-const BOARD_SIZE = 5;
-const TOTAL_CELLS = BOARD_SIZE * BOARD_SIZE;
+const BOARD_COLS = 8;
+const BOARD_ROWS = 8;
+const TOTAL_CELLS = BOARD_COLS * BOARD_ROWS;
 
-// Path from top-right (4) to bottom-left (20) in a 5x5 grid
+// Winding path for 8x8 grid
 const PATH = [
-  4, 3, 2, 1, 0,
-  5, 6, 7, 8, 9,
-  14, 13, 12, 11, 10,
-  15, 16, 17, 18, 19,
-  24, 23, 22, 21, 20
+  0, 1, 2, 3, 4, 5, 6, 7,
+  15, 14, 13, 12, 11, 10, 9, 8,
+  16, 17, 18, 19, 20, 21, 22, 23,
+  31, 30, 29, 28, 27, 26, 25, 24,
+  32, 33, 34, 35, 36, 37, 38, 39,
+  47, 46, 45, 44, 43, 42, 41, 40,
+  48, 49, 50, 51, 52, 53, 54, 55,
+  63, 62, 61, 60, 59, 58, 57, 56
+];
+
+const PATH_COLORS = [
+  'bg-rose-100 border-rose-300 text-rose-700',
+  'bg-sky-100 border-sky-300 text-sky-700',
+  'bg-emerald-100 border-emerald-300 text-emerald-700',
+  'bg-amber-100 border-amber-300 text-amber-700',
+  'bg-violet-100 border-violet-300 text-violet-700',
+  'bg-fuchsia-100 border-fuchsia-300 text-fuchsia-700',
+  'bg-orange-100 border-orange-300 text-orange-700',
+  'bg-cyan-100 border-cyan-300 text-cyan-700',
+  'bg-lime-100 border-lime-300 text-lime-700',
 ];
 
 const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }) => {
@@ -333,7 +349,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
     sessionStorage.removeItem('mathpath_pin');
   };
 
-  if (isLoading) return <Loading message="Се подготвува патеката..." />;
+  if (isLoading) return <Loading message="Се подготвува трката..." />;
 
   // --- RENDER HELPERS ---
 
@@ -342,10 +358,10 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
       <div className="max-w-4xl mx-auto p-6">
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-600 text-white rounded-3xl mb-6 shadow-xl shadow-emerald-200">
-            <Flag className="w-10 h-10" />
+            <Trophy className="w-10 h-10" />
           </div>
-          <h1 className="text-5xl font-black text-emerald-900 tracking-tight mb-4">Мате - Пат! 🏁</h1>
-          <p className="text-slate-500 text-lg font-medium">Тркај се со твојот другар низ математичките предизвици.</p>
+          <h1 className="text-5xl font-black text-emerald-900 tracking-tight mb-4">Мате - Трка! 🏁</h1>
+          <p className="text-slate-500 text-lg font-medium">Тркај се со твоите другари низ математичките предизвици до целта.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -356,7 +372,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
             <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Users className="w-8 h-8 text-emerald-600" />
             </div>
-            <h2 className="text-2xl font-bold text-emerald-900 mb-2">Креирај Пат</h2>
+            <h2 className="text-2xl font-bold text-emerald-900 mb-2">Креирај Трка</h2>
             <p className="text-slate-500 font-medium">Започни нова трка за целата училница.</p>
           </button>
 
@@ -385,12 +401,12 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
     return (
       <div className="max-w-2xl mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100">
         <h2 className="text-3xl font-black text-emerald-900 mb-8 flex items-center gap-3">
-          <Zap className="text-amber-500" /> Поставки за Мате-Пат
+          <Zap className="text-amber-500" /> Поставки за Мате-Трка
         </h2>
         
         <div className="space-y-8">
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Тема за Пат</label>
+            <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Тема за Трка</label>
             <input
               type="text"
               value={topic}
@@ -406,7 +422,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
             className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-emerald-200 hover:bg-emerald-700 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
           >
             {isLoading ? <Loader2 className="animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
-            ГЕНЕРИРАЈ ПАТ
+            ГЕНЕРИРАЈ ТРКА
           </button>
 
           {error && (
@@ -430,7 +446,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
 
     return (
       <div className="max-w-md mx-auto bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 text-center">
-        <h2 className="text-4xl font-black text-emerald-900 mb-8">Мате-Пат! 🎲</h2>
+        <h2 className="text-4xl font-black text-emerald-900 mb-8">Мате-Трка! 🎲</h2>
         
         <div className="space-y-6">
           {hasUrlPin ? (
@@ -561,7 +577,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               </button>
             )}
             <div>
-              <h1 className="text-2xl font-black text-emerald-950">Мате - Пат</h1>
+              <h1 className="text-2xl font-black text-emerald-950">Мате - Трка</h1>
               <p className="text-slate-500 font-medium">Тема: {gameState.topic}</p>
             </div>
           </div>
@@ -596,28 +612,29 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Board */}
-          <div className="lg:col-span-2 bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100">
-            <div className="grid grid-cols-5 gap-3 aspect-square">
+          <div className="lg:col-span-2 bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100 overflow-x-auto">
+            <div className="grid grid-cols-8 gap-2 min-w-[700px]">
               {Array.from({ length: TOTAL_CELLS }).map((_, idx) => {
                 const pathIndex = PATH.indexOf(idx);
                 const isPath = pathIndex !== -1;
-                const isEntry = idx === 4;
-                const isExit = idx === 20;
+                const isEntry = pathIndex === 0;
+                const isExit = pathIndex === PATH.length - 1;
+                const cellColor = isPath ? PATH_COLORS[pathIndex % PATH_COLORS.length] : 'bg-slate-50 opacity-10';
                 
                 return (
                   <div 
                     key={idx}
-                    className={`relative rounded-[1.5rem] flex items-center justify-center border-2 transition-all duration-300 ${
+                    className={`relative aspect-[4/3] rounded-xl flex items-center justify-center border-2 transition-all duration-300 ${
                       isPath 
-                        ? 'bg-white border-emerald-200 shadow-sm hover:border-emerald-400' 
-                        : 'bg-slate-50 border-transparent opacity-10'
-                    } ${isEntry ? 'bg-emerald-50 border-emerald-500 ring-4 ring-emerald-100/50' : ''} ${isExit ? 'bg-amber-50 border-amber-500 ring-4 ring-amber-100/50' : ''}`}
+                        ? `${cellColor} shadow-sm hover:brightness-95` 
+                        : 'border-transparent'
+                    } ${isEntry ? 'ring-4 ring-emerald-400 ring-offset-2' : ''} ${isExit ? 'ring-4 ring-amber-400 ring-offset-2' : ''}`}
                   >
-                    {isEntry && <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-sm">Влез</span>}
-                    {isExit && <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-sm">Излез</span>}
+                    {isEntry && <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-sm z-10">СТАРТ</span>}
+                    {isExit && <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-sm z-10">ЦЕЛ</span>}
                     
                     {isPath && (
-                      <span className="absolute top-2 left-2 text-emerald-200 font-black text-[10px]">{pathIndex + 1}</span>
+                      <span className="absolute top-1 left-1 text-slate-400 font-black text-[10px] opacity-50">{pathIndex + 1}</span>
                     )}
 
                     {/* Players */}
@@ -628,10 +645,10 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
                           layoutId={`player-${p.id}`}
                           className="relative flex flex-col items-center group"
                         >
-                          <span className="absolute -top-8 bg-white/90 backdrop-blur px-2 py-0.5 rounded-lg text-[10px] font-black shadow-sm border border-slate-100 whitespace-nowrap z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          <span className="absolute -top-8 bg-white/90 backdrop-blur px-2 py-0.5 rounded-lg text-[10px] font-black shadow-sm border border-slate-100 whitespace-nowrap z-20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                             {p.name}
                           </span>
-                          <span className="text-2xl sm:text-3xl drop-shadow-lg filter cursor-help">
+                          <span className="text-2xl sm:text-3xl drop-shadow-md filter cursor-help">
                             {p.avatar}
                           </span>
                         </motion.div>

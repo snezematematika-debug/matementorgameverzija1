@@ -1,43 +1,41 @@
 
 import { GoogleGenAI, Type, Schema } from "@google/genai";
+
+// AI Studio browser extension типови
+declare global {
+  interface Window {
+    aistudio?: {
+      hasSelectedApiKey: () => Promise<boolean>;
+    };
+  }
+}
 import { SYSTEM_PERSONA } from "../constants";
 import { QuizQuestion, GeneratedLesson, GeneratedScenario, LessonPackage } from "../types";
 import { incrementDailyQuota, trackGeneration } from "./analyticsService";
 import { getCachedResponse, saveToCache } from "./cacheService";
 
-// Helper to safely get the API client
-const getAiClient = async () => {
+// Resolve the API key from all possible sources
+const resolveApiKey = async (): Promise<string> => {
   let apiKey = '';
 
-  // 1. Priority: Check if user has selected a key via AI Studio dialog
+  // 1. Priority: AI Studio selected key
   try {
-    // @ts-ignore
     if (window.aistudio && await window.aistudio.hasSelectedApiKey()) {
-      // @ts-ignore
-      apiKey = process.env.API_KEY || '';
+      apiKey = (process.env as Record<string, string>).API_KEY || '';
     }
   } catch (e) {
     console.warn("Error checking selected API key:", e);
   }
 
-  // 2. Fallback: Check environment variables
+  // 2. Fallback: environment variables
   if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
-    try {
-      // @ts-ignore
-      apiKey = (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || 
-               // @ts-ignore
-               (typeof process !== 'undefined' && process.env?.API_KEY) ||
-               // @ts-ignore
-               (typeof process !== 'undefined' && process.env?.VITE_API_KEY) ||
-               // @ts-ignore
-               import.meta.env?.VITE_API_KEY || 
-               // @ts-ignore
-               import.meta.env?.GEMINI_API_KEY ||
-               // @ts-ignore
-               import.meta.env?.API_KEY || '';
-    } catch (e) {
-      // Fallback
-    }
+    const env = import.meta.env as Record<string, string>;
+    apiKey =
+      (typeof process !== 'undefined' && (process.env?.GEMINI_API_KEY || process.env?.API_KEY || process.env?.VITE_API_KEY)) ||
+      env.VITE_API_KEY ||
+      env.GEMINI_API_KEY ||
+      env.API_KEY ||
+      '';
   }
 
   if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
@@ -45,7 +43,20 @@ const getAiClient = async () => {
     throw new Error("API клучот не е пронајден. Ве молиме изберете свој клуч или контактирајте го администраторот.");
   }
 
-  return new GoogleGenAI({ apiKey });
+  return apiKey;
+};
+
+// Singleton — еден client за целиот живот на апликацијата
+let _cachedClient: { key: string; client: GoogleGenAI } | null = null;
+
+const getAiClient = async (): Promise<GoogleGenAI> => {
+  const apiKey = await resolveApiKey();
+  if (_cachedClient && _cachedClient.key === apiKey) {
+    return _cachedClient.client;
+  }
+  const client = new GoogleGenAI({ apiKey });
+  _cachedClient = { key: apiKey, client };
+  return client;
 };
 
 // --- Error Handling Helper ---
@@ -55,7 +66,6 @@ const handleGeminiError = (error: any): never => {
 
     // Check for Quota Exceeded (429)
     if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
-        // @ts-ignore
         const hasAistudio = typeof window !== 'undefined' && !!window.aistudio;
         throw new Error(`⚠️ Надминат е дневниот лимит за бесплатни барања (Error 429). Google Gemini (Free Tier) има ограничувања. ${hasAistudio ? 'Ве молиме изберете свој API клуч преку копчето во менито за да продолжите без ограничувања.' : 'Ве молиме почекајте или обидете се утре.'}`);
     }
@@ -111,7 +121,7 @@ const MATH_INSTRUCTION = `
 `;
 
 // Helper function to handle JSON parsing more robustly
-const parseJsonSafe = (text: string) => {
+export const parseJsonSafe = (text: string) => {
     if (!text) return null;
 
     // 0. Pre-clean common AI artifacts
