@@ -176,7 +176,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
     setIsLoading(true);
     setError(null);
     try {
-      const content = await generateGameContent(topic, grade, 'BOARD_GAME');
+      const content = await generateGameContent(topic, 'BOARD_GAME', grade);
       const pin = generatePin();
       
       const newGameState = {

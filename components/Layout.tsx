@@ -470,7 +470,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                         : 'text-emerald-200/80 hover:bg-indigo-800/40 hover:text-emerald-100 border-transparent'
                     }`}
                   >
-                    <span>🏁</span> Мате - Пат
+                    <span>🏁</span> Мате-Трка
                   </button>
                 </div>
               </div>

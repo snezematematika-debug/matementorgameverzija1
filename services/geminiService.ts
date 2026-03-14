@@ -1069,11 +1069,11 @@ export const generateGameContent = async (topic: string, type: string, grade: st
       
       СТРОГИ ПРАВИЛА ЗА JSON СТРУКТУРАТА (Врати само JSON):
       
-      Ако типот е "BINGO":
+      Ако типот е "BOARD_GAME" или "BINGO":
       {
         "questions": [
           {"question": "Колку е 5+5?", "answer": "10"},
-          ... (вкупно 12-15 вакви објекти)
+          ... (вкупно 15-20 вакви објекти за BOARD_GAME)
         ]
       }
 
@@ -1130,6 +1130,58 @@ export const generateGameContent = async (topic: string, type: string, grade: st
       config: {
         systemInstruction: SYSTEM_PERSONA,
         responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            questions: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  question: { type: Type.STRING },
+                  answer: { type: Type.STRING },
+                  options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  correctAnswerIndex: { type: Type.NUMBER },
+                  explanation: { type: Type.STRING }
+                },
+                required: ["question", "answer"]
+              }
+            },
+            cards: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  question: { type: Type.STRING },
+                  answer: { type: Type.STRING }
+                },
+                required: ["question", "answer"]
+              }
+            },
+            riddles: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  question: { type: Type.STRING },
+                  answer: { type: Type.STRING }
+                },
+                required: ["question", "answer"]
+              }
+            },
+            tasks: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  question: { type: Type.STRING },
+                  answer: { type: Type.STRING }
+                },
+                required: ["question", "answer"]
+              }
+            }
+          }
+        }
       }
     });
 
