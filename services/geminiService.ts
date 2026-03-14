@@ -34,9 +34,8 @@ function checkRateLimit(): void {
   _requestTimestamps.push(now);
 }
 
-// Модел — смени го тука ако треба да се надгради
-// gemini-2.0-flash: 1500 барања/ден (Free Tier) наспроти 20/ден на gemini-3-flash-preview
-const GEMINI_MODEL = 'gemini-2.0-flash';
+// Модел — gemini-1.5-flash: гарантирани 1500 req/ден на Free Tier
+const GEMINI_MODEL = 'gemini-1.5-flash';
 
 // Resolve the API key from all possible sources
 const resolveApiKey = async (): Promise<string> => {
