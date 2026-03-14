@@ -113,13 +113,18 @@ export const getRecentGenerations = async (count: number = 10) => {
  */
 export const getWeeklyQuotas = async () => {
   try {
-    const q = query(
-      collection(firestore, "quotas"),
-      orderBy("__name__", "desc"),
-      limit(7)
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ date: d.id, count: d.data().count })).reverse();
+    // Fetch all quotas and sort in memory to avoid index requirements for small collections
+    const snap = await getDocs(collection(firestore, "quotas"));
+    const allQuotas = snap.docs.map(d => ({ 
+      date: d.id, 
+      count: d.data().count || 0 
+    }));
+    
+    // Sort by date descending, take last 7, then reverse back to chronological order
+    return allQuotas
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 7)
+      .reverse();
   } catch (error) {
     console.error("Error fetching weekly quotas:", error);
     return [];

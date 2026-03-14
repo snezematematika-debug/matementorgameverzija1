@@ -43,8 +43,8 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
     return null;
   });
 
-  const { user, loading: authLoading, userStatus } = useAuth();
-  const isAdmin = userStatus === 'admin';
+  const { user, loading: authLoading } = useAuth();
+  const isAdmin = user?.email === 'snezematematika@gmail.com';
 
   const toggleCategory = (cat: string) => {
     setOpenCategory(openCategory === cat ? null : cat);
@@ -601,74 +601,26 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                        <div className="flex-1 min-w-0">
                          <p className="text-sm font-bold text-white truncate">{user.displayName || 'Корисник'}</p>
                          <p className="text-[10px] text-indigo-300 truncate flex items-center gap-1">
-                           {isAdmin && <ShieldCheck className="w-3 h-3 text-emerald-400" />}
+                           {user.email === 'snezematematika@gmail.com' && <ShieldCheck className="w-3 h-3 text-emerald-400" />}
                            {user.email}
                          </p>
                        </div>
                      </div>
-
-                     {/* Статус пораки */}
-                     {userStatus === 'pending' && (
-                       <div className="bg-amber-900/40 border border-amber-600/50 rounded-lg p-2 text-center">
-                         <p className="text-amber-300 text-[10px] font-bold">⏳ Барањето е испратено</p>
-                         <p className="text-amber-400/80 text-[9px] mt-0.5">Администраторот ќе го одобри твојот пристап наскоро.</p>
-                       </div>
-                     )}
-                     {userStatus === 'rejected' && (
-                       <div className="bg-red-900/40 border border-red-600/50 rounded-lg p-2 text-center">
-                         <p className="text-red-300 text-[10px] font-bold">❌ Пристапот е одбиен</p>
-                         <p className="text-red-400/80 text-[9px] mt-0.5">Контактирај го администраторот за повеќе информации.</p>
-                       </div>
-                     )}
                      <button 
                        onClick={() => logout()}
                        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-800/80 hover:bg-red-900/40 text-indigo-200 hover:text-red-200 rounded-lg text-xs font-bold transition-all border border-indigo-700 hover:border-red-800/50"
                      >
                        <LogOut className="w-3.5 h-3.5" /> Одјави се
                      </button>
-
-                     {/* API Key Selection for AI Studio environment */}
-                     {typeof window !== 'undefined' && (window as any).aistudio && (
-                       <button 
-                         onClick={async () => {
-                           try {
-                             await (window as any).aistudio.openSelectKey();
-                           } catch (e) {
-                             console.error("Failed to open key selector:", e);
-                           }
-                         }}
-                         className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-200 rounded-lg text-[10px] font-bold transition-all border border-emerald-700/50 mt-2"
-                         title="Користи свој API клуч за да ги избегнеш лимитите"
-                       >
-                         <Key className="w-3 h-3" /> Користи свој API клуч
-                       </button>
-                     )}
                    </div>
                  ) : (
                    <div className="space-y-2">
-                     <button
+                     <button 
                        onClick={() => signInWithGoogle()}
                        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white text-indigo-900 rounded-lg font-bold text-xs shadow-md hover:bg-indigo-50 transition-all transform active:scale-95"
                      >
                        <LogIn className="w-3.5 h-3.5" /> Најави се со Google
                      </button>
-
-                     {/* API Key Selection for AI Studio environment */}
-                     {typeof window !== 'undefined' && (window as any).aistudio && (
-                       <button 
-                         onClick={async () => {
-                           try {
-                             await (window as any).aistudio.openSelectKey();
-                           } catch (e) {
-                             console.error("Failed to open key selector:", e);
-                           }
-                         }}
-                         className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-200 rounded-lg text-[10px] font-bold transition-all border border-emerald-700/50"
-                         title="Користи свој API клуч за да ги избегнеш лимитите"
-                       >
-                         <Key className="w-3 h-3" /> Користи свој API клуч
-                       </button>
-                     )}
                    </div>
                  )}
                </div>
@@ -676,7 +628,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
              <div className="text-center">
                  <p className="text-[10px] uppercase tracking-widest text-indigo-400 font-semibold mb-1">АВТОР НА ПРОЕКТОТ</p>
                  <p className="text-base font-bold text-white mb-1">Снежана Златковска</p>
-                 <p className="text-[10px] text-indigo-300 font-mono">v2.0 • 2026</p>
+                 <p className="text-[10px] text-indigo-300 font-mono">v1.0 • 2025</p>
              </div>
           </div>
         </aside>

@@ -46,7 +46,7 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() &&
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "snezematematika@gmail.com" && request.auth.token.email_verified == true));
+          ((request.auth.token.email == "snezematematika@gmail.com" || request.auth.token.email == "snezezlatkov@gmail.com") && request.auth.token.email_verified == true));
     }
 
     function isValidCacheEntry(data) {
@@ -73,7 +73,7 @@ service cloud.firestore {
 
     // AI Cache collection
     match /ai_cache/{cacheId} {
-      allow read: if isAuthenticated();
+      allow read: if true; 
       allow create: if isAuthenticated() && isValidCacheEntry(request.resource.data);
       allow update, delete: if isAdmin();
     }
@@ -94,15 +94,8 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
-      // Корисникот може да го чита само своето, admin ги чита сите
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      // Self-registration: корисникот може да создаде само свој документ со статус "pending"
-      allow create: if isAuthenticated()
-        && request.auth.uid == userId
-        && request.resource.data.status == 'pending'
-        && request.resource.data.keys().hasAll(['email', 'displayName', 'status', 'registeredAt']);
-      // Само admin може да ажурира (одобри/одбие)
-      allow update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     // Default deny

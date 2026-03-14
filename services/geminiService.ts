@@ -1,94 +1,26 @@
 
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-
-// AI Studio browser extension типови
-declare global {
-  interface Window {
-    aistudio?: {
-      hasSelectedApiKey: () => Promise<boolean>;
-    };
-  }
-}
 import { SYSTEM_PERSONA } from "../constants";
 import { QuizQuestion, GeneratedLesson, GeneratedScenario, LessonPackage } from "../types";
 import { incrementDailyQuota, trackGeneration } from "./analyticsService";
-import { getCachedResponse, saveToCache, deduplicatedFetch } from "./cacheService";
+import { getCachedResponse, saveToCache } from "./cacheService";
 
-// ─── Client-side Rate Limiter ──────────────────────────────────────────────────
-// Gemini Free Tier: 15 req/min. Ние лимитираме на 10/min за да имаме буфер.
-const _requestTimestamps: number[] = [];
-const RATE_LIMIT_PER_MINUTE = 10;
-
-function checkRateLimit(): void {
-  const now = Date.now();
-  const oneMinuteAgo = now - 60_000;
-  // Отстрани записи постари од 1 минута
-  while (_requestTimestamps.length > 0 && _requestTimestamps[0] < oneMinuteAgo) {
-    _requestTimestamps.shift();
-  }
-  if (_requestTimestamps.length >= RATE_LIMIT_PER_MINUTE) {
-    const waitMs = _requestTimestamps[0] + 60_000 - now;
-    const waitSec = Math.ceil(waitMs / 1000);
-    throw new Error(`⏳ Многу брзи барања. Почекај ${waitSec} секунди пред следното генерирање.`);
-  }
-  _requestTimestamps.push(now);
-}
-
-// ─── Model Rotation ────────────────────────────────────────────────────────────
-// Тестирано 14 Март 2026 — редоследот е по достапна квота на Free Tier
-const GEMINI_MODELS = [
-  'gemini-3.1-flash-lite-preview', // ~1000 req/ден — примарен
-  'gemini-3-flash-preview',        // ~500 req/ден  — резервен 1
-  'gemini-2.5-flash',              // ~250 req/ден  — резервен 2
-];
-let _currentModelIndex = 0;
-const getCurrentModel = () => GEMINI_MODELS[_currentModelIndex];
-// Само за компатибилност на постоечките call-сајтови (се override-ува во callGeminiWithRetry)
-const GEMINI_MODEL = GEMINI_MODELS[0];
-
-// Resolve the API key from all possible sources
-const resolveApiKey = async (): Promise<string> => {
-  let apiKey = '';
-
-  // 1. Priority: AI Studio selected key
-  try {
-    if (window.aistudio && await window.aistudio.hasSelectedApiKey()) {
-      apiKey = (process.env as Record<string, string>).API_KEY || '';
-    }
-  } catch (e) {
-    console.warn("Error checking selected API key:", e);
-  }
-
-  // 2. Fallback: environment variables
-  if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
-    const env = import.meta.env as Record<string, string>;
-    apiKey =
-      (typeof process !== 'undefined' && (process.env?.GEMINI_API_KEY || process.env?.API_KEY || process.env?.VITE_API_KEY)) ||
-      env.VITE_API_KEY ||
-      env.GEMINI_API_KEY ||
-      env.API_KEY ||
-      '';
-  }
+// Helper to safely get the API client
+const getAiClient = async () => {
+  // Use the platform-provided GEMINI_API_KEY from the environment
+  const apiKey = (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || 
+                 (typeof process !== 'undefined' && process.env?.API_KEY) ||
+                 (typeof process !== 'undefined' && process.env?.VITE_API_KEY) ||
+                 import.meta.env?.VITE_API_KEY || 
+                 import.meta.env?.GEMINI_API_KEY ||
+                 import.meta.env?.API_KEY || '';
 
   if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
     console.error("API_KEY is missing.");
-    throw new Error("API клучот не е пронајден. Ве молиме изберете свој клуч или контактирајте го администраторот.");
+    throw new Error("Техничка грешка: API клучот не е пронајден во околината.");
   }
 
-  return apiKey;
-};
-
-// Singleton — еден client за целиот живот на апликацијата
-let _cachedClient: { key: string; client: GoogleGenAI } | null = null;
-
-const getAiClient = async (): Promise<GoogleGenAI> => {
-  const apiKey = await resolveApiKey();
-  if (_cachedClient && _cachedClient.key === apiKey) {
-    return _cachedClient.client;
-  }
-  const client = new GoogleGenAI({ apiKey });
-  _cachedClient = { key: apiKey, client };
-  return client;
+  return new GoogleGenAI({ apiKey });
 };
 
 // --- Error Handling Helper ---
@@ -98,8 +30,7 @@ const handleGeminiError = (error: any): never => {
 
     // Check for Quota Exceeded (429)
     if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
-        const hasAistudio = typeof window !== 'undefined' && !!window.aistudio;
-        throw new Error(`⚠️ Надминат е дневниот лимит за бесплатни барања (Error 429). Google Gemini (Free Tier) има ограничувања. ${hasAistudio ? 'Ве молиме изберете свој API клуч преку копчето во менито за да продолжите без ограничувања.' : 'Ве молиме почекајте или обидете се утре.'}`);
+        throw new Error("⚠️ Надминат е дневниот лимит за бесплатни барања (Error 429). Ве молиме почекајте или обидете се подоцна.");
     }
     
     // Check for Overloaded (503)
@@ -117,30 +48,18 @@ const handleGeminiError = (error: any): never => {
 };
 
 /**
- * Helper to call Gemini with automatic retry (503) and model rotation (429)
+ * Helper to call Gemini with automatic retry for 503 errors
  */
 const callGeminiWithRetry = async (params: any, retries = 2): Promise<any> => {
-  checkRateLimit(); // фрли ако корисникот генерира премногу брзо
   try {
     const ai = await getAiClient();
-    // Секогаш го инјектира тековниот модел (ротира при 429)
-    return await ai.models.generateContent({ ...params, model: getCurrentModel() });
+    return await ai.models.generateContent(params);
   } catch (error: any) {
     const msg = error?.message || "";
-    // 503 — сервер преоптоварен, почекај и обиди се повторно
     if ((msg.includes("503") || msg.includes("Overloaded")) && retries > 0) {
       console.log(`Server overloaded, retrying... (${retries} attempts left)`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
       return callGeminiWithRetry(params, retries - 1);
-    }
-    // 429 или 404 — квота исцрпена или модел недостапен, пробај следен
-    if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota") ||
-        msg.includes("404") || msg.includes("NOT_FOUND") || msg.includes("not found")) {
-      if (_currentModelIndex < GEMINI_MODELS.length - 1) {
-        console.warn(`⚠️ ${getCurrentModel()} недостапен (${msg.includes("404") ? "404" : "429"}), се ротира на следниот модел...`);
-        _currentModelIndex++;
-        return callGeminiWithRetry(params, retries);
-      }
     }
     throw error;
   }
@@ -165,7 +84,7 @@ const MATH_INSTRUCTION = `
 `;
 
 // Helper function to handle JSON parsing more robustly
-export const parseJsonSafe = (text: string) => {
+const parseJsonSafe = (text: string) => {
     if (!text) return null;
 
     // 0. Pre-clean common AI artifacts
@@ -249,7 +168,7 @@ export const generateLessonContent = async (topic: string, grade: string, includ
     `;
 
     const response = await callGeminiWithRetry({
-      model: GEMINI_MODEL,
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_PERSONA,
@@ -263,7 +182,7 @@ export const generateLessonContent = async (topic: string, grade: string, includ
       contentType: 'lesson',
       topic,
       grade,
-      model: GEMINI_MODEL
+      model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
@@ -342,7 +261,7 @@ export const generateLessonConnectivity = async (topic: string, grade: string): 
       `;
   
       const response = await callGeminiWithRetry({
-        model: GEMINI_MODEL,
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
           systemInstruction: "You are a professional teaching assistant. You output raw HTML suitable for embedding in a React component.",
@@ -389,7 +308,7 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
       `;
   
       const response = await callGeminiWithRetry({
-        model: GEMINI_MODEL,
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_PERSONA,
@@ -403,7 +322,7 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
         contentType: 'scenario',
         topic,
         grade: 'N/A',
-        model: GEMINI_MODEL
+        model: 'gemini-3-flash-preview'
       }).catch(e => console.error("Generation tracking failed:", e));
 
       const text = response.text;
@@ -485,7 +404,7 @@ export const generateQuizQuestions = async (topic: string, grade: string): Promi
     };
 
     const response = await callGeminiWithRetry({
-      model: GEMINI_MODEL,
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_PERSONA,
@@ -500,7 +419,7 @@ export const generateQuizQuestions = async (topic: string, grade: string): Promi
       contentType: 'quiz',
       topic,
       grade,
-      model: GEMINI_MODEL
+      model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
@@ -583,7 +502,7 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
     `;
 
     const response = await callGeminiWithRetry({
-      model: GEMINI_MODEL,
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_PERSONA,
@@ -596,7 +515,7 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
       contentType: `worksheet_${type}`,
       topic,
       grade: 'N/A',
-      model: GEMINI_MODEL
+      model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
@@ -652,7 +571,7 @@ export const generateProject = async (topic: string): Promise<string> => {
       `;
   
       const response = await callGeminiWithRetry({
-        model: GEMINI_MODEL,
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_PERSONA,
@@ -665,7 +584,7 @@ export const generateProject = async (topic: string): Promise<string> => {
         contentType: 'project',
         topic,
         grade: 'N/A',
-        model: GEMINI_MODEL
+        model: 'gemini-3-flash-preview'
       }).catch(e => console.error("Generation tracking failed:", e));
 
       const text = response.text;
@@ -736,7 +655,7 @@ export const generateBoardPlan = async (topic: string, grade: string): Promise<s
       `;
   
       const response = await callGeminiWithRetry({
-        model: GEMINI_MODEL,
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_PERSONA,
@@ -749,7 +668,7 @@ export const generateBoardPlan = async (topic: string, grade: string): Promise<s
         contentType: 'board_plan',
         topic,
         grade,
-        model: GEMINI_MODEL
+        model: 'gemini-3-flash-preview'
       }).catch(e => console.error("Generation tracking failed:", e));
 
       const text = response.text;
@@ -796,7 +715,7 @@ export const generateCanvasAnimation = async (description: string): Promise<stri
     `;
 
     const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         systemInstruction: "You are a JavaScript Canvas expert for educational software. You produce clean, high-performance, and visually clear code.",
@@ -862,7 +781,7 @@ export const generateAdvancedProblem = async (category: string, grade: string): 
     `;
 
     const response = await callGeminiWithRetry({
-      model: GEMINI_MODEL,
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_PERSONA,
@@ -876,7 +795,7 @@ export const generateAdvancedProblem = async (category: string, grade: string): 
       contentType: 'advanced_problem',
       topic: category,
       grade,
-      model: GEMINI_MODEL
+      model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
@@ -941,7 +860,7 @@ export const generateErrorDetectiveCase = async (topic: string, grade: string): 
     };
 
     const response = await callGeminiWithRetry({
-      model: GEMINI_MODEL,
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_PERSONA,
@@ -1008,7 +927,7 @@ export const generateIEPPlan = async (params: {
     `;
 
     const response = await callGeminiWithRetry({
-      model: GEMINI_MODEL,
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         systemInstruction: "Ти си специјален едукатор и дефектолог. Твојот јазик е инклузивен и професионален.",
@@ -1021,7 +940,7 @@ export const generateIEPPlan = async (params: {
       contentType: 'iep_plan',
       topic: params.topic,
       grade: params.grade,
-      model: GEMINI_MODEL
+      model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
@@ -1108,7 +1027,7 @@ export const generateTeacherTask = async (topic: string, grade: string): Promise
     `;
 
     const response = await callGeminiWithRetry({
-      model: GEMINI_MODEL,
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_PERSONA,
@@ -1122,7 +1041,7 @@ export const generateTeacherTask = async (topic: string, grade: string): Promise
       contentType: 'teacher_task',
       topic,
       grade,
-      model: GEMINI_MODEL
+      model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
     const text = response.text;
@@ -1206,7 +1125,7 @@ export const generateGameContent = async (topic: string, type: string, grade: st
     `;
 
     const response = await callGeminiWithRetry({
-      model: GEMINI_MODEL,
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_PERSONA,
@@ -1220,7 +1139,7 @@ export const generateGameContent = async (topic: string, type: string, grade: st
       contentType: `game_${type}`,
       topic,
       grade,
-      model: GEMINI_MODEL
+      model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
     const result = parseJsonSafe(response.text);
@@ -1260,7 +1179,7 @@ export async function generateRemedialDecomposition(input: string, grade: string
     }`;
 
     const response = await callGeminiWithRetry({
-      model: GEMINI_MODEL,
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_PERSONA,
@@ -1296,7 +1215,7 @@ export async function generateRemedialDecomposition(input: string, grade: string
       contentType: 'remedial_decomposition',
       topic: input.substring(0, 50),
       grade,
-      model: GEMINI_MODEL
+      model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
     const result = parseJsonSafe(response.text);
