@@ -37,9 +37,9 @@ function checkRateLimit(): void {
 // ─── Model Rotation ────────────────────────────────────────────────────────────
 // Тестирано 14 Март 2026 — редоследот е по достапна квота на Free Tier
 const GEMINI_MODELS = [
-  'gemini-3.1-flash-lite',  // ~1000 req/ден — примарен
-  'gemini-3-flash-preview', // ~500 req/ден  — резервен 1
-  'gemini-2.5-flash',       // ~250 req/ден  — резервен 2
+  'gemini-3.1-flash-lite-preview', // ~1000 req/ден — примарен
+  'gemini-3-flash-preview',        // ~500 req/ден  — резервен 1
+  'gemini-2.5-flash',              // ~250 req/ден  — резервен 2
 ];
 let _currentModelIndex = 0;
 const getCurrentModel = () => GEMINI_MODELS[_currentModelIndex];
@@ -133,10 +133,11 @@ const callGeminiWithRetry = async (params: any, retries = 2): Promise<any> => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       return callGeminiWithRetry(params, retries - 1);
     }
-    // 429 — квота исцрпена, пробај следен модел
-    if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
+    // 429 или 404 — квота исцрпена или модел недостапен, пробај следен
+    if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota") ||
+        msg.includes("404") || msg.includes("NOT_FOUND") || msg.includes("not found")) {
       if (_currentModelIndex < GEMINI_MODELS.length - 1) {
-        console.warn(`⚠️ Квота исцрпена за ${getCurrentModel()}, се ротира на следниот модел...`);
+        console.warn(`⚠️ ${getCurrentModel()} недостапен (${msg.includes("404") ? "404" : "429"}), се ротира на следниот модел...`);
         _currentModelIndex++;
         return callGeminiWithRetry(params, retries);
       }
