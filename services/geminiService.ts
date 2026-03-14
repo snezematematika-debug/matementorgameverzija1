@@ -34,9 +34,17 @@ function checkRateLimit(): void {
   _requestTimestamps.push(now);
 }
 
-// Модел — gemini-1.5-flash: гарантирани 1500 req/ден на Free Tier
-// gemini-2.5-flash: најнов модел, потврдено работи на Free Tier
-const GEMINI_MODEL = 'gemini-2.5-flash';
+// ─── Model Rotation ────────────────────────────────────────────────────────────
+// Тестирано 14 Март 2026 — редоследот е по достапна квота на Free Tier
+const GEMINI_MODELS = [
+  'gemini-3.1-flash-lite',  // ~1000 req/ден — примарен
+  'gemini-3-flash-preview', // ~500 req/ден  — резервен 1
+  'gemini-2.5-flash',       // ~250 req/ден  — резервен 2
+];
+let _currentModelIndex = 0;
+const getCurrentModel = () => GEMINI_MODELS[_currentModelIndex];
+// Само за компатибилност на постоечките call-сајтови (се override-ува во callGeminiWithRetry)
+const GEMINI_MODEL = GEMINI_MODELS[0];
 
 // Resolve the API key from all possible sources
 const resolveApiKey = async (): Promise<string> => {
@@ -109,19 +117,29 @@ const handleGeminiError = (error: any): never => {
 };
 
 /**
- * Helper to call Gemini with automatic retry for 503 errors
+ * Helper to call Gemini with automatic retry (503) and model rotation (429)
  */
 const callGeminiWithRetry = async (params: any, retries = 2): Promise<any> => {
   checkRateLimit(); // фрли ако корисникот генерира премногу брзо
   try {
     const ai = await getAiClient();
-    return await ai.models.generateContent(params);
+    // Секогаш го инјектира тековниот модел (ротира при 429)
+    return await ai.models.generateContent({ ...params, model: getCurrentModel() });
   } catch (error: any) {
     const msg = error?.message || "";
+    // 503 — сервер преоптоварен, почекај и обиди се повторно
     if ((msg.includes("503") || msg.includes("Overloaded")) && retries > 0) {
       console.log(`Server overloaded, retrying... (${retries} attempts left)`);
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+      await new Promise(resolve => setTimeout(resolve, 2000));
       return callGeminiWithRetry(params, retries - 1);
+    }
+    // 429 — квота исцрпена, пробај следен модел
+    if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota")) {
+      if (_currentModelIndex < GEMINI_MODELS.length - 1) {
+        console.warn(`⚠️ Квота исцрпена за ${getCurrentModel()}, се ротира на следниот модел...`);
+        _currentModelIndex++;
+        return callGeminiWithRetry(params, retries);
+      }
     }
     throw error;
   }
