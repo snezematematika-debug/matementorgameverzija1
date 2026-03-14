@@ -35,7 +35,8 @@ function checkRateLimit(): void {
 }
 
 // Модел — gemini-1.5-flash: гарантирани 1500 req/ден на Free Tier
-const GEMINI_MODEL = 'gemini-1.5-flash';
+// gemini-2.5-flash: најнов модел, потврдено работи на Free Tier
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 // Resolve the API key from all possible sources
 const resolveApiKey = async (): Promise<string> => {
