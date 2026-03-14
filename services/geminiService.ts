@@ -12,7 +12,27 @@ declare global {
 import { SYSTEM_PERSONA } from "../constants";
 import { QuizQuestion, GeneratedLesson, GeneratedScenario, LessonPackage } from "../types";
 import { incrementDailyQuota, trackGeneration } from "./analyticsService";
-import { getCachedResponse, saveToCache } from "./cacheService";
+import { getCachedResponse, saveToCache, deduplicatedFetch } from "./cacheService";
+
+// ─── Client-side Rate Limiter ──────────────────────────────────────────────────
+// Gemini Free Tier: 15 req/min. Ние лимитираме на 10/min за да имаме буфер.
+const _requestTimestamps: number[] = [];
+const RATE_LIMIT_PER_MINUTE = 10;
+
+function checkRateLimit(): void {
+  const now = Date.now();
+  const oneMinuteAgo = now - 60_000;
+  // Отстрани записи постари од 1 минута
+  while (_requestTimestamps.length > 0 && _requestTimestamps[0] < oneMinuteAgo) {
+    _requestTimestamps.shift();
+  }
+  if (_requestTimestamps.length >= RATE_LIMIT_PER_MINUTE) {
+    const waitMs = _requestTimestamps[0] + 60_000 - now;
+    const waitSec = Math.ceil(waitMs / 1000);
+    throw new Error(`⏳ Многу брзи барања. Почекај ${waitSec} секунди пред следното генерирање.`);
+  }
+  _requestTimestamps.push(now);
+}
 
 // Модел — смени го тука ако треба да се надгради
 // gemini-2.0-flash: 1500 барања/ден (Free Tier) наспроти 20/ден на gemini-3-flash-preview
@@ -92,6 +112,7 @@ const handleGeminiError = (error: any): never => {
  * Helper to call Gemini with automatic retry for 503 errors
  */
 const callGeminiWithRetry = async (params: any, retries = 2): Promise<any> => {
+  checkRateLimit(); // фрли ако корисникот генерира премногу брзо
   try {
     const ai = await getAiClient();
     return await ai.models.generateContent(params);
