@@ -485,6 +485,14 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
         <div className="bg-indigo-900 text-white p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden mb-8">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
           
+          <button 
+            onClick={closeRoom}
+            className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all z-20 group"
+            title="Затвори соба"
+          >
+            <XCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
+          </button>
+
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left flex-1">
               <p className="text-indigo-300 font-bold uppercase tracking-widest mb-2">Приклучи се на Мате-Хут</p>
