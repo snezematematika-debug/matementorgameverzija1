@@ -26,54 +26,50 @@ import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
-  const [currentMode, setCurrentMode] = useState<AppMode>(() => {
-    const saved = sessionStorage.getItem('matementor_mode');
-    return (saved as AppMode) || AppMode.DASHBOARD;
-  });
-  const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(() => {
-    const saved = sessionStorage.getItem('matementor_grade');
-    return (saved as GradeLevel) || GradeLevel.VI;
-  });
-  const [userRole, setUserRole] = useState<'TEACHER' | 'STUDENT' | null>(() => {
-    const saved = sessionStorage.getItem('matementor_role');
-    if (saved) return saved as 'TEACHER' | 'STUDENT';
-    
-    // Check for PIN in URL immediately during initialization
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('pin')) return 'STUDENT';
-    
-    return 'TEACHER'; // Default to teacher
-  });
+  const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.DASHBOARD);
+  const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(GradeLevel.VI);
+  const [userRole, setUserRole] = useState<'TEACHER' | 'STUDENT' | null>(null);
 
+  // Initialize state from session storage or URL
   useEffect(() => {
-    if (userRole) sessionStorage.setItem('matementor_role', userRole);
-    else sessionStorage.removeItem('matementor_role');
-  }, [userRole]);
-
-  useEffect(() => {
-    sessionStorage.setItem('matementor_mode', currentMode);
-  }, [currentMode]);
-
-  useEffect(() => {
-    sessionStorage.setItem('matementor_grade', selectedGrade);
-  }, [selectedGrade]);
-
-  useEffect(() => {
-    // Check for PIN in URL for mode switching
-    const params = new URLSearchParams(window.location.search);
-    const urlPin = params.get('pin');
-    const gameType = params.get('type');
-    if (urlPin) {
-      setUserRole('STUDENT');
-      if (gameType === 'BINGO') setCurrentMode(AppMode.BINGO);
-      else if (gameType === 'BOARD_GAME') setCurrentMode(AppMode.BOARD_GAME);
-      else setCurrentMode(AppMode.GAMES);
+    if (!loading && user) {
+      const savedMode = sessionStorage.getItem('matementor_mode');
+      const savedGrade = sessionStorage.getItem('matementor_grade');
+      const savedRole = sessionStorage.getItem('matementor_role');
+      
+      if (savedMode) setCurrentMode(savedMode as AppMode);
+      if (savedGrade) setSelectedGrade(savedGrade as GradeLevel);
+      
+      // Role logic
+      const params = new URLSearchParams(window.location.search);
+      const urlPin = params.get('pin');
+      
+      if (urlPin) {
+        setUserRole('STUDENT');
+        const gameType = params.get('type');
+        if (gameType === 'BINGO') setCurrentMode(AppMode.BINGO);
+        else if (gameType === 'BOARD_GAME') setCurrentMode(AppMode.BOARD_GAME);
+        else setCurrentMode(AppMode.GAMES);
+      } else if (savedRole) {
+        setUserRole(savedRole as 'TEACHER' | 'STUDENT');
+      } else {
+        setUserRole('TEACHER');
+      }
     }
-  }, []);
+  }, [user, loading]);
 
+  // Persist state changes
   useEffect(() => {
-    // Clear PIN from URL if we are not in GAMES or BINGO mode
-    if (currentMode !== AppMode.GAMES && currentMode !== AppMode.BINGO && currentMode !== AppMode.BOARD_GAME) {
+    if (user) {
+      sessionStorage.setItem('matementor_mode', currentMode);
+      sessionStorage.setItem('matementor_grade', selectedGrade);
+      if (userRole) sessionStorage.setItem('matementor_role', userRole);
+    }
+  }, [currentMode, selectedGrade, userRole, user]);
+
+  // URL Cleanup
+  useEffect(() => {
+    if (user && currentMode !== AppMode.GAMES && currentMode !== AppMode.BINGO && currentMode !== AppMode.BOARD_GAME) {
       const url = new URL(window.location.href);
       if (url.searchParams.has('pin')) {
         url.searchParams.delete('pin');
@@ -81,7 +77,7 @@ const App: React.FC = () => {
         window.history.replaceState({}, '', url.toString());
       }
     }
-  }, [currentMode]);
+  }, [currentMode, user]);
 
   const renderContent = () => {
     switch (currentMode) {

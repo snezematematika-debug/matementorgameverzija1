@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { LogIn, Mail, Lock, ArrowRight, Github } from 'lucide-react';
-import { signInWithGoogle } from '../services/firebase';
+import { signInWithGoogle, loginWithEmail, registerWithEmail } from '../services/firebase';
 
 const MathSymbol: React.FC<{ symbol: string; x: string; y: string; delay: number; size?: string }> = ({ symbol, x, y, delay, size = "text-2xl" }) => (
   <motion.div
@@ -27,13 +27,46 @@ const MathSymbol: React.FC<{ symbol: string; x: string; y: string; delay: number
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
+    setError(null);
+    setLoading(true);
     try {
       await signInWithGoogle();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Google login failed", error);
+      setError(error.message || "Грешка при најава со Google");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    if (!email || !password || (isRegistering && !name)) {
+      setError("Ве молиме пополнете ги сите полиња");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (isRegistering) {
+        await registerWithEmail(email, password, name);
+      } else {
+        await loginWithEmail(email, password);
+      }
+    } catch (error: any) {
+      console.error("Email auth failed", error);
+      setError(error.message || "Грешка при најава/регистрација");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -93,7 +126,26 @@ const LoginScreen: React.FC = () => {
             </div>
 
             {/* Form */}
-            <div className="space-y-4">
+            <form onSubmit={handleEmailAuth} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 text-red-600 text-xs p-3 rounded-xl border border-red-100 animate-shake">
+                  {error}
+                </div>
+              )}
+
+              {isRegistering && (
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Вашето име"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-11 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all"
+                  />
+                </div>
+              )}
+
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input 
@@ -115,9 +167,19 @@ const LoginScreen: React.FC = () => {
                 />
               </div>
 
-              <button className="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-sky-200 transition-all flex items-center justify-center gap-2 group">
-                {isRegistering ? 'Регистрирај се' : 'Најави се'}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full bg-sky-600 hover:bg-sky-500 disabled:bg-sky-400 text-white font-bold py-3 rounded-xl shadow-lg shadow-sky-200 transition-all flex items-center justify-center gap-2 group"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    {isRegistering ? 'Регистрирај се' : 'Најави се'}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </button>
 
               <div className="relative flex items-center justify-center py-2">
@@ -128,18 +190,23 @@ const LoginScreen: React.FC = () => {
               </div>
 
               <button 
+                type="button"
                 onClick={handleGoogleLogin}
-                className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-3 shadow-sm"
+                disabled={loading}
+                className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-3 shadow-sm disabled:opacity-50"
               >
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
                 Најави се со Google
               </button>
-            </div>
+            </form>
 
             {/* Footer */}
             <div className="mt-8 text-center">
               <button 
-                onClick={() => setIsRegistering(!isRegistering)}
+                onClick={() => {
+                  setIsRegistering(!isRegistering);
+                  setError(null);
+                }}
                 className="text-sm text-sky-600 hover:text-sky-700 font-medium transition-colors"
               >
                 {isRegistering ? 'Веќе имате сметка? Најавете се' : 'Немате сметка? Регистрирајте се'}
@@ -151,5 +218,7 @@ const LoginScreen: React.FC = () => {
     </div>
   );
 };
+
+import { User as UserIcon } from 'lucide-react';
 
 export default LoginScreen;
