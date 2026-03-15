@@ -482,7 +482,17 @@ const MateSafe: React.FC<MateSafeProps> = ({ grade, initialRole = null, onBack }
   }
 
   if (role === 'STUDENT' && isJoined && gameState?.status === 'PLAYING') {
-    const tasks = gameState.content.tasks;
+    const tasks = gameState.content?.tasks || [];
+
+    if (tasks.length === 0) {
+      return (
+        <div className="max-w-md mx-auto h-[70vh] bg-indigo-600 rounded-[3rem] flex flex-col items-center justify-center text-center p-10 text-white shadow-2xl">
+          <Loader2 className="w-20 h-20 animate-spin mb-8 opacity-50" />
+          <h2 className="text-4xl font-black mb-4">Се вчитуваат задачите...</h2>
+          <p className="text-xl font-medium opacity-80">Ве молиме почекајте момент.</p>
+        </div>
+      );
+    }
 
     if (localStatus === 'SUCCESS') {
       return (
