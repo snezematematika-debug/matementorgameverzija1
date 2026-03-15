@@ -145,7 +145,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                 className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg transition-all text-sm font-bold uppercase tracking-wider border border-transparent ${isGradeMenuOpen ? 'bg-indigo-800 text-white border-indigo-600' : 'text-indigo-200 hover:bg-indigo-800/50 hover:text-white'}`}
               >
                 <span className="flex items-center gap-2">
-                  🎓 {isGradeMenuOpen ? 'Избери:' : 'Одделение'}
+                  <span className="w-6 h-6 flex items-center justify-center bg-amber-500/20 text-amber-400 rounded-lg shadow-sm border border-amber-500/30">🏫</span> {isGradeMenuOpen ? 'Избери:' : 'Одделение'}
                 </span>
                 <svg 
                   className={`w-4 h-4 transform transition-transform duration-200 ${isGradeMenuOpen ? 'rotate-180' : ''}`} 
@@ -329,7 +329,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                 }`}
               >
                 <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
-                  <span>🎮</span> Интерактивности
+                  <span className="w-6 h-6 flex items-center justify-center bg-fuchsia-500/20 text-fuchsia-400 rounded-lg shadow-sm border border-fuchsia-500/30 text-xs">✨</span> Интерактивности
                 </span>
                 <svg 
                   className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'INTERACTIVE' ? 'rotate-180' : ''}`} 
