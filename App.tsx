@@ -23,6 +23,7 @@ import ErrorDetective from './components/ErrorDetective';
 import InclusionGenerator from './components/InclusionGenerator';
 import LoginScreen from './components/LoginScreen';
 import AIReviewer from './components/AIReviewer';
+import AICreator from './components/AICreator';
 import { useAuth } from './services/firebase';
 import { AppMode, GradeLevel } from './types';
 
@@ -163,6 +164,8 @@ const App: React.FC = () => {
         return <InclusionGenerator grade={selectedGrade} />;
       case AppMode.AI_REVIEWER:
         return <AIReviewer />;
+      case AppMode.AI_CREATOR:
+        return <AICreator grade={selectedGrade} />;
       default:
         return <Dashboard setMode={setCurrentMode} />;
     }

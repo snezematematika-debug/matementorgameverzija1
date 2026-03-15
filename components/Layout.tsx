@@ -39,7 +39,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
     if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GEOGEBRA, AppMode.MATHIGON, AppMode.ERROR_DETECTIVE].includes(currentMode)) return 'INTERACTIVE';
     if (currentMode === AppMode.GAMES || currentMode === AppMode.BINGO) return 'GAMIFICATION';
     if ([AppMode.ADVANCED_PRACTICE, AppMode.REMEDIAL_TEACHING, AppMode.INCLUSION].includes(currentMode)) return 'SUPPORT';
-    if (currentMode === AppMode.AI_REVIEWER) return 'AI_REVIEWER';
+    if (currentMode === AppMode.AI_REVIEWER || currentMode === AppMode.AI_CREATOR) return 'AI_SUMMATIVE';
     if (currentMode === AppMode.ANALYTICS) return 'ANALYTICS';
     return null;
   });
@@ -57,7 +57,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
     else if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GEOGEBRA, AppMode.MATHIGON, AppMode.ERROR_DETECTIVE].includes(currentMode)) setOpenCategory('INTERACTIVE');
     else if (currentMode === AppMode.GAMES || currentMode === AppMode.BINGO) setOpenCategory('GAMIFICATION');
     else if ([AppMode.ADVANCED_PRACTICE, AppMode.REMEDIAL_TEACHING, AppMode.INCLUSION].includes(currentMode)) setOpenCategory('SUPPORT');
-    else if (currentMode === AppMode.AI_REVIEWER) setOpenCategory('AI_REVIEWER');
+    else if (currentMode === AppMode.AI_REVIEWER || currentMode === AppMode.AI_CREATOR) setOpenCategory('AI_SUMMATIVE');
     else if (currentMode === AppMode.ANALYTICS) setOpenCategory('ANALYTICS');
     else if (currentMode === AppMode.DASHBOARD) setOpenCategory(null);
   }, [currentMode]);
@@ -491,6 +491,59 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               </div>
             </div>
 
+            {/* АИ СУМАТИВНО ОЦЕНУВАЊЕ */}
+            <div>
+              <button
+                onClick={() => toggleCategory('AI_SUMMATIVE')}
+                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all border ${
+                  openCategory === 'AI_SUMMATIVE' 
+                    ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
+                    : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
+                  <span className="w-6 h-6 flex items-center justify-center bg-cyan-500/20 text-cyan-400 rounded-lg shadow-sm border border-cyan-500/30">📊</span> АИ Сумативно
+                </span>
+                <svg 
+                  className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'AI_SUMMATIVE' ? 'rotate-180' : ''}`} 
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'AI_SUMMATIVE' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
+                <div className="flex flex-col gap-0.5 pl-4 pb-1">
+                  <button
+                    onClick={() => {
+                      setMode(AppMode.AI_REVIEWER);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.AI_REVIEWER 
+                        ? 'bg-cyan-500/30 text-cyan-100 shadow-lg border-cyan-400' 
+                        : 'text-cyan-200/80 hover:bg-indigo-800/40 hover:text-cyan-100 border-transparent'
+                    }`}
+                  >
+                    <span>🔍</span> АИ Прегледувач
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMode(AppMode.AI_CREATOR);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.AI_CREATOR 
+                        ? 'bg-indigo-500/30 text-indigo-100 shadow-lg border-indigo-400' 
+                        : 'text-indigo-200/80 hover:bg-indigo-800/40 hover:text-indigo-100 border-transparent'
+                    }`}
+                  >
+                    <span>✨</span> АИ Креатор
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* ПОДДРШКА */}
             <div>
               <button
@@ -556,23 +609,6 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                 </div>
               </div>
             </div>
-
-            {/* АИ ПРЕГЛЕДУВАЧ */}
-            <button
-              onClick={() => {
-                setMode(AppMode.AI_REVIEWER);
-                setIsMobileMenuOpen(false);
-              }}
-              className={`w-full text-left px-3 py-1.5 rounded-lg transition-all flex items-center gap-3 border ${
-                currentMode === AppMode.AI_REVIEWER 
-                  ? 'bg-indigo-600 text-white shadow-lg translate-x-1 border-indigo-400' 
-                  : 'text-indigo-200 hover:bg-indigo-800/50 hover:text-white border-indigo-700/30'
-              }`}
-            >
-              <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
-                <span className="w-6 h-6 flex items-center justify-center bg-cyan-500/20 text-cyan-400 rounded-lg shadow-sm border border-cyan-500/30">🔍</span> АИ Прегледувач
-              </span>
-            </button>
 
             {/* АНАЛИТИКА */}
             {isAdmin && (
