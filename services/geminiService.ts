@@ -7,17 +7,23 @@ import { getCachedResponse, saveToCache } from "./cacheService";
 
 // Helper to safely get the API client
 const getAiClient = async () => {
-  // Use the platform-provided GEMINI_API_KEY from the environment
-  const apiKey = (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || 
-                 (typeof process !== 'undefined' && process.env?.API_KEY) ||
-                 (typeof process !== 'undefined' && process.env?.VITE_API_KEY) ||
-                 import.meta.env?.VITE_API_KEY || 
-                 import.meta.env?.GEMINI_API_KEY ||
-                 import.meta.env?.API_KEY || '';
+  // Priority: process.env (Server/Node) -> import.meta.env (Vite/Client)
+  let apiKey = '';
+  
+  if (typeof process !== 'undefined' && process.env) {
+    apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || '';
+  }
+  
+  if (!apiKey && typeof import.meta !== 'undefined' && import.meta.env) {
+    apiKey = import.meta.env.VITE_API_KEY || import.meta.env.GEMINI_API_KEY || import.meta.env.API_KEY || '';
+  }
 
-  if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
-    console.error("API_KEY is missing.");
-    throw new Error("Техничка грешка: API клучот не е пронајден во околината.");
+  // Clean up potential string artifacts
+  apiKey = apiKey.trim().replace(/['"]/g, '');
+
+  if (!apiKey || apiKey === 'undefined' || apiKey === 'null' || apiKey.length < 10) {
+    console.error("API_KEY is missing or invalid format.");
+    throw new Error("Техничка грешка: API клучот не е пронајден или е невалиден. Ве молиме проверете ги поставките (Secrets).");
   }
 
   return new GoogleGenAI({ apiKey });
