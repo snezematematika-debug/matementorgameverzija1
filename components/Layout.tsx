@@ -121,7 +121,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
           </div>
 
           {/* Scrollable Navigation Area */}
-          <nav className="px-3 py-3 space-y-1 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-indigo-700 scrollbar-track-transparent">
+          <nav className="px-3 py-2 space-y-1 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-indigo-700 scrollbar-track-transparent">
             
             {/* 0. Dashboard */}
             <button
@@ -129,7 +129,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                 setMode(AppMode.DASHBOARD);
                 setIsMobileMenuOpen(false);
               }}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all flex items-center gap-3 mb-4 border ${
+              className={`w-full text-left px-3 py-1.5 rounded-lg transition-all flex items-center gap-3 border ${
                 currentMode === AppMode.DASHBOARD 
                   ? 'bg-indigo-600 text-white shadow-lg translate-x-1 border-indigo-400' 
                   : 'text-indigo-200 hover:bg-indigo-800/50 hover:text-white border-indigo-700/30'
@@ -139,10 +139,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
             </button>
 
             {/* 1. Collapsible Grade Selector */}
-            <div className="mb-4 pb-2 border-b border-indigo-800/50">
+            <div>
               <button
                 onClick={() => setIsGradeMenuOpen(!isGradeMenuOpen)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all text-sm font-bold uppercase tracking-wider border border-transparent ${isGradeMenuOpen ? 'bg-indigo-800 text-white border-indigo-600' : 'text-indigo-200 hover:bg-indigo-800/50 hover:text-white'}`}
+                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg transition-all text-sm font-bold uppercase tracking-wider border border-transparent ${isGradeMenuOpen ? 'bg-indigo-800 text-white border-indigo-600' : 'text-indigo-200 hover:bg-indigo-800/50 hover:text-white'}`}
               >
                 <span className="flex items-center gap-2">
                   🎓 {isGradeMenuOpen ? 'Избери:' : 'Одделение'}
@@ -160,25 +160,25 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                  <div className="flex flex-col gap-1 pl-2">
                     <button
                        onClick={() => handleGradeSelect(GradeLevel.VI)}
-                       className={`flex items-center gap-3 w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.VI ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
+                       className={`flex items-center gap-3 w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.VI ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
                     >
                        <span className="text-lg">👶</span> VI Одделение
                     </button>
                     <button
                        onClick={() => handleGradeSelect(GradeLevel.VII)}
-                       className={`flex items-center gap-3 w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.VII ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
+                       className={`flex items-center gap-3 w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.VII ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
                     >
                        <span className="text-lg">👧</span> VII Одделение
                     </button>
                     <button
                        onClick={() => handleGradeSelect(GradeLevel.VIII)}
-                       className={`flex items-center gap-3 w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.VIII ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
+                       className={`flex items-center gap-3 w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.VIII ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
                     >
                        <span className="text-lg">🧑</span> VIII Одделение
                     </button>
                     <button
                        onClick={() => handleGradeSelect(GradeLevel.IX)}
-                       className={`flex items-center gap-3 w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.IX ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
+                       className={`flex items-center gap-3 w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.IX ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
                     >
                        <span className="text-lg">🎓</span> IX Одделение
                     </button>
@@ -187,10 +187,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
             </div>
 
             {/* ПОДГОТОВКА И ПЛАНИРАЊЕ */}
-            <div className="pt-2">
+            <div>
               <button
                 onClick={() => toggleCategory('PREP')}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all border ${
                   openCategory === 'PREP' 
                     ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
                     : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
@@ -208,13 +208,13 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               </button>
               
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'PREP' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                <div className="flex flex-col gap-1 pl-4 pb-2">
+                <div className="flex flex-col gap-0.5 pl-4 pb-1">
                   <button
                     onClick={() => {
                       setMode(AppMode.LESSON);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.LESSON 
                         ? 'bg-blue-500/30 text-blue-100 shadow-lg border-blue-400' 
                         : 'text-blue-200/80 hover:bg-indigo-800/40 hover:text-blue-100 border-transparent'
@@ -227,7 +227,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.SCENARIO);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.SCENARIO 
                         ? 'bg-emerald-500/30 text-emerald-100 shadow-lg border-emerald-400' 
                         : 'text-emerald-200/80 hover:bg-indigo-800/40 hover:text-emerald-100 border-transparent'
@@ -240,7 +240,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.BOARD_PLAN);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.BOARD_PLAN 
                         ? 'bg-indigo-500/30 text-indigo-100 shadow-lg border-indigo-400' 
                         : 'text-indigo-200/80 hover:bg-indigo-800/40 hover:text-indigo-100 border-transparent'
@@ -253,10 +253,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
             </div>
 
             {/* МАТЕРИЈАЛИ */}
-            <div className="pt-2">
+            <div>
               <button
                 onClick={() => toggleCategory('MATERIALS')}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all border ${
                   openCategory === 'MATERIALS' 
                     ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
                     : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
@@ -274,13 +274,13 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               </button>
               
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'MATERIALS' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                <div className="flex flex-col gap-1 pl-4 pb-2">
+                <div className="flex flex-col gap-0.5 pl-4 pb-1">
                   <button
                     onClick={() => {
                       setMode(AppMode.WORKSHEET);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.WORKSHEET 
                         ? 'bg-sky-500/30 text-sky-100 shadow-lg border-sky-400' 
                         : 'text-sky-200/80 hover:bg-indigo-800/40 hover:text-sky-100 border-transparent'
@@ -293,7 +293,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.QUIZ);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.QUIZ 
                         ? 'bg-orange-500/30 text-orange-100 shadow-lg border-orange-400' 
                         : 'text-orange-200/80 hover:bg-indigo-800/40 hover:text-orange-100 border-transparent'
@@ -306,7 +306,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.PROJECT);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.PROJECT 
                         ? 'bg-rose-500/30 text-rose-100 shadow-lg border-rose-400' 
                         : 'text-rose-200/80 hover:bg-indigo-800/40 hover:text-rose-100 border-transparent'
@@ -319,10 +319,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
             </div>
 
             {/* ИНТЕРАКТИВНОСТИ */}
-            <div className="pt-2">
+            <div>
               <button
                 onClick={() => toggleCategory('INTERACTIVE')}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all border ${
                   openCategory === 'INTERACTIVE' 
                     ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
                     : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
@@ -340,13 +340,13 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               </button>
               
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'INTERACTIVE' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                <div className="flex flex-col gap-1 pl-4 pb-2">
+                <div className="flex flex-col gap-0.5 pl-4 pb-1">
                   <button
                     onClick={() => {
                       setMode(AppMode.TEACHER_PANEL);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.TEACHER_PANEL 
                         ? 'bg-teal-500/30 text-teal-100 shadow-lg border-teal-400' 
                         : 'text-teal-200/80 hover:bg-indigo-800/40 hover:text-teal-100 border-transparent'
@@ -359,7 +359,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.ERROR_DETECTIVE);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.ERROR_DETECTIVE 
                         ? 'bg-orange-500/30 text-orange-100 shadow-lg border-orange-400' 
                         : 'text-orange-200/80 hover:bg-indigo-800/40 hover:text-orange-100 border-transparent'
@@ -372,7 +372,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.VISUALIZER);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.VISUALIZER 
                         ? 'bg-fuchsia-500/30 text-fuchsia-100 shadow-lg border-fuchsia-400' 
                         : 'text-fuchsia-200/80 hover:bg-indigo-800/40 hover:text-fuchsia-100 border-transparent'
@@ -385,7 +385,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.GEOGEBRA);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.GEOGEBRA 
                         ? 'bg-blue-500/30 text-blue-100 shadow-lg border-blue-400' 
                         : 'text-blue-200/80 hover:bg-indigo-800/40 hover:text-blue-100 border-transparent'
@@ -398,7 +398,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.MATHIGON);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.MATHIGON 
                         ? 'bg-amber-500/30 text-amber-100 shadow-lg border-amber-400' 
                         : 'text-amber-200/80 hover:bg-indigo-800/40 hover:text-amber-100 border-transparent'
@@ -411,10 +411,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
             </div>
 
             {/* ГЕЈМИФИКАЦИЈА */}
-            <div className="pt-2">
+            <div>
               <button
                 onClick={() => toggleCategory('GAMIFICATION')}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all border ${
                   openCategory === 'GAMIFICATION' 
                     ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
                     : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
@@ -432,13 +432,13 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               </button>
               
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'GAMIFICATION' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                <div className="flex flex-col gap-1 pl-4 pb-2">
+                <div className="flex flex-col gap-0.5 pl-4 pb-1">
                   <button
                     onClick={() => {
                       setMode(AppMode.GAMES);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.GAMES 
                         ? 'bg-pink-500/30 text-pink-100 shadow-lg border-pink-400' 
                         : 'text-pink-200/80 hover:bg-indigo-800/40 hover:text-pink-100 border-transparent'
@@ -451,7 +451,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.BINGO);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.BINGO 
                         ? 'bg-amber-500/30 text-amber-100 shadow-lg border-amber-400' 
                         : 'text-amber-200/80 hover:bg-indigo-800/40 hover:text-amber-100 border-transparent'
@@ -464,7 +464,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.BOARD_GAME);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.BOARD_GAME 
                         ? 'bg-emerald-500/30 text-emerald-100 shadow-lg border-emerald-400' 
                         : 'text-emerald-200/80 hover:bg-indigo-800/40 hover:text-emerald-100 border-transparent'
@@ -477,7 +477,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.MATE_SAFE);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.MATE_SAFE 
                         ? 'bg-indigo-500/30 text-indigo-100 shadow-lg border-indigo-400' 
                         : 'text-indigo-200/80 hover:bg-indigo-800/40 hover:text-indigo-100 border-transparent'
@@ -490,10 +490,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
             </div>
 
             {/* ПОДДРШКА */}
-            <div className="pt-2">
+            <div>
               <button
                 onClick={() => toggleCategory('SUPPORT')}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all border ${
                   openCategory === 'SUPPORT' 
                     ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
                     : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
@@ -511,13 +511,13 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               </button>
               
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'SUPPORT' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                <div className="flex flex-col gap-1 pl-4 pb-2">
+                <div className="flex flex-col gap-0.5 pl-4 pb-1">
                   <button
                     onClick={() => {
                       setMode(AppMode.ADVANCED_PRACTICE);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.ADVANCED_PRACTICE 
                         ? 'bg-yellow-500/30 text-yellow-100 shadow-lg border-yellow-400' 
                         : 'text-yellow-200/80 hover:bg-indigo-800/40 hover:text-yellow-100 border-transparent'
@@ -530,7 +530,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.REMEDIAL_TEACHING);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.REMEDIAL_TEACHING 
                         ? 'bg-emerald-500/30 text-emerald-100 shadow-lg border-emerald-400' 
                         : 'text-emerald-200/80 hover:bg-indigo-800/40 hover:text-emerald-100 border-transparent'
@@ -543,7 +543,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       setMode(AppMode.INCLUSION);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.INCLUSION 
                         ? 'bg-purple-500/30 text-purple-100 shadow-lg border-purple-400' 
                         : 'text-purple-200/80 hover:bg-indigo-800/40 hover:text-purple-100 border-transparent'
@@ -557,12 +557,12 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
 
             {/* АНАЛИТИКА */}
             {isAdmin && (
-              <div className="pt-2 border-t border-indigo-800/50 mt-4">
+              <div className="border-t border-indigo-800/50 pt-1">
                 <button
                   onClick={() => {
                     toggleCategory('ANALYTICS');
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all border ${
+                  className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl transition-all border ${
                     openCategory === 'ANALYTICS' 
                       ? 'bg-indigo-800/60 border-indigo-500/50 text-white shadow-inner' 
                       : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
@@ -580,10 +580,10 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                 </button>
                 
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openCategory === 'ANALYTICS' ? 'max-h-64 opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
-                  <div className="flex flex-col gap-1 pl-4 pb-2">
+                  <div className="flex flex-col gap-0.5 pl-4 pb-1">
                     <button
                       onClick={() => setMode(AppMode.ANALYTICS)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                         currentMode === AppMode.ANALYTICS 
                           ? 'bg-slate-500/30 text-slate-100 shadow-lg border-slate-400' 
                           : 'text-slate-400 hover:bg-indigo-800/40 hover:text-slate-100 border-transparent'
@@ -598,32 +598,32 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
           </nav>
 
           {/* Footer Section - User Profile & Logout */}
-          <div className="p-4 mt-auto border-t border-indigo-800 bg-indigo-950/50 backdrop-blur-sm">
+          <div className="p-3 mt-auto border-t border-indigo-800 bg-indigo-950/50 backdrop-blur-sm">
              {!authLoading && (
-               <div className="mb-4">
+               <div className="mb-2">
                  {user ? (
-                   <div className="space-y-3">
-                     <div className="flex items-center gap-3 p-2 bg-indigo-800/50 rounded-xl border border-indigo-700/50">
+                   <div className="space-y-2">
+                     <div className="flex items-center gap-2 p-1.5 bg-indigo-800/50 rounded-xl border border-indigo-700/50">
                        {user.photoURL ? (
-                         <img src={user.photoURL} alt={user.displayName || ''} className="w-10 h-10 rounded-full border-2 border-indigo-500 shadow-sm" referrerPolicy="no-referrer" />
+                         <img src={user.photoURL} alt={user.displayName || ''} className="w-8 h-8 rounded-full border-2 border-indigo-500 shadow-sm" referrerPolicy="no-referrer" />
                        ) : (
-                         <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center border-2 border-indigo-500">
-                           <UserIcon className="w-5 h-5 text-indigo-100" />
+                         <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center border-2 border-indigo-500">
+                           <UserIcon className="w-4 h-4 text-indigo-100" />
                          </div>
                        )}
                        <div className="flex-1 min-w-0">
-                         <p className="text-sm font-bold text-white truncate">{user.displayName || 'Корисник'}</p>
-                         <p className="text-[10px] text-indigo-300 truncate flex items-center gap-1">
-                           {user.email === 'snezematematika@gmail.com' && <ShieldCheck className="w-3 h-3 text-emerald-400" />}
+                         <p className="text-xs font-bold text-white truncate">{user.displayName || 'Корисник'}</p>
+                         <p className="text-[9px] text-indigo-300 truncate flex items-center gap-1">
+                           {user.email === 'snezematematika@gmail.com' && <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />}
                            {user.email}
                          </p>
                        </div>
                      </div>
                      <button 
                        onClick={() => logout()}
-                       className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-800/80 hover:bg-red-900/40 text-indigo-200 hover:text-red-200 rounded-lg text-xs font-bold transition-all border border-indigo-700 hover:border-red-800/50"
+                       className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-indigo-800/80 hover:bg-red-900/40 text-indigo-200 hover:text-red-200 rounded-lg text-[10px] font-bold transition-all border border-indigo-700 hover:border-red-800/50"
                      >
-                       <LogOut className="w-3.5 h-3.5" /> Одјави се
+                       <LogOut className="w-3 h-3" /> Одјави се
                      </button>
                    </div>
                  ) : (
@@ -639,9 +639,9 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                </div>
              )}
              <div className="text-center">
-                 <p className="text-[10px] uppercase tracking-widest text-indigo-400 font-semibold mb-1">АВТОР НА ПРОЕКТОТ</p>
-                 <p className="text-base font-bold text-white mb-1">Снежана Златковска</p>
-                 <p className="text-[10px] text-indigo-300 font-mono">v1.0 • 2025</p>
+                 <p className="text-[9px] uppercase tracking-widest text-indigo-400 font-semibold mb-0.5">АВТОР НА ПРОЕКТОТ</p>
+                 <p className="text-sm font-bold text-white mb-0.5">Снежана Златковска</p>
+                 <p className="text-[9px] text-indigo-300 font-mono">v1.0 • 2025</p>
              </div>
           </div>
         </aside>
