@@ -22,6 +22,7 @@ import RemedialTeaching from './components/RemedialTeaching';
 import ErrorDetective from './components/ErrorDetective';
 import InclusionGenerator from './components/InclusionGenerator';
 import LoginScreen from './components/LoginScreen';
+import AIReviewer from './components/AIReviewer';
 import { useAuth } from './services/firebase';
 import { AppMode, GradeLevel } from './types';
 
@@ -160,6 +161,8 @@ const App: React.FC = () => {
         return <ErrorDetective grade={selectedGrade} />;
       case AppMode.INCLUSION:
         return <InclusionGenerator grade={selectedGrade} />;
+      case AppMode.AI_REVIEWER:
+        return <AIReviewer />;
       default:
         return <Dashboard setMode={setCurrentMode} />;
     }
