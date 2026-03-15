@@ -25,6 +25,7 @@ import { useAuth } from './services/firebase';
 import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
+  // Mate-Mentor Version 2.1 - Mandatory Auth & Naming Fix
   const { user, loading } = useAuth();
   const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.DASHBOARD);
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(GradeLevel.VI);
