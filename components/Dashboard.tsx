@@ -11,7 +11,8 @@ import {
   Zap,
   Star,
   Users,
-  Flag
+  Flag,
+  ShieldCheck
 } from 'lucide-react';
 import { AppMode } from '../types';
 
@@ -44,6 +45,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
     { title: 'Нов Мате-Хут', desc: 'Започни квиз во живо со учениците', mode: AppMode.GAMES, icon: Zap, color: 'bg-pink-600' },
     { title: 'Мате-Бинго', desc: 'Брза игра со 3х3 табла', mode: AppMode.BINGO, icon: Sparkles, color: 'bg-amber-500' },
     { title: 'Мате - Трка', desc: 'Трка до целта низ математички полиња', mode: AppMode.BOARD_GAME, icon: Flag, color: 'bg-emerald-600' },
+    { title: 'Мате-сеф', desc: 'Отклучи го сефот со решавање задачи', mode: AppMode.MATE_SAFE, icon: ShieldCheck, color: 'bg-indigo-600' },
   ];
 
   const recentActivity = [

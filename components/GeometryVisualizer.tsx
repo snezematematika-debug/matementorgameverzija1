@@ -2,7 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { generateCanvasAnimation } from '../services/geminiService';
 import Loading from './Loading';
 
-const GeometryVisualizer: React.FC = () => {
+interface GeometryVisualizerProps {
+  grade?: string;
+}
+
+const GeometryVisualizer: React.FC<GeometryVisualizerProps> = ({ grade = 'N/A' }) => {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -123,7 +127,7 @@ const GeometryVisualizer: React.FC = () => {
     }
 
     try {
-      const code = await generateCanvasAnimation(description);
+      const code = await generateCanvasAnimation(description, grade);
       codeRef.current = code;
       setIsPlaying(true); // Auto start
     } catch (err: any) {

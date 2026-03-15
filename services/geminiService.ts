@@ -277,6 +277,15 @@ export const generateLessonConnectivity = async (topic: string, grade: string): 
       const text = response.text;
       if (!text) throw new Error("No response content");
       
+      // Track usage
+      incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+      trackGeneration({
+        contentType: 'connectivity',
+        topic,
+        grade,
+        model: 'gemini-3-flash-preview'
+      }).catch(e => console.error("Generation tracking failed:", e));
+
       // Clean up markdown code blocks if AI adds them by mistake
       const result = text.replace(/```html/g, '').replace(/```/g, '').trim();
       if (result) {
@@ -290,13 +299,14 @@ export const generateLessonConnectivity = async (topic: string, grade: string): 
     }
   };
 
-export const generateScenarioContent = async (topic: string): Promise<GeneratedScenario> => {
-    const cached = await getCachedResponse('scenario', { topic });
+export const generateScenarioContent = async (topic: string, grade: string = 'N/A'): Promise<GeneratedScenario> => {
+    const cached = await getCachedResponse('scenario', { topic, grade });
     if (cached) return cached;
 
     try {
       const prompt = `
         Креирај детално Сценарио за час по математика на тема: "${topic}".
+        Одделение: ${grade}.
         Пополни ги полињата за да одговараат на официјалниот формат за подготовки.
         
         ${MATH_INSTRUCTION}
@@ -327,7 +337,7 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
       trackGeneration({
         contentType: 'scenario',
         topic,
-        grade: 'N/A',
+        grade,
         model: 'gemini-3-flash-preview'
       }).catch(e => console.error("Generation tracking failed:", e));
 
@@ -336,7 +346,7 @@ export const generateScenarioContent = async (topic: string): Promise<GeneratedS
       
       const result = parseJsonSafe(text) as GeneratedScenario;
       if (result) {
-        await saveToCache('scenario', { topic }, result);
+        await saveToCache('scenario', { topic, grade }, result);
       }
       return result;
     } catch (error: any) {
@@ -441,8 +451,8 @@ export const generateQuizQuestions = async (topic: string, grade: string): Promi
   }
 };
 
-export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFERENTIATED' | 'EXIT_TICKET' = 'STANDARD'): Promise<string> => {
-  const cached = await getCachedResponse('worksheet', { topic, type });
+export const generateWorksheet = async (topic: string, grade: string = 'N/A', type: 'STANDARD' | 'DIFFERENTIATED' | 'EXIT_TICKET' = 'STANDARD'): Promise<string> => {
+  const cached = await getCachedResponse('worksheet', { topic, grade, type });
   if (cached) return cached;
 
   try {
@@ -453,6 +463,7 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
     if (type === 'EXIT_TICKET') {
         structureInstruction = `
         ТИП: ИЗЛЕЗНО ЛИВЧЕ (EXIT TICKET)
+        ОДДЕЛЕНИЕ: ${grade}
         
         ИНСТРУКЦИИ ЗА ЛАЈАУТ (МНОГУ ВАЖНО):
         Креирај ДВЕ ИДЕНТИЧНИ КОПИИ од излезното ливче на истата страница, одделени со хоризонтална линија (---).
@@ -469,6 +480,7 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
         `;
     } else if (type === 'DIFFERENTIATED') {
       structureInstruction = `
+      ОДДЕЛЕНИЕ: ${grade}
       СТРУКТУРА НА РАБОТНИОТ ЛИСТ (ЗАДОЛЖИТЕЛНО ПОДЕЛИ ГИ ЗАДАЧИТЕ ВАКА):
 
       ### 🟢 ГРУПА А: Почетно ниво (Basic tasks for understanding the concept)
@@ -482,6 +494,7 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
       `;
     } else {
       structureInstruction = `
+      ОДДЕЛЕНИЕ: ${grade}
       Содржина:
       - 5 текстуални задачи со различно ниво на тежина (од полесни кон потешки).
       `;
@@ -490,6 +503,7 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
     const prompt = `
       Креирај Работен Лист (Worksheet) за ученици по математика.
       Тема: "${topic}".
+      Одделение: ${grade}.
       
       ${structureInstruction}
       
@@ -520,7 +534,7 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
     trackGeneration({
       contentType: `worksheet_${type}`,
       topic,
-      grade: 'N/A',
+      grade,
       model: 'gemini-3-flash-preview'
     }).catch(e => console.error("Generation tracking failed:", e));
 
@@ -532,7 +546,7 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
     clean = clean.replace(/svg\s*```/gi, '```');
     
     if (clean) {
-      await saveToCache('worksheet', { topic, type }, clean);
+      await saveToCache('worksheet', { topic, grade, type }, clean);
     }
     return clean;
 
@@ -542,8 +556,8 @@ export const generateWorksheet = async (topic: string, type: 'STANDARD' | 'DIFFE
   }
 };
 
-export const generateProject = async (topic: string): Promise<string> => {
-    const cached = await getCachedResponse('project', { topic });
+export const generateProject = async (topic: string, grade: string = 'N/A'): Promise<string> => {
+    const cached = await getCachedResponse('project', { topic, grade });
     if (cached) return cached;
 
     try {
@@ -553,6 +567,7 @@ export const generateProject = async (topic: string): Promise<string> => {
         You are a helpful teacher assistant. Generate the response STRICTLY IN MACEDONIAN LANGUAGE.
         
         Task: Create a STEAM or real-world math project based on the lesson: "${topic}".
+        Grade: ${grade}.
         
         The project should encourage creativity, critical thinking, and application of math in real life.
         
@@ -589,7 +604,7 @@ export const generateProject = async (topic: string): Promise<string> => {
       trackGeneration({
         contentType: 'project',
         topic,
-        grade: 'N/A',
+        grade,
         model: 'gemini-3-flash-preview'
       }).catch(e => console.error("Generation tracking failed:", e));
 
@@ -597,7 +612,7 @@ export const generateProject = async (topic: string): Promise<string> => {
       if (!text) throw new Error("No response content");
       
       if (text) {
-        await saveToCache('project', { topic }, text);
+        await saveToCache('project', { topic, grade }, text);
       }
       return text;
     } catch (error: any) {
@@ -690,8 +705,8 @@ export const generateBoardPlan = async (topic: string, grade: string): Promise<s
     }
   };
 
-export const generateCanvasAnimation = async (description: string): Promise<string> => {
-  const cached = await getCachedResponse('canvas_animation', { description });
+export const generateCanvasAnimation = async (description: string, grade: string = 'N/A'): Promise<string> => {
+  const cached = await getCachedResponse('canvas_animation', { description, grade });
   if (cached) return cached;
 
   try {
@@ -700,6 +715,7 @@ export const generateCanvasAnimation = async (description: string): Promise<stri
     const prompt = `
       Act as an expert Educational Math Visualizer.
       Write a JavaScript function body for an HTML5 Canvas animation about: "${description}".
+      Grade Level Context: ${grade} (Use this to adjust complexity).
       
       The function signature is: function draw(ctx, width, height, frame) { ... }
       
@@ -732,8 +748,17 @@ export const generateCanvasAnimation = async (description: string): Promise<stri
     let code = response.text || "";
     code = code.replace(/```javascript/g, "").replace(/```js/g, "").replace(/```/g, "");
     
+    // Track usage
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
+      contentType: 'canvas_animation',
+      topic: description.substring(0, 50),
+      grade,
+      model: 'gemini-3-flash-preview'
+    }).catch(e => console.error("Generation tracking failed:", e));
+
     if (code) {
-      await saveToCache('canvas_animation', { description }, code);
+      await saveToCache('canvas_animation', { description, grade }, code);
     }
     return code;
   } catch (error: any) {
@@ -878,6 +903,15 @@ export const generateErrorDetectiveCase = async (topic: string, grade: string): 
     const text = response.text;
     if (!text) throw new Error("No response content from AI");
     
+    // Track usage
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
+      contentType: 'error_detective',
+      topic,
+      grade,
+      model: 'gemini-3-flash-preview'
+    }).catch(e => console.error("Generation tracking failed:", e));
+
     const result = parseJsonSafe(text);
     if (result) {
       await saveToCache('error_detective', { topic, grade }, result);
@@ -981,10 +1015,10 @@ export const getContentPackage = async (grade: string, topic: string): Promise<L
     ] = await Promise.all([
       generateLessonContent(topic, grade),
       generateQuizQuestions(topic, grade),
-      generateScenarioContent(topic),
+      generateScenarioContent(topic, grade),
       generateBoardPlan(topic, grade),
-      generateWorksheet(topic),
-      generateProject(topic),
+      generateWorksheet(topic, grade),
+      generateProject(topic, grade),
       generateLessonConnectivity(topic, grade),
       generateIEPPlan({ topic, grade, disabilityType: 'general', adaptationLevel: 'standard', learningStyles: [], interests: '' }),
       generateErrorDetectiveCase(topic, grade),
@@ -1279,6 +1313,73 @@ export async function generateRemedialDecomposition(input: string, grade: string
     const result = parseJsonSafe(response.text);
     if (result) {
       await saveToCache('remedial_decomposition', { input, grade }, result);
+    }
+    return result;
+  } catch (error: any) {
+    handleGeminiError(error);
+    return null;
+  }
+}
+
+export async function generateMateSafeTasks(topic: string, grade: string): Promise<any> {
+  const cached = await getCachedResponse('mate_safe', { topic, grade });
+  if (cached) return cached;
+
+  try {
+    const prompt = `Генерирај 5 математички задачи за играта 'Мате-сеф' за ${grade} одделение на тема: ${topic}.
+    
+    КРИТИЧНИ ПРАВИЛА:
+    1. Решението на секоја задача МОРА да биде ЦЕЛ БРОЈ (позитивен или негативен).
+    2. Задачите треба да бидат со различна тежина.
+    3. Решенијата ќе се користат како шифра за отклучување сеф.
+    
+    Врати го одговорот во JSON формат со следнава структура:
+    {
+      "tasks": [
+        {
+          "question": "Текстот на задачата",
+          "answer": 15
+        }
+      ]
+    }`;
+
+    const response = await callGeminiWithRetry({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: {
+        systemInstruction: SYSTEM_PERSONA,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            tasks: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  question: { type: Type.STRING },
+                  answer: { type: Type.NUMBER }
+                },
+                required: ["question", "answer"]
+              }
+            }
+          },
+          required: ["tasks"]
+        }
+      }
+    });
+
+    incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+    trackGeneration({
+      contentType: 'mate_safe',
+      topic,
+      grade,
+      model: 'gemini-3-flash-preview'
+    }).catch(e => console.error("Generation tracking failed:", e));
+
+    const result = parseJsonSafe(response.text);
+    if (result) {
+      await saveToCache('mate_safe', { topic, grade }, result);
     }
     return result;
   } catch (error: any) {

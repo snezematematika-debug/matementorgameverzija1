@@ -13,6 +13,7 @@ import TeacherPanel from './components/TeacherPanel';
 import MateHoot from './components/MateHoot';
 import MateBingo from './components/MateBingo';
 import MathPath from './components/MathPath';
+import MateSafe from './components/MateSafe';
 import Dashboard from './components/Dashboard';
 import GeoGebra from './components/GeoGebra';
 import Mathigon from './components/Mathigon';
@@ -50,6 +51,7 @@ const App: React.FC = () => {
         const gameType = params.get('type');
         if (gameType === 'BINGO') setCurrentMode(AppMode.BINGO);
         else if (gameType === 'BOARD_GAME') setCurrentMode(AppMode.BOARD_GAME);
+        else if (gameType === 'MATE_SAFE') setCurrentMode(AppMode.MATE_SAFE);
         else setCurrentMode(AppMode.GAMES);
       } else if (savedRole) {
         setUserRole(savedRole as 'TEACHER' | 'STUDENT');
@@ -70,7 +72,7 @@ const App: React.FC = () => {
 
   // URL Cleanup
   useEffect(() => {
-    if (user && currentMode !== AppMode.GAMES && currentMode !== AppMode.BINGO && currentMode !== AppMode.BOARD_GAME) {
+    if (user && currentMode !== AppMode.GAMES && currentMode !== AppMode.BINGO && currentMode !== AppMode.BOARD_GAME && currentMode !== AppMode.MATE_SAFE) {
       const url = new URL(window.location.href);
       if (url.searchParams.has('pin')) {
         url.searchParams.delete('pin');
@@ -93,7 +95,7 @@ const App: React.FC = () => {
       case AppMode.PROJECT:
         return <ProjectGenerator grade={selectedGrade} />;
       case AppMode.VISUALIZER:
-        return <GeometryVisualizer />;
+        return <GeometryVisualizer grade={selectedGrade} />;
       case AppMode.BOARD_PLAN:
         return <BoardPlanGenerator grade={selectedGrade} />;
       case AppMode.ADVANCED_PRACTICE:
@@ -125,6 +127,17 @@ const App: React.FC = () => {
       case AppMode.BOARD_GAME:
         return (
           <MathPath 
+            grade={selectedGrade} 
+            initialRole={userRole}
+            onBack={() => {
+              setUserRole('TEACHER');
+              setCurrentMode(AppMode.DASHBOARD);
+            }} 
+          />
+        );
+      case AppMode.MATE_SAFE:
+        return (
+          <MateSafe 
             grade={selectedGrade} 
             initialRole={userRole}
             onBack={() => {

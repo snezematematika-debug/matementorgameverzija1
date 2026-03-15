@@ -262,7 +262,7 @@ const AdminDashboard: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-700 font-medium">{gen.topic}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{gen.grade}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{gen.grade || 'N/A'}</td>
                     <td className="px-6 py-4 text-xs text-slate-400">
                       {gen.timestamp?.toDate ? gen.timestamp.toDate().toLocaleString() : 'Пред малку'}
                     </td>

@@ -472,6 +472,19 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                   >
                     <span>🏁</span> Мате-Трка
                   </button>
+                  <button
+                    onClick={() => {
+                      setMode(AppMode.MATE_SAFE);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.MATE_SAFE 
+                        ? 'bg-indigo-500/30 text-indigo-100 shadow-lg border-indigo-400' 
+                        : 'text-indigo-200/80 hover:bg-indigo-800/40 hover:text-indigo-100 border-transparent'
+                    }`}
+                  >
+                    <span>🔐</span> Мате-сеф
+                  </button>
                 </div>
               </div>
             </div>
