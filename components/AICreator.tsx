@@ -1,17 +1,43 @@
-import React, { useState } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
-import { Sparkles, Loader2, Download, Copy, CheckCircle2, FileText, Settings2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { GoogleGenAI } from "@google/genai";
+import { Sparkles, Loader2, Download, Copy, FileText, Settings2, Printer, FileDown, Type as TypeIcon, Layers } from 'lucide-react';
 import Markdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
+import 'katex/dist/katex.min.css';
+import { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } from 'docx';
+import { saveAs } from 'file-saver';
+import { THEMES } from '../constants';
+import { useAuth } from '../services/firebase';
 
-const AI_CREATOR_PROMPT = `Ти си експерт за креирање на сумативни математички тестови и писмени работи според наставната програма на Бирото за развој на образованието.
+const AI_CREATOR_PROMPT = `Ти си експерт за креирање на сумативни математички тестови и писмени работи според наставната програма на Бирото за развој на образованието во Македонија.
 
 Твоја задача е да креираш професионална писмена работа за дадената тема и одделение.
-Писмената работа треба да содржи:
-1. Наслов и основни податоци (Име, Презиме, Одделение, Датум).
-2. Задачи поделени по нивоа на тежина (Лесно, Средно, Тешко).
-3. Јасно дефинирани бодови за секоја задача.
-4. Скала за оценување (бодови -> оценка).
-5. Клуч со точни решенија на крајот.
+
+ВАЖНО: СТРОГО Е ЗАБРАНЕТО КОРИСТЕЊЕ НА HTML ТАГОВИ (како <center>, <br>, <h1>, <div>). Користи исклучиво чист Markdown за форматирање.
+
+ВАЖНО ЗА МАТЕМАТИЧКИ ФОРМУЛИ:
+- Користи LaTeX формат за сите математички изрази и формули (пр. $x^2$, $\frac{a}{b}$, $\sqrt{x}$).
+- Користи двојни долари за формули во посебен ред (пр. $$E = mc^2$$).
+
+Формат на задачи по нивоа:
+- Ниво 1: Задачите секогаш мора да бидат со понудени 4 одговори (multiple choice). Секоја задача носи точно 4 поени (4п).
+- Ниво 2: Задачите мора да бидат со допишување на краток одговор (fill in the blank). Секоја задача носи точно 6 поени (6п).
+- Ниво 3: Задачите се потешки и мора да имаат планиран простор за решавање (постапка). Секоја задача носи точно 10 поени (10п).
+
+Формат на излез:
+1. Заглавие: ПИСМЕНА РАБОТА (центрирано)
+2. Под заглавието: 'Име и презиме: _________ Одд: ____ Освоени поени: ____ / Вкупно: ____'
+3. Содржина: Задачи поделени по нивоа. За секоја задача мора да стои ознака за поените.
+4. Критериум за оценување (на крајот):
+   - 0 - 29% = 1
+   - 30 - 49% = 2
+   - 50 - 69% = 3
+   - 70 - 85% = 4
+   - 86 - 100% = 5
+5. Завршок: 'Наставник: [ИМЕ_НА_НАСТАВНИК]'
+6. Клуч со точни решенија на крајот (на посебна страна или јасно одвоено).
 
 Сите задачи и упатства мора да бидат на македонски јазик. Користи соодветна математичка терминологија.`;
 
@@ -20,16 +46,68 @@ interface AICreatorProps {
 }
 
 const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
-  const [topic, setTopic] = useState('');
+  const { user } = useAuth();
+  const [testType, setTestType] = useState<'Стандардна' | 'Диференцирана'>('Стандардна');
+  const [selectedThemeIds, setSelectedThemeIds] = useState<string[]>([]);
+  const [level1Count, setLevel1Count] = useState(2);
+  const [level2Count, setLevel2Count] = useState(2);
+  const [level3Count, setLevel3Count] = useState(1);
+  
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const filteredThemes = useMemo(() => THEMES.filter(t => t.grade === grade), [grade]);
+
+  const toggleTheme = (id: string) => {
+    setSelectedThemeIds(prev => 
+      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+    );
+  };
+
   const generateTest = async () => {
-    if (!topic.trim()) return;
+    if (selectedThemeIds.length === 0) return;
 
     setLoading(true);
     setError(null);
+
+    const selectedThemesTitles = THEMES
+      .filter(t => selectedThemeIds.includes(t.id))
+      .map(t => t.title)
+      .join(', ');
+      
+    const teacherName = user?.displayName || '________________';
+
+    const differentiationInstructions = testType === 'Диференцирана' 
+      ? `
+      ВАЖНО: Ова е ДИФЕРЕНЦИРАНА писмена работа за ученици со потешкотии во учењето.
+      - Користи поедноставен јазик и јасни инструкции.
+      - Задачите треба да имаат помалку чекори за решавање.
+      - Вклучи насоки, формули или мали потсетници како помош за секоја задача каде што е соодветно.
+      - Нивото на тежина треба да биде прилагодено, но сепак да ги покрива основните стандарди.
+      `
+      : `
+      ВАЖНО: Ова е СТАНДАРДНА писмена работа според редовната наставна програма.
+      - Задачите треба да бидат со стандардна тежина за соодветното одделение.
+      `;
+
+    const prompt = `
+      Креирај ${testType} писмена работа за ${grade} одделение.
+      Теми: ${selectedThemesTitles}
+      
+      Број на задачи по нивоа:
+      - Ниво 1 (4 поени по задача): ${level1Count} задачи
+      - Ниво 2 (6 поени по задача): ${level2Count} задачи
+      - Ниво 3 (10 поени по задача): ${level3Count} задачи
+      
+      ${differentiationInstructions}
+      
+      ВАЖНО: Направи соодветен и разновиден избор на задачи рамномерно распределени од сите избрани теми.
+      
+      Замени го [ИМЕ_НА_НАСТАВНИК] со ${teacherName}.
+      
+      ${AI_CREATOR_PROMPT}
+    `;
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -37,7 +115,7 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
 
       const response = await ai.models.generateContent({
         model,
-        contents: `Креирај писмена работа за ${grade} одделение на тема: ${topic}. \n\n${AI_CREATOR_PROMPT}`,
+        contents: prompt,
       });
 
       setResult(response.text || "Нема резултат.");
@@ -56,20 +134,185 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
     }
   };
 
-  const downloadTest = () => {
+  const downloadMarkdown = () => {
     if (!result) return;
     const element = document.createElement("a");
-    const file = new Blob([result], { type: 'text/plain' });
+    const file = new Blob([result], { type: 'text/markdown' });
     element.href = URL.createObjectURL(file);
-    element.download = `Pismena_Rabota_${grade}_Odd_${topic.replace(/\s+/g, '_')}.txt`;
+    element.download = `Pismena_Rabota_${grade}_Odd.md`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
   };
 
+  const downloadWord = async () => {
+    if (!result) return;
+
+    // Helper to clean LaTeX math to plain text
+    const cleanMath = (text: string) => {
+      return text
+        .replace(/<[^>]*>/g, '') // Strip any HTML tags
+        .replace(/\$\$(.*?)\$\$/g, '$1')
+        .replace(/\$(.*?)\$/g, '$1')
+        .replace(/\\frac\{(.*?)\}\{(.*?)\}/g, '$1/$2')
+        .replace(/\\sqrt\{(.*?)\}/g, '√$1')
+        .replace(/\\cdot/g, '·')
+        .replace(/\\times/g, '×')
+        .replace(/\\pm/g, '±')
+        .replace(/\\le/g, '≤')
+        .replace(/\\ge/g, '≥')
+        .replace(/\\neq/g, '≠')
+        .replace(/\\alpha/g, 'α')
+        .replace(/\\beta/g, 'β')
+        .replace(/\\gamma/g, 'γ')
+        .replace(/\\pi/g, 'π')
+        .replace(/\\degree/g, '°')
+        .replace(/\^2/g, '²')
+        .replace(/\^3/g, '³')
+        .replace(/\^n/g, 'ⁿ')
+        .replace(/_1/g, '₁')
+        .replace(/_2/g, '₂')
+        .replace(/_n/g, 'ₙ')
+        .replace(/\\text\{(.*?)\}/g, '$1')
+        .replace(/\\/g, ''); // Remove remaining backslashes
+    };
+
+    const lines = result.split('\n');
+    const paragraphs: Paragraph[] = [];
+
+    lines.forEach((line) => {
+      const trimmedLine = line.trim();
+      if (!trimmedLine && paragraphs.length > 0) {
+        paragraphs.push(new Paragraph({ text: "" }));
+        return;
+      }
+
+      // Check if it's the main title
+      if (trimmedLine.toUpperCase().includes('ПИСМЕНА РАБОТА') && trimmedLine.length < 30) {
+        paragraphs.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: trimmedLine.replace(/#/g, '').trim(),
+                bold: true,
+                size: 32,
+              }),
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 400 },
+          })
+        );
+        return;
+      }
+
+      // Check if it's the student info line
+      if (trimmedLine.includes('Име и презиме:')) {
+        paragraphs.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: cleanMath(trimmedLine),
+                size: 24,
+              }),
+            ],
+            spacing: { after: 300 },
+          })
+        );
+        return;
+      }
+
+      // Check if it's a Level header
+      if (trimmedLine.startsWith('Ниво') || trimmedLine.startsWith('### Ниво') || trimmedLine.startsWith('## Ниво')) {
+        paragraphs.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: trimmedLine.replace(/#/g, '').trim(),
+                bold: true,
+                size: 28,
+              }),
+            ],
+            spacing: { before: 400, after: 200 },
+          })
+        );
+        return;
+      }
+
+      // Check if it's a task number
+      const taskMatch = trimmedLine.match(/^(\d+\.)(.*)/);
+      if (taskMatch) {
+        paragraphs.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: taskMatch[1],
+                bold: true,
+                size: 24,
+              }),
+              new TextRun({
+                text: cleanMath(taskMatch[2]).replace(/\*\*/g, ''),
+                size: 24,
+              }),
+            ],
+            spacing: { before: 200, after: 100 },
+          })
+        );
+        return;
+      }
+
+      // General text line
+      if (trimmedLine) {
+        // Add extra space if it's a "space for solving" indicator
+        const isSpaceIndicator = trimmedLine.toLowerCase().includes('простор за решавање') || 
+                               trimmedLine.toLowerCase().includes('решение:');
+
+        // Handle bold markdown in general text
+        const parts = trimmedLine.split(/(\*\*.*?\*\*)/);
+        const children = parts.map(part => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return new TextRun({
+              text: cleanMath(part.slice(2, -2)),
+              bold: true,
+              size: 24,
+            });
+          }
+          return new TextRun({
+            text: cleanMath(part),
+            size: 24,
+          });
+        });
+
+        paragraphs.push(
+          new Paragraph({
+            children: children,
+            spacing: { 
+              after: isSpaceIndicator ? 2400 : 150 // 2400 twips is about 4-5 lines
+            },
+          })
+        );
+      }
+    });
+
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: paragraphs,
+        },
+      ],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `Pismena_Rabota_${grade}_Odd.docx`);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4 print:hidden">
         <div>
           <h2 className="text-2xl font-bold text-indigo-900 flex items-center gap-3">
             <Sparkles className="w-8 h-8 text-indigo-600" />
@@ -79,47 +322,140 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
         </div>
       </div>
 
-      <div className="bg-indigo-50/50 p-6 rounded-3xl border border-indigo-100 space-y-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
-              <Settings2 className="w-4 h-4" /> Тема на писмената работа
+      <div className="bg-white p-6 rounded-3xl border border-indigo-100 shadow-sm space-y-6 print:hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-indigo-900 flex items-center gap-2">
+              <TypeIcon className="w-4 h-4" /> Вид на писмена
             </label>
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="пр. Алгебарски изрази, Геометриски фигури..."
-              className="w-full px-4 py-3 rounded-xl border-2 border-indigo-100 focus:border-indigo-500 focus:ring-0 outline-none transition-all"
-            />
+            <div className="flex bg-indigo-50 p-1 rounded-xl">
+              <button
+                onClick={() => setTestType('Стандардна')}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${testType === 'Стандардна' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-400 hover:text-indigo-600'}`}
+              >
+                Стандардна
+              </button>
+              <button
+                onClick={() => setTestType('Диференцирана')}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${testType === 'Диференцирана' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-400 hover:text-indigo-600'}`}
+              >
+                Диференцирана
+              </button>
+            </div>
           </div>
+
+          <div className="space-y-2 lg:col-span-2">
+            <label className="block text-sm font-bold text-indigo-900 flex items-center gap-2">
+              <Layers className="w-4 h-4" /> Избери теми (може повеќе)
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {filteredThemes.map(theme => (
+                <button
+                  key={theme.id}
+                  onClick={() => toggleTheme(theme.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all ${
+                    selectedThemeIds.includes(theme.id)
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
+                      : 'bg-white border-indigo-50 text-indigo-400 hover:border-indigo-200'
+                  }`}
+                >
+                  {theme.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-4 border-t border-indigo-50">
+          <div className="flex-1 w-full space-y-4">
+            <label className="block text-sm font-bold text-indigo-900 flex items-center gap-2">
+              <Settings2 className="w-4 h-4" /> Број на задачи по нивоа
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-emerald-600">Ниво 1 (4п)</span>
+                  <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">{level1Count} задачи</span>
+                </div>
+                <input
+                  type="range" min="0" max="10" value={level1Count}
+                  onChange={(e) => setLevel1Count(parseInt(e.target.value))}
+                  className="w-full h-2 bg-emerald-100 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-amber-600">Ниво 2 (6п)</span>
+                  <span className="text-xs font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{level2Count} задачи</span>
+                </div>
+                <input
+                  type="range" min="0" max="10" value={level2Count}
+                  onChange={(e) => setLevel2Count(parseInt(e.target.value))}
+                  className="w-full h-2 bg-amber-100 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-purple-600">Ниво 3 (10п)</span>
+                  <span className="text-xs font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">{level3Count} задачи</span>
+                </div>
+                <input
+                  type="range" min="0" max="10" value={level3Count}
+                  onChange={(e) => setLevel3Count(parseInt(e.target.value))}
+                  className="w-full h-2 bg-purple-100 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="md:self-end">
             <button
               onClick={generateTest}
-              disabled={loading || !topic.trim()}
-              className="w-full md:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2"
+              disabled={loading || selectedThemeIds.length === 0}
+              className="w-full md:w-auto px-10 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white rounded-2xl font-bold shadow-xl transition-all flex items-center justify-center gap-3"
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-              Генерирај
+              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6" />}
+              Генерирај писмена
             </button>
           </div>
         </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 flex items-center gap-3">
+        <div className="p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 flex items-center gap-3 print:hidden">
           <Loader2 className="w-5 h-5" /> {error}
         </div>
       )}
 
       {result && (
-        <div className="bg-white rounded-3xl shadow-xl border overflow-hidden">
-          <div className="p-4 bg-slate-50 border-b flex justify-between items-center">
+        <div className="bg-white rounded-3xl shadow-xl border overflow-hidden print:shadow-none print:border-none print:m-0">
+          <div className="p-4 bg-slate-50 border-b flex justify-between items-center print:hidden">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-indigo-600" />
-              <span className="font-bold text-indigo-900">Генерирана писмена работа</span>
+              <span className="font-bold text-indigo-900">Преглед на писмената работа</span>
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={handlePrint}
+                className="p-2 hover:bg-white rounded-lg transition-colors text-indigo-600"
+                title="Печати во PDF"
+              >
+                <Printer className="w-5 h-5" />
+              </button>
+              <button
+                onClick={downloadWord}
+                className="p-2 hover:bg-white rounded-lg transition-colors text-blue-600"
+                title="Симни како Word"
+              >
+                <FileDown className="w-5 h-5" />
+              </button>
+              <button
+                onClick={downloadMarkdown}
+                className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600"
+                title="Симни како Markdown"
+              >
+                <Download className="w-5 h-5" />
+              </button>
               <button
                 onClick={copyToClipboard}
                 className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600"
@@ -127,31 +463,55 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
               >
                 <Copy className="w-5 h-5" />
               </button>
-              <button
-                onClick={downloadTest}
-                className="p-2 hover:bg-white rounded-lg transition-colors text-emerald-600"
-                title="Превземи"
-              >
-                <Download className="w-5 h-5" />
-              </button>
             </div>
           </div>
-          <div className="p-8 prose prose-indigo max-w-none">
-            <Markdown>{result}</Markdown>
+          <div className="p-8 prose prose-indigo max-w-none print:p-0 print:prose-sm print:max-w-none">
+            <div className="markdown-body">
+              <Markdown 
+                remarkPlugins={[remarkMath]} 
+                rehypePlugins={[rehypeKatex, rehypeRaw]}
+              >
+                {result}
+              </Markdown>
+            </div>
           </div>
         </div>
       )}
 
       {!result && !loading && (
-        <div className="text-center py-12 text-slate-400">
+        <div className="text-center py-12 text-slate-400 print:hidden">
           <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-10 h-10" />
           </div>
           <p className="max-w-xs mx-auto italic">
-            Внесете тема за да генерирате комплетна писмена работа со задачи, бодови и клуч со решенија.
+            Изберете една или повеќе теми за да генерирате комплетна писмена работа со задачи, бодови и клуч со решенија.
           </p>
         </div>
       )}
+
+      <style>{`
+        @media print {
+          /* Hide everything except the test content */
+          body * {
+            visibility: hidden;
+          }
+          .markdown-body, .markdown-body * {
+            visibility: visible;
+          }
+          .markdown-body {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 20px;
+            background: white;
+          }
+          /* Ensure title is centered in print */
+          h1 { text-align: center !important; margin-bottom: 20px; }
+          /* Remove any shadow/border from parent containers in print */
+          .bg-white { background: transparent !important; box-shadow: none !important; border: none !important; }
+        }
+      `}</style>
     </div>
   );
 };

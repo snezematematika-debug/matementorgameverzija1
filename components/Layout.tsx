@@ -516,19 +516,6 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                 <div className="flex flex-col gap-0.5 pl-4 pb-1">
                   <button
                     onClick={() => {
-                      setMode(AppMode.AI_REVIEWER);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
-                      currentMode === AppMode.AI_REVIEWER 
-                        ? 'bg-cyan-500/30 text-cyan-100 shadow-lg border-cyan-400' 
-                        : 'text-cyan-200/80 hover:bg-indigo-800/40 hover:text-cyan-100 border-transparent'
-                    }`}
-                  >
-                    <span>🔍</span> АИ Прегледувач
-                  </button>
-                  <button
-                    onClick={() => {
                       setMode(AppMode.AI_CREATOR);
                       setIsMobileMenuOpen(false);
                     }}
@@ -539,6 +526,19 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }`}
                   >
                     <span>✨</span> АИ Креатор
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMode(AppMode.AI_REVIEWER);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.AI_REVIEWER 
+                        ? 'bg-cyan-500/30 text-cyan-100 shadow-lg border-cyan-400' 
+                        : 'text-cyan-200/80 hover:bg-indigo-800/40 hover:text-cyan-100 border-transparent'
+                    }`}
+                  >
+                    <span>🔍</span> АИ Прегледувач
                   </button>
                 </div>
               </div>
