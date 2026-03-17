@@ -65,11 +65,12 @@ export enum AppMode {
   ERROR_DETECTIVE = 'ERROR_DETECTIVE',
   INCLUSION = 'INCLUSION',
   MATE_SAFE = 'MATE_SAFE',
+  MATE_MACHINE = 'MATE_MACHINE',
   AI_REVIEWER = 'AI_REVIEWER',
   AI_CREATOR = 'AI_CREATOR'
 }
 
-export type GameType = 'BINGO' | 'ESCAPE_ROOM' | 'PASSWORD' | 'BALLOONS' | 'FLASHCARDS' | 'MATEHOOT' | 'BOARD_GAME' | 'MATE_SAFE';
+export type GameType = 'BINGO' | 'ESCAPE_ROOM' | 'PASSWORD' | 'BALLOONS' | 'FLASHCARDS' | 'MATEHOOT' | 'BOARD_GAME' | 'MATE_SAFE' | 'MATE_MACHINE';
 
 export interface GameState {
   pin: string;

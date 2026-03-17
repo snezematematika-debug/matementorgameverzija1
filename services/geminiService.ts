@@ -1387,3 +1387,81 @@ export async function generateMateSafeTasks(topic: string, grade: string): Promi
     return null;
   }
 }
+
+export const checkMateMachineStep = async (lastStep: string, currentStep: string, initialProblem: string, difficulty: string): Promise<{isValid: boolean, feedback: string, isFinal: boolean}> => {
+  try {
+    const ai = await getAiClient();
+    const prompt = `
+      ТИ СИ АЛГЕБАРСКИ ПРОЦЕСОР (МАТЕ-МАШИНА).
+      
+      ПОЧЕТЕН ПРОБЛЕМ: ${initialProblem}
+      ПОСЛЕДЕН ТОЧЕН ЧЕКОР: ${lastStep}
+      НОВ ЧЕКОР ОД УЧЕНИКОТ: ${currentStep}
+      ТЕЖИНА: ${difficulty}
+      
+      ЗАДАЧА:
+      1. Провери дали новиот чекор е математички еквивалентен на претходниот и дали е логичен напредок кон решението.
+      2. Ако е точен, провери дали ова е финалното решение (најпроста форма или вредност на x).
+      3. Врати повратна информација на македонски јазик.
+      
+      ПРАВИЛА ЗА ПРОВЕРКА:
+      - Биди строг но фер. Мали варијации во редослед се дозволени (на пр. 2x+5 и 5+2x).
+      - Ако чекорот е ист како претходниот, кажи му на ученикот дека треба да направи промена.
+      
+      ВРАТИ JSON:
+      {
+        "isValid": boolean,
+        "feedback": "Краток коментар на македонски",
+        "isFinal": boolean
+      }
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        systemInstruction: "You are a precise mathematical engine. You validate algebraic steps and provide encouraging feedback in Macedonian.",
+        responseMimeType: "application/json",
+      }
+    });
+
+    const text = response.text;
+    return parseJsonSafe(text) as {isValid: boolean, feedback: string, isFinal: boolean};
+  } catch (error: any) {
+    handleGeminiError(error);
+    return { isValid: false, feedback: "Грешка при проверка.", isFinal: false };
+  }
+};
+
+export const generateMateMachineHint = async (lastStep: string, initialProblem: string, difficulty: string): Promise<string> => {
+  try {
+    const ai = await getAiClient();
+    const prompt = `
+      ТИ СИ МЕНТОР ПО АЛГЕБРА.
+      Ученикот е заглавен во "Мате-машината".
+      
+      ПОЧЕТЕН ПРОБЛЕМ: ${initialProblem}
+      ПОСЛЕДЕН ТОЧЕН ЧЕКОР: ${lastStep}
+      ТЕЖИНА: ${difficulty}
+      
+      ЗАДАЧА:
+      Дај краток, охрабрувачки совет (hint) за тоа кој би бил следниот логичен чекор.
+      НЕ ГО ДАВАЈ ЦЕЛОТО РЕШЕНИЕ. Само насока (на пр. "Обиди се да ги префрлиш сите x на левата страна").
+      
+      Врати го советот на македонски јазик.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: {
+        systemInstruction: "You are a helpful math tutor. You provide hints without giving away the full answer.",
+      }
+    });
+
+    return response.text || "Обиди се да го поедноставиш изразот.";
+  } catch (error: any) {
+    handleGeminiError(error);
+    return "Размисли за следниот чекор.";
+  }
+};

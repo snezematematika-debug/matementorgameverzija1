@@ -14,6 +14,7 @@ import MateHoot from './components/MateHoot';
 import MateBingo from './components/MateBingo';
 import MathPath from './components/MathPath';
 import MateSafe from './components/MateSafe';
+import MateMachine from './components/MateMachine';
 import Dashboard from './components/Dashboard';
 import GeoGebra from './components/GeoGebra';
 import Mathigon from './components/Mathigon';
@@ -33,6 +34,7 @@ const App: React.FC = () => {
   const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.DASHBOARD);
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(GradeLevel.VI);
   const [userRole, setUserRole] = useState<'TEACHER' | 'STUDENT' | null>(null);
+  const [mateMachineProblem, setMateMachineProblem] = useState<string | undefined>(undefined);
 
   // Initialize state from session storage or URL
   useEffect(() => {
@@ -54,6 +56,7 @@ const App: React.FC = () => {
         if (gameType === 'BINGO') setCurrentMode(AppMode.BINGO);
         else if (gameType === 'BOARD_GAME') setCurrentMode(AppMode.BOARD_GAME);
         else if (gameType === 'MATE_SAFE') setCurrentMode(AppMode.MATE_SAFE);
+        else if (gameType === 'MATE_MACHINE') setCurrentMode(AppMode.MATE_MACHINE);
         else setCurrentMode(AppMode.GAMES);
       } else if (savedRole) {
         setUserRole(savedRole as 'TEACHER' | 'STUDENT');
@@ -103,7 +106,13 @@ const App: React.FC = () => {
       case AppMode.ADVANCED_PRACTICE:
         return <AdvancedPractice grade={selectedGrade} />;
       case AppMode.TEACHER_PANEL:
-        return <TeacherPanel grade={selectedGrade} />;
+        return (
+          <TeacherPanel 
+            grade={selectedGrade} 
+            setMateMachineProblem={setMateMachineProblem}
+            setMode={setCurrentMode}
+          />
+        );
       case AppMode.GAMES:
         return (
           <MateHoot 
@@ -148,6 +157,8 @@ const App: React.FC = () => {
             }} 
           />
         );
+      case AppMode.MATE_MACHINE:
+        return <MateMachine grade={selectedGrade} initialProblem={mateMachineProblem} />;
       case AppMode.GEOGEBRA:
         return <GeoGebra />;
       case AppMode.MATHIGON:

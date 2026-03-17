@@ -12,7 +12,8 @@ import {
   Star,
   Users,
   Flag,
-  ShieldCheck
+  ShieldCheck,
+  Cpu
 } from 'lucide-react';
 import { AppMode } from '../types';
 
@@ -46,6 +47,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
     { title: 'Мате-Бинго', desc: 'Брза игра со 3х3 табла', mode: AppMode.BINGO, icon: Sparkles, color: 'bg-amber-500' },
     { title: 'Мате - Трка', desc: 'Трка до целта низ математички полиња', mode: AppMode.BOARD_GAME, icon: Flag, color: 'bg-emerald-600' },
     { title: 'Мате-сеф', desc: 'Отклучи го сефот со решавање задачи', mode: AppMode.MATE_SAFE, icon: ShieldCheck, color: 'bg-indigo-600' },
+    { title: 'Мате-машина', desc: 'Алгебарски процесор за чекори', mode: AppMode.MATE_MACHINE, icon: Cpu, color: 'bg-slate-800' },
   ];
 
   const recentActivity = [

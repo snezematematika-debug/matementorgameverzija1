@@ -37,7 +37,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
     if ([AppMode.LESSON, AppMode.SCENARIO, AppMode.BOARD_PLAN].includes(currentMode)) return 'PREP';
     if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) return 'MATERIALS';
     if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GEOGEBRA, AppMode.MATHIGON, AppMode.ERROR_DETECTIVE].includes(currentMode)) return 'INTERACTIVE';
-    if (currentMode === AppMode.GAMES || currentMode === AppMode.BINGO) return 'GAMIFICATION';
+    if (currentMode === AppMode.GAMES || currentMode === AppMode.BINGO || currentMode === AppMode.BOARD_GAME || currentMode === AppMode.MATE_SAFE || currentMode === AppMode.MATE_MACHINE) return 'GAMIFICATION';
     if ([AppMode.ADVANCED_PRACTICE, AppMode.REMEDIAL_TEACHING, AppMode.INCLUSION].includes(currentMode)) return 'SUPPORT';
     if (currentMode === AppMode.AI_REVIEWER || currentMode === AppMode.AI_CREATOR) return 'AI_SUMMATIVE';
     if (currentMode === AppMode.ANALYTICS) return 'ANALYTICS';
@@ -55,7 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
     if ([AppMode.LESSON, AppMode.SCENARIO, AppMode.BOARD_PLAN].includes(currentMode)) setOpenCategory('PREP');
     else if ([AppMode.WORKSHEET, AppMode.QUIZ, AppMode.PROJECT].includes(currentMode)) setOpenCategory('MATERIALS');
     else if ([AppMode.TEACHER_PANEL, AppMode.VISUALIZER, AppMode.GEOGEBRA, AppMode.MATHIGON, AppMode.ERROR_DETECTIVE].includes(currentMode)) setOpenCategory('INTERACTIVE');
-    else if (currentMode === AppMode.GAMES || currentMode === AppMode.BINGO) setOpenCategory('GAMIFICATION');
+    else if (currentMode === AppMode.GAMES || currentMode === AppMode.BINGO || currentMode === AppMode.BOARD_GAME || currentMode === AppMode.MATE_SAFE || currentMode === AppMode.MATE_MACHINE) setOpenCategory('GAMIFICATION');
     else if ([AppMode.ADVANCED_PRACTICE, AppMode.REMEDIAL_TEACHING, AppMode.INCLUSION].includes(currentMode)) setOpenCategory('SUPPORT');
     else if (currentMode === AppMode.AI_REVIEWER || currentMode === AppMode.AI_CREATOR) setOpenCategory('AI_SUMMATIVE');
     else if (currentMode === AppMode.ANALYTICS) setOpenCategory('ANALYTICS');
@@ -486,6 +486,19 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }`}
                   >
                     <span>🔐</span> Мате-сеф
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMode(AppMode.MATE_MACHINE);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
+                      currentMode === AppMode.MATE_MACHINE 
+                        ? 'bg-slate-500/30 text-slate-100 shadow-lg border-slate-400' 
+                        : 'text-slate-200/80 hover:bg-indigo-800/40 hover:text-slate-100 border-transparent'
+                    }`}
+                  >
+                    <span>⚙️</span> Мате-машина
                   </button>
                 </div>
               </div>
