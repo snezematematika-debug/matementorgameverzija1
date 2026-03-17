@@ -74,7 +74,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 print:bg-white">
       {/* Mobile Header - Only visible on small screens */}
       {!hideSidebar && (
-        <div className="md:hidden bg-indigo-950 text-white p-4 flex justify-between items-center sticky top-0 z-30 shadow-md">
+        <div className="md:hidden bg-indigo-950 text-white p-4 flex justify-between items-center sticky top-0 z-30 shadow-md print:hidden">
           <h1 className="text-lg font-bold flex items-center gap-3">
             <Logo size="w-7 h-7" /> Мате-Ментор
           </h1>
@@ -717,7 +717,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
 
       {/* Main Content */}
       <main className="flex-1 p-4 md:p-6 h-auto md:h-screen md:overflow-y-auto print:h-auto print:overflow-visible print:p-0">
-        <div className={`${maxWidthClass} mx-auto bg-white rounded-2xl shadow-xl min-h-[90%] p-6 md:p-8 print:shadow-none print:max-w-none print:rounded-none transition-all duration-500`}>
+        <div className={`${maxWidthClass} mx-auto bg-white rounded-2xl shadow-xl min-h-[90%] p-6 md:p-8 print:shadow-none print:max-w-none print:rounded-none print:p-0 transition-all duration-500`}>
           {children}
         </div>
       </main>

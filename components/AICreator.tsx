@@ -564,25 +564,33 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
 
       <style>{`
         @media print {
-          /* Hide everything except the test content */
-          body * {
-            visibility: hidden;
+          /* Ensure the formatted text is visible and takes full width */
+          .formatted-text {
+            display: block !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: white !important;
+            color: black !important;
           }
-          .markdown-body, .markdown-body * {
-            visibility: visible;
-          }
-          .markdown-body {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            padding: 20px;
-            background: white;
-          }
+          
           /* Ensure title is centered in print */
           h1 { text-align: center !important; margin-bottom: 20px; }
+          
           /* Remove any shadow/border from parent containers in print */
           .bg-white { background: transparent !important; box-shadow: none !important; border: none !important; }
+          
+          /* Table improvements for print */
+          table {
+            page-break-inside: auto;
+          }
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+          thead {
+            display: table-header-group;
+          }
         }
       `}</style>
     </div>
