@@ -3,10 +3,11 @@ import { GoogleGenAI } from "@google/genai";
 import { Sparkles, Loader2, Download, Copy, FileText, Settings2, Printer, FileDown, Type as TypeIcon, Layers } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
-import { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } from 'docx';
+import { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
 import { saveAs } from 'file-saver';
 import { THEMES } from '../constants';
 import { useAuth } from '../services/firebase';
@@ -31,11 +32,13 @@ const AI_CREATOR_PROMPT = `Ти си експерт за креирање на �
 2. Под заглавието: 'Име и презиме: _________ Одд: ____ Освоени поени: ____ / Вкупно: ____'
 3. Содржина: Задачи поделени по нивоа. За секоја задача мора да стои ознака за поените.
 4. Критериум за оценување (на крајот):
-   - 0 - 29% = 1
-   - 30 - 49% = 2
-   - 50 - 69% = 3
-   - 70 - 85% = 4
-   - 86 - 100% = 5
+   - Креирај ПРЕГЛЕДНА ТАБЕЛА во Markdown формат со колони: Поени, Процент, Оценка.
+   - Скала:
+     - 0 - 29% = 1 (недоволен)
+     - 30 - 49% = 2 (доволен)
+     - 50 - 69% = 3 (добар)
+     - 70 - 85% = 4 (многу добар)
+     - 86 - 100% = 5 (одличен)
 5. Завршок: 'Наставник: [ИМЕ_НА_НАСТАВНИК]'
 6. Клуч со точни решенија на крајот (на посебна страна или јасно одвоено).
 
@@ -178,18 +181,69 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
     };
 
     const lines = result.split('\n');
-    const paragraphs: Paragraph[] = [];
+    const sections: (Paragraph | Table)[] = [];
+    let currentTableRows: TableRow[] = [];
+    let isInsideTable = false;
 
     lines.forEach((line) => {
       const trimmedLine = line.trim();
-      if (!trimmedLine && paragraphs.length > 0) {
-        paragraphs.push(new Paragraph({ text: "" }));
+      
+      // Table detection (very basic)
+      if (trimmedLine.startsWith('|') && trimmedLine.endsWith('|')) {
+        // Skip separator lines like |---|---|
+        if (trimmedLine.includes('---')) {
+          isInsideTable = true;
+          return;
+        }
+
+        const cells = trimmedLine
+          .split('|')
+          .filter(cell => cell.trim() !== '' || (trimmedLine.startsWith('|') && trimmedLine.endsWith('|')))
+          .map(cell => cell.trim());
+        
+        // Handle cases where split might leave empty strings at ends
+        const actualCells = trimmedLine.startsWith('|') && trimmedLine.endsWith('|') 
+          ? trimmedLine.slice(1, -1).split('|').map(c => c.trim())
+          : cells;
+
+        if (actualCells.length > 0) {
+          const tableRow = new TableRow({
+            children: actualCells.map(cellText => (
+              new TableCell({
+                children: [new Paragraph({ 
+                  children: [new TextRun({ text: cleanMath(cellText), size: 24 })],
+                  alignment: AlignmentType.CENTER 
+                })],
+                width: { size: 100 / actualCells.length, type: WidthType.PERCENTAGE },
+              })
+            )),
+          });
+
+          currentTableRows.push(tableRow);
+          isInsideTable = true;
+          return;
+        }
+      } else if (isInsideTable && currentTableRows.length > 0) {
+        // End of table
+        sections.push(
+          new Table({
+            rows: currentTableRows,
+            width: { size: 100, type: WidthType.PERCENTAGE },
+          })
+        );
+        currentTableRows = [];
+        isInsideTable = false;
+        // Don't return, process the current line as a normal paragraph
+      }
+
+      if (!trimmedLine && sections.length > 0) {
+        sections.push(new Paragraph({ text: "" }));
         return;
       }
 
       // Check if it's the main title
       if (trimmedLine.toUpperCase().includes('ПИСМЕНА РАБОТА') && trimmedLine.length < 30) {
-        paragraphs.push(
+        sections.push(
           new Paragraph({
             children: [
               new TextRun({
@@ -207,7 +261,7 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
 
       // Check if it's the student info line
       if (trimmedLine.includes('Име и презиме:')) {
-        paragraphs.push(
+        sections.push(
           new Paragraph({
             children: [
               new TextRun({
@@ -223,7 +277,7 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
 
       // Check if it's a Level header
       if (trimmedLine.startsWith('Ниво') || trimmedLine.startsWith('### Ниво') || trimmedLine.startsWith('## Ниво')) {
-        paragraphs.push(
+        sections.push(
           new Paragraph({
             children: [
               new TextRun({
@@ -241,7 +295,7 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
       // Check if it's a task number
       const taskMatch = trimmedLine.match(/^(\d+\.)(.*)/);
       if (taskMatch) {
-        paragraphs.push(
+        sections.push(
           new Paragraph({
             children: [
               new TextRun({
@@ -264,7 +318,7 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
       if (trimmedLine) {
         // Add extra space if it's a "space for solving" indicator
         const isSpaceIndicator = trimmedLine.toLowerCase().includes('простор за решавање') || 
-                               trimmedLine.toLowerCase().includes('решение:');
+                                trimmedLine.toLowerCase().includes('решение:');
 
         // Handle bold markdown in general text
         const parts = trimmedLine.split(/(\*\*.*?\*\*)/);
@@ -282,7 +336,7 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
           });
         });
 
-        paragraphs.push(
+        sections.push(
           new Paragraph({
             children: children,
             spacing: { 
@@ -293,11 +347,21 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
       }
     });
 
+    // Final table check
+    if (isInsideTable && currentTableRows.length > 0) {
+      sections.push(
+        new Table({
+          rows: currentTableRows,
+          width: { size: 100, type: WidthType.PERCENTAGE },
+        })
+      );
+    }
+
     const doc = new Document({
       sections: [
         {
           properties: {},
-          children: paragraphs,
+          children: sections,
         },
       ],
     });
@@ -468,7 +532,7 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
           <div className="p-8 prose prose-indigo max-w-none print:p-0 print:prose-sm print:max-w-none">
             <div className="markdown-body">
               <Markdown 
-                remarkPlugins={[remarkMath]} 
+                remarkPlugins={[remarkMath, remarkGfm]} 
                 rehypePlugins={[rehypeKatex, rehypeRaw]}
               >
                 {result}
