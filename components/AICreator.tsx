@@ -1,12 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Sparkles, Loader2, Download, Copy, FileText, Settings2, Printer, FileDown, Type as TypeIcon, Layers } from 'lucide-react';
-import Markdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import remarkGfm from 'remark-gfm';
-import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
-import 'katex/dist/katex.min.css';
+import FormattedText from './FormattedText';
 import { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
 import { saveAs } from 'file-saver';
 import { THEMES } from '../constants';
@@ -550,15 +545,8 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
               </button>
             </div>
           </div>
-          <div className="p-8 prose prose-indigo max-w-none print:p-0 print:prose-sm print:max-w-none">
-            <div className="markdown-body">
-              <Markdown 
-                remarkPlugins={[remarkMath, remarkGfm]} 
-                rehypePlugins={[rehypeKatex, rehypeRaw]}
-              >
-                {result}
-              </Markdown>
-            </div>
+          <div className="p-8 print:p-0">
+            <FormattedText text={result} />
           </div>
         </div>
       )}
