@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { AppMode, GradeLevel } from '../types';
 import { useAuth, signInWithGoogle, logout } from '../services/firebase';
 import { LogIn, LogOut, User as UserIcon, ShieldCheck, Key } from 'lucide-react';
@@ -72,6 +73,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 print:bg-white">
+      <Toaster position="top-right" />
       {/* Mobile Header - Only visible on small screens */}
       {!hideSidebar && (
         <div className="md:hidden bg-indigo-950 text-white p-4 flex justify-between items-center sticky top-0 z-30 shadow-md print:hidden">
@@ -265,7 +267,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                 }`}
               >
                 <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
-                  <span>📂</span> Материјали
+                  <span>🗂️</span> Материјали
                 </span>
                 <svg 
                   className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'MATERIALS' ? 'rotate-180' : ''}`} 
@@ -318,6 +320,25 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* БИБЛИОТЕКА */}
+            <div className="mt-2 mb-2">
+              <button
+                onClick={() => {
+                  setMode(AppMode.LIBRARY);
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all border ${
+                  currentMode === AppMode.LIBRARY 
+                    ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg' 
+                    : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
+                  <span>📂</span> Моја Библиотека
+                </span>
+              </button>
             </div>
 
             {/* ИНТЕРАКТИВНОСТИ */}

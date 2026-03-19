@@ -49,6 +49,19 @@
         "lastUpdated": { "type": "string", "format": "date-time" }
       },
       "required": ["count", "lastUpdated"]
+    },
+    "LibraryItem": {
+      "title": "Library Item",
+      "description": "A saved piece of content in the teacher's library",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string" },
+        "userId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "type", "userId", "timestamp"]
     }
   },
   "firestore": {
@@ -63,6 +76,10 @@
     "quotas/{date}": {
       "schema": "Quota",
       "description": "Collection for tracking daily AI usage quotas"
+    },
+    "library/{itemId}": {
+      "schema": "LibraryItem",
+      "description": "Collection for teacher's saved library items"
     }
   }
 }

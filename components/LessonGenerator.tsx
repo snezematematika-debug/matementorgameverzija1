@@ -4,14 +4,16 @@ import { CURRICULUM, THEMES } from '../constants';
 import { generateLessonContent, generateLessonConnectivity } from '../services/geminiService';
 import { GradeLevel, GeneratedLesson } from '../types';
 import Loading from './Loading';
+import SaveOptionsDropdown from './SaveOptionsDropdown';
 import FormattedText from './FormattedText';
 import { parse } from 'marked';
 
 interface LessonGeneratorProps {
   grade: GradeLevel;
+  initialContent?: string;
 }
 
-const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade }) => {
+const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade, initialContent }) => {
   // State for selections
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
@@ -19,6 +21,32 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade }) => {
   
   // State for content
   const [lesson, setLesson] = useState<GeneratedLesson | null>(null);
+
+  // Initialize from initialContent if provided
+  useEffect(() => {
+    if (initialContent) {
+      try {
+        // Check if it's JSON (complex object) or just markdown
+        if (initialContent.trim().startsWith('{')) {
+          const parsed = JSON.parse(initialContent);
+          setLesson(parsed);
+        } else {
+          // If it's just markdown, we might need a simpler display or a mock object
+          setLesson({
+            title: "Вчитана лекција",
+            objectives: ["Преглед на зачуван материјал"],
+            content: initialContent
+          });
+        }
+      } catch (e) {
+        setLesson({
+          title: "Вчитана лекција",
+          objectives: ["Преглед на зачуван материјал"],
+          content: initialContent
+        });
+      }
+    }
+  }, [initialContent]);
   const [connectivity, setConnectivity] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -351,10 +379,20 @@ ${lesson.content}
         </div>
 
         {error && (
-            <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
-            <strong>Грешка:</strong> {error}
-            <br/>
-            <span className="text-sm opacity-80">Проверете дали е внесен GEMINI_API_KEY во Vercel Environment Variables.</span>
+            <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">⚠️</span>
+                    <strong className="font-bold">Грешка при генерирање:</strong>
+                </div>
+                <p className="text-sm mb-2">{error}</p>
+                <div className="text-xs bg-white/50 p-2 rounded border border-red-100">
+                    <p className="font-semibold mb-1">Можни решенија:</p>
+                    <ul className="list-disc list-inside space-y-0.5 opacity-80">
+                        <li>Проверете дали имате интернет конекција.</li>
+                        <li>Обидете се повторно за неколку секунди (можеби серверот е преоптоварен).</li>
+                        <li>Проверете дали е внесен <code className="bg-red-100 px-1 rounded">GEMINI_API_KEY</code> во Secrets во поставките на AI Studio.</li>
+                    </ul>
+                </div>
             </div>
         )}
 
@@ -371,39 +409,14 @@ ${lesson.content}
                 Достапни формати:
              </div>
              
-             {/* Word/MD Group with Thicker Blue Border */}
-             <div className="flex rounded-lg shadow-sm bg-white border-2 border-indigo-600 divide-x-2 divide-indigo-600 overflow-hidden">
-                <button 
-                    onClick={handleDownloadMd}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-indigo-700 hover:bg-indigo-50 transition-colors"
-                    title="Преземи Markdown формат"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Markdown
-                </button>
-                <button 
-                    onClick={handleDownloadWord}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-indigo-700 hover:bg-indigo-50 transition-colors"
-                    title="Преземи Microsoft Word формат"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Word Doc
-                </button>
-             </div>
-             
-             <button 
-                onClick={handlePrint}
-                className="flex items-center gap-2 px-5 py-2 bg-slate-900 text-white text-sm font-bold rounded-lg shadow-md hover:bg-slate-800 hover:shadow-lg transition-all transform hover:-translate-y-0.5"
-             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                Печати PDF
-             </button>
+             <SaveOptionsDropdown 
+                title={`Лекција - ${lesson.title}`}
+                content={getMarkdownContent()}
+                type="Лекција"
+                onDownloadWord={handleDownloadWord}
+                onDownloadMarkdown={handleDownloadMd}
+                onPrint={handlePrint}
+             />
           </div>
 
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm print:border-none print:shadow-none print:p-0">

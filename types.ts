@@ -34,14 +34,15 @@ export interface GeneratedLesson {
 }
 
 export interface GeneratedScenario {
-  topic: string;
-  standards: string; // Стандарди за оценување
-  content: string; // Содржина и поими
-  introActivity: string; // Воведна активност
-  mainActivity: string; // Главни активности
-  finalActivity: string; // Завршна активност
-  resources: string; // Средства
-  assessment: string; // Следење на напредокот
+  title?: string;
+  topic?: string;
+  standards?: string; // Стандарди за оценување
+  content?: string; // Содржина и поими
+  introActivity?: string; // Воведна активност
+  mainActivity?: string; // Главни активности
+  finalActivity?: string; // Завршна активност
+  resources?: string; // Средства
+  assessment?: string; // Следење на напредокот
 }
 
 export enum AppMode {
@@ -67,7 +68,8 @@ export enum AppMode {
   MATE_SAFE = 'MATE_SAFE',
   MATE_MACHINE = 'MATE_MACHINE',
   AI_REVIEWER = 'AI_REVIEWER',
-  AI_CREATOR = 'AI_CREATOR'
+  AI_CREATOR = 'AI_CREATOR',
+  LIBRARY = 'LIBRARY'
 }
 
 export type GameType = 'BINGO' | 'ESCAPE_ROOM' | 'PASSWORD' | 'BALLOONS' | 'FLASHCARDS' | 'MATEHOOT' | 'BOARD_GAME' | 'MATE_SAFE' | 'MATE_MACHINE';

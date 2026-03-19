@@ -25,6 +25,7 @@ import InclusionGenerator from './components/InclusionGenerator';
 import LoginScreen from './components/LoginScreen';
 import AIReviewer from './components/AIReviewer';
 import AICreator from './components/AICreator';
+import Library from './components/Library';
 import { useAuth } from './services/firebase';
 import { AppMode, GradeLevel } from './types';
 
@@ -35,6 +36,7 @@ const App: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(GradeLevel.VI);
   const [userRole, setUserRole] = useState<'TEACHER' | 'STUDENT' | null>(null);
   const [mateMachineProblem, setMateMachineProblem] = useState<string | undefined>(undefined);
+  const [loadedLibraryItem, setLoadedLibraryItem] = useState<{type: string, content: string} | null>(null);
 
   // Initialize state from session storage or URL
   useEffect(() => {
@@ -87,16 +89,21 @@ const App: React.FC = () => {
     }
   }, [currentMode, user]);
 
+  const changeMode = (mode: AppMode) => {
+    setLoadedLibraryItem(null);
+    setCurrentMode(mode);
+  };
+
   const renderContent = () => {
     switch (currentMode) {
       case AppMode.LESSON:
-        return <LessonGenerator grade={selectedGrade} />;
+        return <LessonGenerator grade={selectedGrade} initialContent={loadedLibraryItem?.type === 'Лекција' ? loadedLibraryItem.content : undefined} />;
       case AppMode.SCENARIO:
-        return <ScenarioGenerator grade={selectedGrade} />;
+        return <ScenarioGenerator grade={selectedGrade} initialContent={loadedLibraryItem?.type === 'Сценарио' ? loadedLibraryItem.content : undefined} />;
       case AppMode.QUIZ:
-        return <QuizMaker grade={selectedGrade} />;
+        return <QuizMaker grade={selectedGrade} initialContent={loadedLibraryItem?.type === 'Тест' ? loadedLibraryItem.content : undefined} />;
       case AppMode.WORKSHEET:
-        return <WorksheetGenerator grade={selectedGrade} />;
+        return <WorksheetGenerator grade={selectedGrade} initialContent={loadedLibraryItem?.type === 'Работен лист' ? loadedLibraryItem.content : undefined} />;
       case AppMode.PROJECT:
         return <ProjectGenerator grade={selectedGrade} />;
       case AppMode.VISUALIZER:
@@ -105,12 +112,28 @@ const App: React.FC = () => {
         return <BoardPlanGenerator grade={selectedGrade} />;
       case AppMode.ADVANCED_PRACTICE:
         return <AdvancedPractice grade={selectedGrade} />;
+      case AppMode.LIBRARY:
+        return (
+          <Library 
+            onOpen={(item) => {
+              setLoadedLibraryItem({ type: item.type, content: item.content });
+              const modeMap: Record<string, AppMode> = {
+                'Лекција': AppMode.LESSON,
+                'Тест': AppMode.QUIZ,
+                'Сценарио': AppMode.SCENARIO,
+                'Работен лист': AppMode.WORKSHEET,
+                'Писмена работа': AppMode.AI_CREATOR
+              };
+              setCurrentMode(modeMap[item.type] || AppMode.DASHBOARD);
+            }} 
+          />
+        );
       case AppMode.TEACHER_PANEL:
         return (
           <TeacherPanel 
             grade={selectedGrade} 
             setMateMachineProblem={setMateMachineProblem}
-            setMode={setCurrentMode}
+            setMode={changeMode}
           />
         );
       case AppMode.GAMES:
@@ -164,7 +187,7 @@ const App: React.FC = () => {
       case AppMode.MATHIGON:
         return <Mathigon />;
       case AppMode.DASHBOARD:
-        return <Dashboard setMode={setCurrentMode} />;
+        return <Dashboard setMode={changeMode} />;
       case AppMode.ANALYTICS:
         return <AdminDashboard />;
       case AppMode.REMEDIAL_TEACHING:
@@ -176,7 +199,7 @@ const App: React.FC = () => {
       case AppMode.AI_REVIEWER:
         return <AIReviewer />;
       case AppMode.AI_CREATOR:
-        return <AICreator grade={selectedGrade} />;
+        return <AICreator grade={selectedGrade} initialContent={loadedLibraryItem?.type === 'Писмена работа' ? loadedLibraryItem.content : undefined} />;
       default:
         return <Dashboard setMode={setCurrentMode} />;
     }
@@ -200,7 +223,7 @@ const App: React.FC = () => {
   return (
     <Layout 
       currentMode={currentMode} 
-      setMode={setCurrentMode}
+      setMode={changeMode}
       selectedGrade={selectedGrade}
       setGrade={setSelectedGrade}
       hideSidebar={userRole === 'STUDENT'}

@@ -210,6 +210,14 @@ const AIReviewer: React.FC = () => {
                     <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
                     <h4 className="font-bold text-red-900 mb-2">Грешка при анализата</h4>
                     <p className="text-sm text-red-700 mb-4">{error}</p>
+                    <div className="text-xs bg-white/50 p-3 rounded border border-red-100 text-left mb-6 w-full max-w-xs mx-auto">
+                      <p className="font-semibold mb-1">Можни решенија:</p>
+                      <ul className="list-disc list-inside space-y-0.5 opacity-80">
+                        <li>Проверете ја интернет конекцијата.</li>
+                        <li>Проверете го <code className="bg-red-100 px-1 rounded">GEMINI_API_KEY</code> во Secrets.</li>
+                        <li>Обидете се повторно за неколку секунди.</li>
+                      </ul>
+                    </div>
                     <button 
                       onClick={runAnalysis}
                       className="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-all"

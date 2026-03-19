@@ -5,20 +5,29 @@ import { generateWorksheet } from '../services/geminiService';
 import { CurriculumTopic, GradeLevel } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
+import SaveOptionsDropdown from './SaveOptionsDropdown';
 import { parse } from 'marked';
 
 interface WorksheetGeneratorProps {
   grade: GradeLevel;
+  initialContent?: string;
 }
 
 type Tool = 'pen' | 'line' | 'eraser';
 
-const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
+const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade, initialContent }) => {
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [worksheetType, setWorksheetType] = useState<'STANDARD' | 'DIFFERENTIATED' | 'EXIT_TICKET'>('STANDARD');
   
   const [worksheet, setWorksheet] = useState<string | null>(null);
+
+  // Initialize from initialContent if provided
+  useEffect(() => {
+    if (initialContent) {
+      setWorksheet(initialContent);
+    }
+  }, [initialContent]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -346,9 +355,19 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
 
         {error && (
             <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
-                <strong>Грешка:</strong> {error}
-                <br/>
-                <span className="text-sm opacity-80">Проверете дали е внесен GEMINI_API_KEY во Vercel Environment Variables.</span>
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">⚠️</span>
+                    <strong className="font-bold">Грешка при генерирање:</strong>
+                </div>
+                <p className="text-sm mb-2">{error}</p>
+                <div className="text-xs bg-white/50 p-2 rounded border border-red-100">
+                    <p className="font-semibold mb-1">Можни решенија:</p>
+                    <ul className="list-disc list-inside space-y-0.5 opacity-80">
+                        <li>Проверете дали имате интернет конекција.</li>
+                        <li>Обидете се повторно за неколку секунди (можеби серверот е преоптоварен).</li>
+                        <li>Проверете дали е внесен <code className="bg-red-100 px-1 rounded">GEMINI_API_KEY</code> во Secrets во поставките на AI Studio.</li>
+                    </ul>
+                </div>
             </div>
         )}
 
@@ -361,8 +380,14 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade }) => {
              <button onClick={() => setIsBoardOpen(true)} className="px-5 py-2 bg-teal-600 text-white text-sm font-bold rounded-lg shadow-md hover:bg-teal-700 transition-all">
                 <span>👨‍🏫 Објасни на табла</span>
              </button>
-             <button onClick={handleDownloadWord} className="px-5 py-2 bg-white border-2 border-indigo-600 text-indigo-700 text-sm font-bold rounded-lg hover:bg-indigo-50">Word Doc</button>
-             <button onClick={handlePrint} className="px-5 py-2 bg-slate-900 text-white text-sm font-bold rounded-lg shadow-md hover:bg-slate-800">Печати PDF</button>
+             <SaveOptionsDropdown 
+                title={`Работен лист - ${currentTopic?.name || "Математика"}`}
+                content={worksheet}
+                type="Работен лист"
+                onDownloadWord={handleDownloadWord}
+                onDownloadMarkdown={handleDownloadMd}
+                onPrint={handlePrint}
+             />
           </div>
 
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm p-8 print:p-0 print:border-none">

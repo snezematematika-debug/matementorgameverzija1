@@ -4,6 +4,7 @@ import { CURRICULUM, THEMES } from '../constants';
 import { generateQuizQuestions } from '../services/geminiService';
 import { GradeLevel, QuizQuestion } from '../types';
 import Loading from './Loading';
+import SaveOptionsDropdown from './SaveOptionsDropdown';
 import FormattedText from './FormattedText';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -12,14 +13,33 @@ import { parse } from 'marked';
 
 interface QuizMakerProps {
   grade: GradeLevel;
+  initialContent?: string;
 }
 
-const QuizMaker: React.FC<QuizMakerProps> = ({ grade }) => {
+const QuizMaker: React.FC<QuizMakerProps> = ({ grade, initialContent }) => {
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
 
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [rubric, setRubric] = useState<string | null>(null);
+
+  // Initialize from initialContent if provided
+  useEffect(() => {
+    if (initialContent) {
+      try {
+        if (initialContent.trim().startsWith('[')) {
+          const parsed = JSON.parse(initialContent);
+          setQuestions(parsed);
+        } else {
+          // If it's just markdown/text, we'll need a way to display it.
+          // For now, let's assume it's a list of questions in JSON.
+          setError("Невалиден формат на зачуваниот тест.");
+        }
+      } catch (e) {
+        setError("Грешка при вчитување на тестот.");
+      }
+    }
+  }, [initialContent]);
   const [loading, setLoading] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -138,6 +158,45 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade }) => {
     const a = document.createElement('a');
     a.href = url;
     a.download = `Test_${selectedTopic.replace(/\s+/g, '_')}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const getMarkdownContent = () => {
+    if (questions.length === 0) return "";
+    
+    let md = `# Тест за ${selectedTopic}\n\n`;
+    md += `**Предмет:** Математика\n`;
+    md += `**Одделение:** ${grade} одд.\n`;
+    md += `**Наставник:** ${teacherName || '__________________'}\n`;
+    md += `**Училиште:** ${schoolName || '__________________'}\n\n`;
+    md += `---\n\n`;
+
+    questions.forEach((q, idx) => {
+      md += `### ${idx + 1}. ${q.question} (${q.difficulty})\n`;
+      q.options.forEach((opt, optIdx) => {
+        md += `${String.fromCharCode(65 + optIdx)}) ${opt}\n`;
+      });
+      md += `\n`;
+    });
+
+    if (rubric) {
+      md += `\n---\n\n## Клуч за одговори и Рубрика за оценување\n\n${rubric}`;
+    }
+
+    return md;
+  };
+
+  const handleDownloadMd = () => {
+    const content = getMarkdownContent();
+    if (!content) return;
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Test_${selectedTopic.replace(/\s+/g, '_')}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -409,25 +468,14 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade }) => {
                 )}
             </div>
 
-            <button
-                onClick={handleDownloadWord}
-                className="px-6 py-3 bg-white border-2 border-indigo-600 text-indigo-700 rounded-lg transition-colors flex items-center gap-2 font-bold shadow-sm hover:bg-indigo-50"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Word Документ
-            </button>
-
-            <button
-                onClick={() => window.print()}
-                className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors flex items-center gap-2 font-bold shadow-md"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                Печати PDF
-            </button>
+            <SaveOptionsDropdown 
+                title={`Тест - ${selectedTopic}`}
+                content={getMarkdownContent()}
+                type="Тест"
+                onDownloadWord={handleDownloadWord}
+                onDownloadMarkdown={handleDownloadMd}
+                onPrint={() => window.print()}
+            />
           </div>
         </div>
       )}

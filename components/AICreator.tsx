@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Sparkles, Loader2, Download, Copy, FileText, Settings2, Printer, FileDown, Type as TypeIcon, Layers } from 'lucide-react';
 import FormattedText from './FormattedText';
+import SaveOptionsDropdown from './SaveOptionsDropdown';
 import { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
 import { saveAs } from 'file-saver';
 import { THEMES } from '../constants';
@@ -51,9 +52,10 @@ const AI_CREATOR_PROMPT = `Ти си експерт за креирање на �
 
 interface AICreatorProps {
   grade: string;
+  initialContent?: string;
 }
 
-const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
+const AICreator: React.FC<AICreatorProps> = ({ grade, initialContent }) => {
   const { user } = useAuth();
   const [testType, setTestType] = useState<'Стандардна' | 'Диференцирана'>('Стандардна');
   const [selectedThemeIds, setSelectedThemeIds] = useState<string[]>([]);
@@ -63,6 +65,13 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
   
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+
+  // Initialize from initialContent if provided
+  React.useEffect(() => {
+    if (initialContent) {
+      setResult(initialContent);
+    }
+  }, [initialContent]);
   const [error, setError] = useState<string | null>(null);
 
   const filteredThemes = useMemo(() => THEMES.filter(t => t.grade === grade), [grade]);
@@ -502,8 +511,20 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 flex items-center gap-3 print:hidden">
-          <Loader2 className="w-5 h-5" /> {error}
+        <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 print:hidden">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-lg">⚠️</span>
+            <strong className="font-bold">Грешка при креирање:</strong>
+          </div>
+          <p className="text-sm mb-2">{error}</p>
+          <div className="text-xs bg-white/50 p-2 rounded border border-red-100">
+            <p className="font-semibold mb-1">Можни решенија:</p>
+            <ul className="list-disc list-inside space-y-0.5 opacity-80">
+              <li>Проверете дали имате интернет конекција.</li>
+              <li>Обидете се повторно за неколку секунди (можеби серверот е преоптоварен).</li>
+              <li>Проверете дали е внесен <code className="bg-red-100 px-1 rounded">GEMINI_API_KEY</code> во Secrets во поставките на AI Studio.</li>
+            </ul>
+          </div>
         </div>
       )}
 
@@ -515,27 +536,14 @@ const AICreator: React.FC<AICreatorProps> = ({ grade }) => {
               <span className="font-bold text-indigo-900">Преглед на писмената работа</span>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={handlePrint}
-                className="p-2 hover:bg-white rounded-lg transition-colors text-indigo-600"
-                title="Печати во PDF"
-              >
-                <Printer className="w-5 h-5" />
-              </button>
-              <button
-                onClick={downloadWord}
-                className="p-2 hover:bg-white rounded-lg transition-colors text-blue-600"
-                title="Симни како Word"
-              >
-                <FileDown className="w-5 h-5" />
-              </button>
-              <button
-                onClick={downloadMarkdown}
-                className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600"
-                title="Симни како Markdown"
-              >
-                <Download className="w-5 h-5" />
-              </button>
+              <SaveOptionsDropdown 
+                title={`Писмена работа - ${grade} одд.`}
+                content={result}
+                type="Писмена работа"
+                onDownloadWord={downloadWord}
+                onDownloadMarkdown={downloadMarkdown}
+                onPrint={handlePrint}
+              />
               <button
                 onClick={copyToClipboard}
                 className="p-2 hover:bg-white rounded-lg transition-colors text-slate-600"
