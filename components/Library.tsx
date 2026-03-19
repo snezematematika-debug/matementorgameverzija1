@@ -24,23 +24,33 @@ const Library: React.FC<LibraryProps> = ({ onOpen }) => {
   const [filterType, setFilterType] = useState<string>('Сите');
 
   const fetchItems = async () => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const q = query(
         collection(firestore, 'library'),
-        where('userId', '==', auth.currentUser.uid),
-        orderBy('timestamp', 'desc')
+        where('userId', '==', auth.currentUser.uid)
       );
       const querySnapshot = await getDocs(q);
       const fetchedItems: LibraryItem[] = [];
       querySnapshot.forEach((doc) => {
         fetchedItems.push({ id: doc.id, ...doc.data() } as LibraryItem);
       });
+      
+      // Sort in memory to avoid index requirements
+      fetchedItems.sort((a, b) => {
+        const timeA = a.timestamp?.seconds || 0;
+        const timeB = b.timestamp?.seconds || 0;
+        return timeB - timeA;
+      });
+      
       setItems(fetchedItems);
     } catch (error) {
       console.error('Error fetching library items:', error);
-      // handleFirestoreError(error, OperationType.LIST, 'library');
+      handleFirestoreError(error, OperationType.LIST, 'library');
     } finally {
       setLoading(false);
     }
@@ -48,7 +58,7 @@ const Library: React.FC<LibraryProps> = ({ onOpen }) => {
 
   useEffect(() => {
     fetchItems();
-  }, []);
+  }, [auth.currentUser]);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Дали сте сигурни дека сакате да го избришете овој материјал?')) return;

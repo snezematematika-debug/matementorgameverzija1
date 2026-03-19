@@ -411,7 +411,7 @@ ${lesson.content}
              
              <SaveOptionsDropdown 
                 title={`Лекција - ${lesson.title}`}
-                content={getMarkdownContent()}
+                content={JSON.stringify(lesson)}
                 type="Лекција"
                 onDownloadWord={handleDownloadWord}
                 onDownloadMarkdown={handleDownloadMd}

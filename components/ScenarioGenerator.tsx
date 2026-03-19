@@ -29,13 +29,27 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ grade, initialCon
         } else {
           setScenario({
             title: "Вчитано сценарио",
-            content: initialContent
+            topic: "Вчитано сценарио",
+            content: initialContent,
+            standards: "",
+            introActivity: "",
+            mainActivity: "",
+            finalActivity: "",
+            resources: "",
+            assessment: ""
           });
         }
       } catch (e) {
         setScenario({
           title: "Вчитано сценарио",
-          content: initialContent
+          topic: "Вчитано сценарио",
+          content: initialContent,
+          standards: "",
+          introActivity: "",
+          mainActivity: "",
+          finalActivity: "",
+          resources: "",
+          assessment: ""
         });
       }
     }
@@ -391,7 +405,7 @@ ${scenario.assessment}
              {/* Save Options Dropdown */}
              <SaveOptionsDropdown 
                 title={`Сценарио - ${scenario.topic}`}
-                content={getMarkdownContent()}
+                content={JSON.stringify(scenario)}
                 type="Сценарио"
                 onDownloadWord={handleDownloadWord}
                 onDownloadMarkdown={handleDownloadMd}

@@ -470,7 +470,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade, initialContent }) => {
 
             <SaveOptionsDropdown 
                 title={`Тест - ${selectedTopic}`}
-                content={getMarkdownContent()}
+                content={JSON.stringify({ questions, rubric })}
                 type="Тест"
                 onDownloadWord={handleDownloadWord}
                 onDownloadMarkdown={handleDownloadMd}
