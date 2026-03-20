@@ -6,17 +6,37 @@ import { CurriculumTopic, GradeLevel, LessonPackage } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
 import { parse } from 'marked';
+import { ArrowLeft } from 'lucide-react';
+import { LibraryContext } from '../App';
 
 interface ProjectGeneratorProps {
   grade: GradeLevel;
+  initialContent?: string;
 }
 
-const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
+const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade, initialContent }) => {
+  const { goBackToLibrary, loadedItem } = React.useContext(LibraryContext);
   const availableThemes = PROJECT_THEMES.filter(theme => theme.grade === grade);
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   
   const [fullPackage, setFullPackage] = useState<LessonPackage | null>(null);
+
+  // Initialize from initialContent if provided
+  useEffect(() => {
+    if (initialContent) {
+      try {
+        if (initialContent.trim().startsWith('{')) {
+          const parsed = JSON.parse(initialContent);
+          setFullPackage(parsed);
+        } else {
+          setFullPackage({ project: initialContent } as LessonPackage);
+        }
+      } catch (e) {
+        setFullPackage({ project: initialContent } as LessonPackage);
+      }
+    }
+  }, [initialContent]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -179,12 +199,23 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade }) => {
 
       {/* Input Section - Hidden on Print */}
       <div className="print:hidden">
-        <div className="border-b pb-4 mb-6">
-            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                🚀 Проектни задачи (STEAM)
-                <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>
-            </h2>
-            <p className="text-slate-500 mt-1">Генерирајте креативни истражувачки проекти поврзани со реалниот живот.</p>
+        <div className="flex items-center justify-between border-b pb-4 mb-6">
+            <div className="flex items-center gap-4">
+                {loadedItem && (
+                  <button 
+                    onClick={goBackToLibrary}
+                    className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600"
+                    title="Назад во библиотека"
+                  >
+                    <ArrowLeft size={24} />
+                  </button>
+                )}
+                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    🚀 Проектни задачи (STEAM)
+                    <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>
+                </h2>
+            </div>
+            <p className="text-slate-500 mt-1 hidden md:block">Генерирајте креативни истражувачки проекти поврзани со реалниот живот.</p>
         </div>
 
         {/* Teacher Instruction */}

@@ -26,12 +26,16 @@ import LoginScreen from './components/LoginScreen';
 import AIReviewer from './components/AIReviewer';
 import AICreator from './components/AICreator';
 import Library from './components/Library';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import DocumentView from './components/DocumentView';
 import { useAuth } from './services/firebase';
 import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
   // Mate-Mentor Version 2.1 - Mandatory Auth & Naming Fix
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [currentMode, setCurrentMode] = useState<AppMode>(AppMode.DASHBOARD);
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel>(GradeLevel.VI);
   const [userRole, setUserRole] = useState<'TEACHER' | 'STUDENT' | null>(null);
@@ -113,21 +117,7 @@ const App: React.FC = () => {
       case AppMode.ADVANCED_PRACTICE:
         return <AdvancedPractice grade={selectedGrade} />;
       case AppMode.LIBRARY:
-        return (
-          <Library 
-            onOpen={(item) => {
-              setLoadedLibraryItem({ type: item.type, content: item.content });
-              const modeMap: Record<string, AppMode> = {
-                'Лекција': AppMode.LESSON,
-                'Тест': AppMode.QUIZ,
-                'Сценарио': AppMode.SCENARIO,
-                'Работен лист': AppMode.WORKSHEET,
-                'Писмена работа': AppMode.AI_CREATOR
-              };
-              setCurrentMode(modeMap[item.type] || AppMode.DASHBOARD);
-            }} 
-          />
-        );
+        return <Library />;
       case AppMode.TEACHER_PANEL:
         return (
           <TeacherPanel 
@@ -228,7 +218,10 @@ const App: React.FC = () => {
       setGrade={setSelectedGrade}
       hideSidebar={userRole === 'STUDENT'}
     >
-      {renderContent()}
+      <Routes>
+        <Route path="/library/document/:id" element={<DocumentView />} />
+        <Route path="*" element={renderContent()} />
+      </Routes>
     </Layout>
   );
 };

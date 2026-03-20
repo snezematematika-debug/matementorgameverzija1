@@ -404,9 +404,10 @@ ${scenario.assessment}
              
              {/* Save Options Dropdown */}
              <SaveOptionsDropdown 
-                title={`Сценарио - ${scenario.topic}`}
+                title={`Сценарио - ${scenario.topic && scenario.topic !== 'undefined' ? scenario.topic : 'Без наслов'}`}
                 content={JSON.stringify(scenario)}
                 type="Сценарио"
+                grade={grade || 'Непознато'}
                 onDownloadWord={handleDownloadWord}
                 onDownloadMarkdown={handleDownloadMd}
                 onPrint={handlePrint}

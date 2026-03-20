@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, deleteDoc, doc, orderBy, Timestamp } from 'firebase/firestore';
 import { firestore, auth, handleFirestoreError, OperationType } from '../services/firebase';
 import { Folder, FileText, Trash2, ExternalLink, Loader2, Search, Calendar, Tag } from 'lucide-react';
@@ -10,18 +11,20 @@ interface LibraryItem {
   title: string;
   content: string;
   type: string;
-  timestamp: any;
+  grade?: string | number;
+  createdAt: any;
+  timestamp?: any; // Fallback for old documents
 }
 
-interface LibraryProps {
-  onOpen: (item: LibraryItem) => void;
-}
+interface LibraryProps {}
 
-const Library: React.FC<LibraryProps> = ({ onOpen }) => {
+const Library: React.FC<LibraryProps> = () => {
+  const navigate = useNavigate();
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('Сите');
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const fetchItems = async () => {
     if (!auth.currentUser) {
@@ -42,8 +45,8 @@ const Library: React.FC<LibraryProps> = ({ onOpen }) => {
       
       // Sort in memory to avoid index requirements
       fetchedItems.sort((a, b) => {
-        const timeA = a.timestamp?.seconds || 0;
-        const timeB = b.timestamp?.seconds || 0;
+        const timeA = (a.createdAt?.seconds || a.timestamp?.seconds || 0);
+        const timeB = (b.createdAt?.seconds || b.timestamp?.seconds || 0);
         return timeB - timeA;
       });
       
@@ -61,15 +64,21 @@ const Library: React.FC<LibraryProps> = ({ onOpen }) => {
   }, [auth.currentUser]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Дали сте сигурни дека сакате да го избришете овој материјал?')) return;
+    setItemToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
     
     try {
-      await deleteDoc(doc(firestore, 'library', id));
-      setItems(items.filter(item => item.id !== id));
+      await deleteDoc(doc(firestore, 'library', itemToDelete));
+      setItems(items.filter(item => item.id !== itemToDelete));
       toast.success('Материјалот е избришан.');
     } catch (error) {
       console.error('Error deleting item:', error);
       toast.error('Грешка при бришење.');
+    } finally {
+      setItemToDelete(null);
     }
   };
 
@@ -79,9 +88,10 @@ const Library: React.FC<LibraryProps> = ({ onOpen }) => {
     return matchesSearch && matchesType;
   });
 
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'Непознато';
-    const date = timestamp instanceof Timestamp ? timestamp.toDate() : new Date(timestamp);
+  const formatDate = (item: LibraryItem) => {
+    const ts = item.createdAt || item.timestamp;
+    if (!ts) return 'Непознато';
+    const date = ts instanceof Timestamp ? ts.toDate() : new Date(ts);
     return date.toLocaleDateString('mk-MK', {
       day: '2-digit',
       month: '2-digit',
@@ -155,6 +165,7 @@ const Library: React.FC<LibraryProps> = ({ onOpen }) => {
                 <tr className="bg-slate-50 border-b border-slate-200">
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Наслов</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Тип</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Одделение</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Датум</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Акции</th>
                 </tr>
@@ -176,15 +187,23 @@ const Library: React.FC<LibraryProps> = ({ onOpen }) => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
+                      <span className="text-sm font-medium text-slate-600">
+                        {item.grade && item.grade !== 'Непознато' ? `${item.grade} одд.` : 'Непознато'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-xs text-slate-500">
                         <Calendar className="w-3 h-3" />
-                        {formatDate(item.timestamp)}
+                        {formatDate(item)}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => onOpen(item)}
+                          onClick={() => {
+                            console.log(`Opening document with ID: ${item.id}`);
+                            navigate(`/library/document/${item.id}`);
+                          }}
                           className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all flex items-center gap-1 text-xs font-bold"
                           title="Отвори"
                         >
@@ -226,6 +245,35 @@ const Library: React.FC<LibraryProps> = ({ onOpen }) => {
               Исчисти филтри
             </button>
           )}
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {itemToDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-in fade-in zoom-in duration-200">
+            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Trash2 className="w-8 h-8 text-rose-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 text-center mb-2">Избриши материјал?</h3>
+            <p className="text-slate-500 text-center mb-8">
+              Дали сте сигурни дека сакате да го избришете овој материјал? Оваа акција е неповратна.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setItemToDelete(null)}
+                className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-all"
+              >
+                Откажи
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-200 transition-all"
+              >
+                Избриши
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -6,13 +6,14 @@ export interface LibraryItemData {
   content: string;
   type: string;
   userId: string;
+  grade: string | number;
 }
 
 export const saveToLibrary = async (data: LibraryItemData) => {
   try {
     const docRef = await addDoc(collection(firestore, 'library'), {
       ...data,
-      timestamp: serverTimestamp(),
+      createdAt: serverTimestamp(),
     });
     return docRef.id;
   } catch (error) {

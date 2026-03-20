@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -20,9 +20,12 @@ import {
 import { generateRemedialDecomposition, getContentPackage } from '../services/geminiService';
 import Markdown from 'react-markdown';
 import { GradeLevel, LessonPackage } from '../types';
+import { ArrowLeft } from 'lucide-react';
+import { LibraryContext } from '../App';
 
 interface RemedialTeachingProps {
   grade: GradeLevel;
+  initialContent?: string;
 }
 
 interface Step {
@@ -57,10 +60,27 @@ const GLOSSARY_DATA: GlossaryTerm[] = [
   { term: "НЗС", definition: "Најмал заеднички содржател. Најмалиот број што може да се подели со два други броја.", visual: "🔢", category: "Броеви" },
 ];
 
-const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
+const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade, initialContent }) => {
+  const { goBackToLibrary, loadedItem } = React.useContext(LibraryContext);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [fullPackage, setFullPackage] = useState<LessonPackage | null>(null);
+
+  // Initialize from initialContent if provided
+  useEffect(() => {
+    if (initialContent) {
+      try {
+        if (initialContent.trim().startsWith('{')) {
+          const parsed = JSON.parse(initialContent);
+          setFullPackage(parsed);
+        } else {
+          setFullPackage({ remedialTeaching: initialContent } as unknown as LessonPackage);
+        }
+      } catch (e) {
+        setFullPackage({ remedialTeaching: initialContent } as unknown as LessonPackage);
+      }
+    }
+  }, [initialContent]);
   const decomposition = fullPackage?.remedial as Decomposition | null;
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [showHint, setShowHint] = useState(false);
@@ -212,7 +232,17 @@ const RemedialTeaching: React.FC<RemedialTeachingProps> = ({ grade }) => {
       </AnimatePresence>
 
       {/* Header Section */}
-      <header className="text-center space-y-4">
+      <header className="text-center space-y-4 relative">
+        {loadedItem && (
+          <button 
+            onClick={goBackToLibrary}
+            className="absolute left-0 top-0 p-3 hover:bg-slate-100 rounded-2xl transition-colors text-slate-600 flex items-center gap-2 font-bold"
+            title="Назад во библиотека"
+          >
+            <ArrowLeft size={24} />
+            <span className="hidden sm:inline">Библиотека</span>
+          </button>
+        )}
         <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-emerald-600 rounded-3xl shadow-sm mb-2">
           <Brain className="w-8 h-8" />
         </div>

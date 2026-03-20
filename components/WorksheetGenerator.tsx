@@ -384,6 +384,7 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade, initialC
                 title={`Работен лист - ${currentTopic?.name || "Математика"}`}
                 content={worksheet}
                 type="Работен лист"
+                grade={grade || 'Непознато'}
                 onDownloadWord={handleDownloadWord}
                 onDownloadMarkdown={handleDownloadMd}
                 onPrint={handlePrint}

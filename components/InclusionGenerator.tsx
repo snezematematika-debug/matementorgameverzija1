@@ -2,13 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { CURRICULUM, THEMES } from '../constants';
 import { generateIEPPlan } from '../services/geminiService';
-import { GradeLevel } from '../types';
+import { GradeLevel, LessonPackage } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
-import { Sparkles, FileText, Download, Printer, Users, Brain, Heart, Star } from 'lucide-react';
+import { Sparkles, FileText, Download, Printer, Users, Brain, Heart, Star, ArrowLeft } from 'lucide-react';
+import { LibraryContext } from '../App';
 
 interface InclusionGeneratorProps {
   grade: GradeLevel;
+  initialContent?: string;
 }
 
 const DISABILITY_TYPES = [
@@ -74,7 +76,8 @@ const LEARNING_STYLES = [
   { id: 'kinesthetic', label: 'Кинестетички тип: Сака „правење“ (влечење објекти, моделирање)' }
 ];
 
-const InclusionGenerator: React.FC<InclusionGeneratorProps> = ({ grade }) => {
+const InclusionGenerator: React.FC<InclusionGeneratorProps> = ({ grade, initialContent }) => {
+  const { goBackToLibrary, loadedItem } = React.useContext(LibraryContext);
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
   const [selectedDisability, setSelectedDisability] = useState<string>("");
@@ -85,6 +88,22 @@ const InclusionGenerator: React.FC<InclusionGeneratorProps> = ({ grade }) => {
   const [iepPlan, setIepPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Initialize from initialContent if provided
+  useEffect(() => {
+    if (initialContent) {
+      try {
+        if (initialContent.trim().startsWith('{')) {
+          const parsed = JSON.parse(initialContent);
+          setIepPlan(parsed.inclusion || initialContent);
+        } else {
+          setIepPlan(initialContent);
+        }
+      } catch (e) {
+        setIepPlan(initialContent);
+      }
+    }
+  }, [initialContent]);
 
   const filteredThemes = THEMES.filter(t => t.grade === grade);
   const availableTopics = CURRICULUM.filter(topic => topic.themeId === selectedThemeId && topic.grade === grade);
@@ -220,12 +239,23 @@ const InclusionGenerator: React.FC<InclusionGeneratorProps> = ({ grade }) => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="print:hidden">
-        <div className="border-b pb-4 mb-6">
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Heart className="text-rose-500" /> Инклузија: Персонализирај за ИОП
-            <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>
-          </h2>
-          <p className="text-slate-500 mt-1">Креирајте прилагоден образовен план за ученици со посебни образовни потреби.</p>
+        <div className="flex items-center justify-between border-b pb-4 mb-6">
+            <div className="flex items-center gap-4">
+                {loadedItem && (
+                  <button 
+                    onClick={goBackToLibrary}
+                    className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600"
+                    title="Назад во библиотека"
+                  >
+                    <ArrowLeft size={24} />
+                  </button>
+                )}
+                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    <Heart className="text-rose-500" /> Инклузија: Персонализирај за ИОП
+                    <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>
+                </h2>
+            </div>
+            <p className="text-slate-500 mt-1 hidden md:block">Креирајте прилагоден образовен план за ученици со посебни образовни потреби.</p>
         </div>
 
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">

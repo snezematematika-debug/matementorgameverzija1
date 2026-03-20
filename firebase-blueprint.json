@@ -58,10 +58,11 @@
         "title": { "type": "string" },
         "content": { "type": "string" },
         "type": { "type": "string" },
+        "grade": { "type": "string" },
         "userId": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "content", "type", "userId", "timestamp"]
+      "required": ["title", "content", "type", "grade", "userId", "createdAt"]
     }
   },
   "firestore": {

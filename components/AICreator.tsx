@@ -537,9 +537,10 @@ const AICreator: React.FC<AICreatorProps> = ({ grade, initialContent }) => {
             </div>
             <div className="flex gap-2">
               <SaveOptionsDropdown 
-                title={`Писмена работа - ${grade} одд.`}
+                title={`Писмена работа - ${grade || 'Непознато'} одд.`}
                 content={result}
                 type="Писмена работа"
+                grade={grade || 'Непознато'}
                 onDownloadWord={downloadWord}
                 onDownloadMarkdown={downloadMarkdown}
                 onPrint={handlePrint}

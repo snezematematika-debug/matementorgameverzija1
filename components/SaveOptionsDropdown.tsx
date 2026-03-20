@@ -15,6 +15,7 @@ interface SaveOptionsDropdownProps {
   title: string;
   content: string;
   type: string;
+  grade: string | number;
   onDownloadWord: () => void;
   onDownloadMarkdown: () => void;
   onPrint: () => void;
@@ -24,6 +25,7 @@ const SaveOptionsDropdown: React.FC<SaveOptionsDropdownProps> = ({
   title,
   content,
   type,
+  grade,
   onDownloadWord,
   onDownloadMarkdown,
   onPrint,
@@ -43,6 +45,7 @@ const SaveOptionsDropdown: React.FC<SaveOptionsDropdownProps> = ({
         title,
         content,
         type,
+        grade,
         userId: user.uid,
       });
       toast.success('Успешно зачувано во "Моја Библиотека"!', {

@@ -410,9 +410,10 @@ ${lesson.content}
              </div>
              
              <SaveOptionsDropdown 
-                title={`Лекција - ${lesson.title}`}
+                title={`Лекција - ${lesson.title && lesson.title !== 'undefined' ? lesson.title : 'Без наслов'}`}
                 content={JSON.stringify(lesson)}
                 type="Лекција"
+                grade={grade || 'Непознато'}
                 onDownloadWord={handleDownloadWord}
                 onDownloadMarkdown={handleDownloadMd}
                 onPrint={handlePrint}

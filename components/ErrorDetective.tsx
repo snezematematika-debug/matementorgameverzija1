@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
@@ -16,9 +16,12 @@ import {
 import { generateErrorDetectiveCase, getContentPackage } from '../services/geminiService';
 import Markdown from 'react-markdown';
 import { GradeLevel, LessonPackage } from '../types';
+import { ArrowLeft } from 'lucide-react';
+import { LibraryContext } from '../App';
 
 interface ErrorDetectiveProps {
   grade: GradeLevel;
+  initialContent?: string;
 }
 
 interface Step {
@@ -34,10 +37,27 @@ interface Case {
   finalAdvice: string;
 }
 
-const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
+const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade, initialContent }) => {
+  const { goBackToLibrary, loadedItem } = React.useContext(LibraryContext);
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [fullPackage, setFullPackage] = useState<LessonPackage | null>(null);
+
+  // Initialize from initialContent if provided
+  useEffect(() => {
+    if (initialContent) {
+      try {
+        if (initialContent.trim().startsWith('{')) {
+          const parsed = JSON.parse(initialContent);
+          setFullPackage(parsed);
+        } else {
+          setFullPackage({ errorDetective: initialContent } as unknown as LessonPackage);
+        }
+      } catch (e) {
+        setFullPackage({ errorDetective: initialContent } as unknown as LessonPackage);
+      }
+    }
+  }, [initialContent]);
   const currentCase = fullPackage?.errorDetective as Case | null;
   const [selectedStepIndex, setSelectedStepIndex] = useState<number | null>(null);
   const [isSolved, setIsSolved] = useState(false);
@@ -81,7 +101,17 @@ const ErrorDetective: React.FC<ErrorDetectiveProps> = ({ grade }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
       {/* Header */}
-      <header className="text-center space-y-4">
+      <header className="text-center space-y-4 relative">
+        {loadedItem && (
+          <button 
+            onClick={goBackToLibrary}
+            className="absolute left-0 top-0 p-3 hover:bg-slate-100 rounded-2xl transition-colors text-slate-600 flex items-center gap-2 font-bold"
+            title="Назад во библиотека"
+          >
+            <ArrowLeft size={24} />
+            <span className="hidden sm:inline">Библиотека</span>
+          </button>
+        )}
         <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 text-orange-600 rounded-full shadow-inner mb-2 border-4 border-white">
           <Search className="w-10 h-10" />
         </div>
