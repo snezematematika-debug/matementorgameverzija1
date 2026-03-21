@@ -24,18 +24,26 @@ const DocumentView: React.FC = () => {
       setLoading(true);
       try {
         console.log(`Fetching document with ID: ${id}`);
+        if (!id) throw new Error('Недостасува ID на документот.');
+        
         const docRef = doc(firestore, 'library', id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          setDocData({ id: docSnap.id, ...docSnap.data() });
+          const data = { id: docSnap.id, ...docSnap.data() };
+          console.log('Document data fetched successfully:', data.title);
+          setDocData(data);
+          
+          if (!data.content) {
+            console.warn('Document content is empty!');
+          }
         } else {
+          console.error('Document not found in Firestore');
           setError('Документот не е пронајден.');
         }
       } catch (err) {
         console.error('Error fetching document:', err);
-        setError('Грешка при вчитување на документот.');
-        handleFirestoreError(err, OperationType.GET, `library/${id}`);
+        setError('Грешка при вчитување на документот. Ве молиме обидете се повторно.');
       } finally {
         setLoading(false);
       }
@@ -424,7 +432,13 @@ ${parsedJson.conclusion}
       </div>
 
       <div className="bg-white p-8 md:p-12 rounded-2xl border border-slate-200 shadow-sm min-h-[600px] document-card print-container">
-        <FormattedText text={displayContent} />
+        {displayContent ? (
+          <FormattedText text={displayContent} />
+        ) : (
+          <div className="p-12 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <p className="text-slate-500 italic">Овој документ нема содржина.</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -158,7 +158,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-
+              
               {/* Expandable Options */}
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isGradeMenuOpen ? 'max-h-64 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
                  <div className="flex flex-col gap-1 pl-2">
@@ -188,6 +188,25 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     </button>
                  </div>
               </div>
+            </div>
+
+            {/* 1.5. ПРОГРАМИ */}
+            <div className="mt-1 mb-2">
+              <button
+                onClick={() => {
+                  setMode(AppMode.PROGRAMS);
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all border ${
+                  currentMode === AppMode.PROGRAMS 
+                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' 
+                    : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
+                }`}
+              >
+                <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
+                  <span className="w-6 h-6 flex items-center justify-center bg-emerald-500/20 text-emerald-400 rounded-lg shadow-sm border border-emerald-500/30 text-xs">📜</span> ПРОГРАМИ
+                </span>
+              </button>
             </div>
 
             {/* ПОДГОТОВКА И ПЛАНИРАЊЕ */}

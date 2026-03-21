@@ -26,8 +26,10 @@ import LoginScreen from './components/LoginScreen';
 import AIReviewer from './components/AIReviewer';
 import AICreator from './components/AICreator';
 import Library from './components/Library';
+import ProgramsView from './components/ProgramsView';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import DocumentView from './components/DocumentView';
+import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './services/firebase';
 import { AppMode, GradeLevel } from './types';
@@ -119,6 +121,8 @@ const App: React.FC = () => {
         return <AdvancedPractice grade={selectedGrade} />;
       case AppMode.LIBRARY:
         return <Library />;
+      case AppMode.PROGRAMS:
+        return <ProgramsView />;
       case AppMode.TEACHER_PANEL:
         return (
           <TeacherPanel 
@@ -212,19 +216,21 @@ const App: React.FC = () => {
   }
 
   return (
-    <Layout 
-      currentMode={currentMode} 
-      setMode={changeMode}
-      selectedGrade={selectedGrade}
-      setGrade={setSelectedGrade}
-      hideSidebar={userRole === 'STUDENT'}
-    >
-      <Toaster position="top-right" />
-      <Routes>
-        <Route path="/library/document/:id" element={<DocumentView />} />
-        <Route path="*" element={renderContent()} />
-      </Routes>
-    </Layout>
+    <ErrorBoundary>
+      <Layout 
+        currentMode={currentMode} 
+        setMode={changeMode}
+        selectedGrade={selectedGrade}
+        setGrade={setSelectedGrade}
+        hideSidebar={userRole === 'STUDENT'}
+      >
+        <Toaster position="top-right" />
+        <Routes>
+          <Route path="/library/document/:id" element={<DocumentView />} />
+          <Route path="*" element={renderContent()} />
+        </Routes>
+      </Layout>
+    </ErrorBoundary>
   );
 };
 

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, deleteDoc, doc, orderBy, Timestamp, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, orderBy, Timestamp, addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { firestore, auth, handleFirestoreError, OperationType } from '../services/firebase';
 import { Folder, FileText, Trash2, ExternalLink, Loader2, Search, Calendar, Tag, ShieldCheck, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -27,78 +27,6 @@ const Library: React.FC<LibraryProps> = () => {
   const [filterType, setFilterType] = useState<string>('Сите');
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-  const isAdmin = auth.currentUser?.email === 'snezematematika@gmail.com' || auth.currentUser?.email === 'snezezlatkov@gmail.com';
-
-  const addOfficialPrograms = async () => {
-    if (!isAdmin) {
-      toast.error('Само администратори можат да го направат ова.');
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      console.log("Starting to add official programs...");
-      const programs = [
-        {
-          title: "Годишна програма по Математика - VI одделение (МОН/БРО)",
-          type: "Програма",
-          grade: "VI",
-          isGlobal: true,
-          userId: auth.currentUser?.uid,
-          timestamp: serverTimestamp(),
-          createdAt: serverTimestamp(),
-          content: `# Наставна програма по Математика за VI одделение (2023)\n\n**Институција:** Биро за развој на образованието / МОН\n**Број на часови:** 5 часа неделно / 180 часа годишно\n\n## Теми и подрачја:\n1. **Броеви** (Множества, Природни броеви до 1.000.000, Римски броеви, Цели броеви, Позитивни рационални броеви)\n2. **Геометрија** (Отсечка, Агол, Круг, Многуаголник, 3Д форми, Положба и движење)\n3. **Операции со броеви** (Операции во N0, Деливост, Операции со рационални броеви)\n4. **Мерење** (Должина, маса, зафатнина, време, пари, плоштина на 2Д форми)\n5. **Работа со податоци** (Ранг, медијана, аритметичка средина, веројатност)\n\n## Клучни резултати од учење:\n- Користи знаења за множества за објаснување на бројни множества.\n- Применува римски броеви во практични примери.\n- Пресметува со дропки и децимални броеви во секојдневен контекст.\n- Препознава и конструира основни геометриски форми и 3Д тела.`
-        },
-        {
-          title: "Годишна програма по Математика - VII одделение (МОН/БРО)",
-          type: "Програма",
-          grade: "VII",
-          isGlobal: true,
-          userId: auth.currentUser?.uid,
-          timestamp: serverTimestamp(),
-          createdAt: serverTimestamp(),
-          content: `# Наставна програма по Математика за VII одделение (2023)\n\n**Институција:** Биро за развој на образованието / МОН\n**Број на часови:** 4 часа неделно / 144 часа годишно\n\n## Теми и подрачја:\n1. **Броеви и операции со броеви** (Операции со множества, Цели броеви, Степен и корен, Рационални броеви, Проценти, Размер и пропорција)\n2. **Геометрија** (Отсечка и агол, Круг, Триаголник, Четириаголник, 3Д форми, Положба и движење)\n3. **Алгебра** (Алгебарски изрази, Линеарни равенки, Низи, функции и графици)\n4. **Мерење** (Периметар, плоштина и волумен на коцка и квадар)\n5. **Работа со податоци** (Групирани податоци, веројатност)\n\n## Клучни резултати од учење:\n- Користи аритметички закони за поедноставување пресметки со цели броеви.\n- Решава проблеми со размер и права пропорционалност.\n- Конструира триаголник и впишана/опишана кружница.\n- Составува и решава линеарни равенки со целобројни коефициенти.`
-        },
-        {
-          title: "Годишна програма по Математика - VIII одделение (МОН/БРО)",
-          type: "Програма",
-          grade: "VIII",
-          isGlobal: true,
-          userId: auth.currentUser?.uid,
-          timestamp: serverTimestamp(),
-          createdAt: serverTimestamp(),
-          content: `# Наставна програма по Математика за VIII одделение (2024)\n\n**Институција:** Биро за развој на образованието / МОН\n**Број на часови:** 4 часа неделно / 144 часа годишно\n\n## Теми и подрачја:\n1. **Броеви и операции со броеви** (Релации меѓу множества, Рационални броеви, Проценти, Пропорционалност, Степени и корени)\n2. **Геометрија** (Агол - периферен и централен, Складност на триаголници, Питагорова теорема, Полиедри, Трансформации)\n3. **Алгебра** (Мономи, биноми, полиноми, Линеарни равенки и неравенки, Линеарна функција)\n4. **Мерење** (Периметар и плоштина на 2Д форми, Плоштина и волумен на призма и пирамида)\n5. **Работа со податоци** (Истражување, дијаграми, веројатност)\n\n## Клучни резултати од учење:\n- Применува Питагорова теорема во реални проблеми.\n- Упростува цели рационални изрази и решава линеарни равенки со рационални коефициенти.\n- Толкува графици на линеарни функции.\n- Анализира 3Д форми преку мрежи и проекции.`
-        },
-        {
-          title: "Годишна програма по Математика - IX одделение (МОН/БРО)",
-          type: "Програма",
-          grade: "IX",
-          isGlobal: true,
-          userId: auth.currentUser?.uid,
-          timestamp: serverTimestamp(),
-          createdAt: serverTimestamp(),
-          content: `# Наставна програма по Математика за IX одделение (2024)\n\n**Институција:** Биро за развој на образованието / МОН\n**Број на часови:** 4 часа неделно / 144 часа годишно\n\n## Теми и подрачја:\n1. **Броеви и операции со броеви** (Реални броеви, Интервали, Операции, Степени со основа 10, Проценти и камата)\n2. **Геометрија** (Талесова теорема, Тангентен и тетивен четириаголник, Правилни многуаголници, Сличност)\n3. **Алгебра** (Полиноми, Скратено множење, Системи линеарни равенки, Квадратни равенки, Аритметичка прогресија)\n4. **Мерење** (Плоштина и волумен на цилиндар и конус, Пресеци на 3Д форми)\n5. **Работа со податоци** (Континуирани податоци, Корелација, Релативна фреквенција)\n\n## Клучни резултати од учење:\n- Користи Талесова теорема и својства на сличност за решавање проблеми.\n- Применува формули за скратено множење и разложување полиноми.\n- Решава системи од две линеарни равенки со две непознати.\n- Пресметува плоштина и волумен на заоблени тела (цилиндар, конус).`
-        }
-      ];
-
-      for (const prog of programs) {
-        // Check if already exists to avoid duplicates
-        const existing = items.find(i => i.title === prog.title);
-        if (!existing) {
-          await addDoc(collection(firestore, 'library'), prog);
-        }
-      }
-      
-      toast.success('Официјалните програми се додадени!');
-      await fetchItems();
-    } catch (error) {
-      console.error('Error adding programs:', error);
-      toast.error('Грешка при додавање на програмите.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchItems = async () => {
     if (!auth.currentUser) {
       setLoading(false);
@@ -112,28 +40,12 @@ const Library: React.FC<LibraryProps> = () => {
         where('userId', '==', auth.currentUser.uid)
       );
       
-      // Fetch global items
-      const globalQuery = query(
-        collection(firestore, 'library'),
-        where('isGlobal', '==', true)
-      );
-
-      const [userSnapshot, globalSnapshot] = await Promise.all([
-        getDocs(userQuery),
-        getDocs(globalQuery)
-      ]);
+      const userSnapshot = await getDocs(userQuery);
 
       const fetchedItems: LibraryItem[] = [];
       
       userSnapshot.forEach((doc) => {
         fetchedItems.push({ id: doc.id, ...doc.data() } as LibraryItem);
-      });
-
-      globalSnapshot.forEach((doc) => {
-        // Avoid duplicates if user is admin and their items are also global
-        if (!fetchedItems.find(i => i.id === doc.id)) {
-          fetchedItems.push({ id: doc.id, ...doc.data() } as LibraryItem);
-        }
       });
       
       // Sort in memory to avoid index requirements
@@ -216,15 +128,6 @@ const Library: React.FC<LibraryProps> = () => {
           </h2>
           <p className="text-slate-500 text-sm">Вашите зачувани наставни материјали на едно место</p>
         </div>
-        {isAdmin && (
-          <button
-            onClick={addOfficialPrograms}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
-          >
-            <Plus className="w-4 h-4" />
-            Додај официјални програми (МОН/БРО)
-          </button>
-        )}
       </div>
 
       <div className="bg-white p-4 rounded-2xl border border-indigo-50 shadow-sm flex flex-col md:flex-row gap-4">
@@ -251,7 +154,6 @@ const Library: React.FC<LibraryProps> = () => {
             <option value="Сценарио">Сценарија</option>
             <option value="Работен лист">Работни листови</option>
             <option value="Писмена работа">Писмени работи</option>
-            <option value="Програма">Програми</option>
           </select>
         </div>
       </div>
@@ -269,7 +171,6 @@ const Library: React.FC<LibraryProps> = () => {
           <h3 className="text-xl font-bold text-slate-800 mb-2">Вашата библиотека е празна</h3>
           <p className="text-slate-500 max-w-md mx-auto mb-8">
             Тука ќе се појават сите материјали што ќе ги зачувате. 
-            {isAdmin && " Кликнете на копчето погоре за да ги додадете официјалните програми."}
           </p>
         </div>
       ) : (
