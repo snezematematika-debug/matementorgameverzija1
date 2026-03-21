@@ -347,7 +347,7 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade, initialC
             </div>
             
             <div className="mt-4 flex justify-end">
-                <button onClick={handleAiGenerate} disabled={loading || !selectedTopicId} className="w-full md:w-auto px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-bold shadow-md hover:bg-indigo-700 disabled:opacity-50">
+                <button onClick={handleAiGenerate} disabled={loading || !selectedTopicId} className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl font-bold shadow-lg hover:from-indigo-700 hover:to-indigo-800 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:transform-none">
                     {loading ? 'Се генерира...' : (worksheet ? '🔄 Регенерирај' : '✨ Креирај')}
                 </button>
             </div>
@@ -377,7 +377,7 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade, initialC
       {worksheet && !loading && (
         <div className="mt-8 space-y-6 animate-slide-up print:mt-0">
           <div className="print:hidden flex flex-wrap justify-end gap-3 items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
-             <button onClick={() => setIsBoardOpen(true)} className="px-5 py-2 bg-teal-600 text-white text-sm font-bold rounded-lg shadow-md hover:bg-teal-700 transition-all">
+             <button onClick={() => setIsBoardOpen(true)} className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-teal-700 text-white text-sm font-bold rounded-xl shadow-lg hover:from-teal-700 hover:to-teal-800 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
                 <span>👨‍🏫 Објасни на табла</span>
              </button>
              <SaveOptionsDropdown 
