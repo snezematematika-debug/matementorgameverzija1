@@ -46,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
   });
 
   const { user, loading: authLoading } = useAuth();
-  const isAdmin = user?.email === 'snezematematika@gmail.com';
+  const isAdmin = user?.email === 'snezematematika@gmail.com' || user?.email === 'snezezlatkov@gmail.com';
 
   const toggleCategory = (cat: string) => {
     setOpenCategory(openCategory === cat ? null : cat);

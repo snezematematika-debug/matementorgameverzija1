@@ -30,10 +30,14 @@ const Library: React.FC<LibraryProps> = () => {
   const isAdmin = auth.currentUser?.email === 'snezematematika@gmail.com' || auth.currentUser?.email === 'snezezlatkov@gmail.com';
 
   const addOfficialPrograms = async () => {
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      toast.error('Само администратори можат да го направат ова.');
+      return;
+    }
     
     setLoading(true);
     try {
+      console.log("Starting to add official programs...");
       const programs = [
         {
           title: "Годишна програма по Математика - VI одделение (МОН/БРО)",
@@ -86,7 +90,7 @@ const Library: React.FC<LibraryProps> = () => {
       }
       
       toast.success('Официјалните програми се додадени!');
-      fetchItems();
+      await fetchItems();
     } catch (error) {
       console.error('Error adding programs:', error);
       toast.error('Грешка при додавање на програмите.');
@@ -257,7 +261,18 @@ const Library: React.FC<LibraryProps> = () => {
           <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
           <p className="text-slate-500 font-medium">Се вчитава библиотеката...</p>
         </div>
-      ) : filteredItems.length > 0 ? (
+      ) : filteredItems.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
+          <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Folder className="w-10 h-10 text-indigo-300" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">Вашата библиотека е празна</h3>
+          <p className="text-slate-500 max-w-md mx-auto mb-8">
+            Тука ќе се појават сите материјали што ќе ги зачувате. 
+            {isAdmin && " Кликнете на копчето погоре за да ги додадете официјалните програми."}
+          </p>
+        </div>
+      ) : (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -332,26 +347,6 @@ const Library: React.FC<LibraryProps> = () => {
               </tbody>
             </table>
           </div>
-        </div>
-      ) : (
-        <div className="text-center py-20 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-            <Folder className="w-8 h-8 text-slate-300" />
-          </div>
-          <h3 className="text-lg font-bold text-slate-600">Библиотеката е празна</h3>
-          <p className="text-slate-400 text-sm max-w-xs mx-auto mt-1">
-            {searchTerm || filterType !== 'Сите' 
-              ? 'Нема резултати за вашето пребарување.' 
-              : 'Зачувајте некој материјал за да го видите овде.'}
-          </p>
-          {(searchTerm || filterType !== 'Сите') && (
-            <button 
-              onClick={() => { setSearchTerm(''); setFilterType('Сите'); }}
-              className="mt-4 text-indigo-600 font-bold text-sm hover:underline"
-            >
-              Исчисти филтри
-            </button>
-          )}
         </div>
       )}
 
