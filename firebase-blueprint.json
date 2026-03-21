@@ -60,6 +60,7 @@
         "type": { "type": "string" },
         "grade": { "type": "string" },
         "userId": { "type": "string" },
+        "isGlobal": { "type": "boolean", "description": "Whether this item is available to all users" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "content", "type", "grade", "userId", "createdAt"]

@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, deleteDoc, doc, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, orderBy, Timestamp, addDoc, serverTimestamp } from 'firebase/firestore';
 import { firestore, auth, handleFirestoreError, OperationType } from '../services/firebase';
-import { Folder, FileText, Trash2, ExternalLink, Loader2, Search, Calendar, Tag } from 'lucide-react';
+import { Folder, FileText, Trash2, ExternalLink, Loader2, Search, Calendar, Tag, ShieldCheck, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface LibraryItem {
@@ -12,6 +12,7 @@ interface LibraryItem {
   content: string;
   type: string;
   grade?: string | number;
+  isGlobal?: boolean;
   createdAt: any;
   timestamp?: any; // Fallback for old documents
 }
@@ -26,6 +27,74 @@ const Library: React.FC<LibraryProps> = () => {
   const [filterType, setFilterType] = useState<string>('Сите');
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
+  const isAdmin = auth.currentUser?.email === 'snezematematika@gmail.com' || auth.currentUser?.email === 'snezezlatkov@gmail.com';
+
+  const addOfficialPrograms = async () => {
+    if (!isAdmin) return;
+    
+    setLoading(true);
+    try {
+      const programs = [
+        {
+          title: "Годишна програма по Математика - VI одделение (МОН/БРО)",
+          type: "Програма",
+          grade: "VI",
+          isGlobal: true,
+          userId: auth.currentUser?.uid,
+          timestamp: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          content: `# Годишна програма по Математика за VI одделение\n\n**Одобрена од МОН и БРО**\n\n## Цели на наставата:\n- Развивање на математичко размислување...\n- Совладување на основните операции со природни броеви и децимални броеви...\n- Запознавање со основните геометриски форми...\n\n## Тематски целини:\n1. Број и решавање проблеми\n2. Алгебра и решавање проблеми\n3. Геометрија и решавање проблеми\n4. Мерење и решавање проблеми\n5. Работа со податоци и решавање проблеми\n\n... (целосна содржина)`
+        },
+        {
+          title: "Годишна програма по Математика - VII одделение (МОН/БРО)",
+          type: "Програма",
+          grade: "VII",
+          isGlobal: true,
+          userId: auth.currentUser?.uid,
+          timestamp: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          content: `# Годишна програма по Математика за VII одделение\n\n**Одобрена од МОН и БРО**\n\n## Тематски целини:\n1. Броеви и пресметување\n2. Изрази и равенки\n3. Геометрија и симетрија\n4. Мерење и плоштина\n5. Веројатност и статистика\n\n... (целосна содржина)`
+        },
+        {
+          title: "Годишна програма по Математика - VIII одделение (МОН/БРО)",
+          type: "Програма",
+          grade: "VIII",
+          isGlobal: true,
+          userId: auth.currentUser?.uid,
+          timestamp: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          content: `# Годишна програма по Математика за VIII одделение\n\n**Одобрена од МОН и БРО**\n\n... (целосна содржина)`
+        },
+        {
+          title: "Годишна програма по Математика - IX одделение (МОН/БРО)",
+          type: "Програма",
+          grade: "IX",
+          isGlobal: true,
+          userId: auth.currentUser?.uid,
+          timestamp: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          content: `# Годишна програма по Математика за IX одделение\n\n**Одобрена од МОН и БРО**\n\n... (целосна содржина)`
+        }
+      ];
+
+      for (const prog of programs) {
+        // Check if already exists to avoid duplicates
+        const existing = items.find(i => i.title === prog.title);
+        if (!existing) {
+          await addDoc(collection(firestore, 'library'), prog);
+        }
+      }
+      
+      toast.success('Официјалните програми се додадени!');
+      fetchItems();
+    } catch (error) {
+      console.error('Error adding programs:', error);
+      toast.error('Грешка при додавање на програмите.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchItems = async () => {
     if (!auth.currentUser) {
       setLoading(false);
@@ -33,14 +102,34 @@ const Library: React.FC<LibraryProps> = () => {
     }
     setLoading(true);
     try {
-      const q = query(
+      // Fetch user items
+      const userQuery = query(
         collection(firestore, 'library'),
         where('userId', '==', auth.currentUser.uid)
       );
-      const querySnapshot = await getDocs(q);
+      
+      // Fetch global items
+      const globalQuery = query(
+        collection(firestore, 'library'),
+        where('isGlobal', '==', true)
+      );
+
+      const [userSnapshot, globalSnapshot] = await Promise.all([
+        getDocs(userQuery),
+        getDocs(globalQuery)
+      ]);
+
       const fetchedItems: LibraryItem[] = [];
-      querySnapshot.forEach((doc) => {
+      
+      userSnapshot.forEach((doc) => {
         fetchedItems.push({ id: doc.id, ...doc.data() } as LibraryItem);
+      });
+
+      globalSnapshot.forEach((doc) => {
+        // Avoid duplicates if user is admin and their items are also global
+        if (!fetchedItems.find(i => i.id === doc.id)) {
+          fetchedItems.push({ id: doc.id, ...doc.data() } as LibraryItem);
+        }
       });
       
       // Sort in memory to avoid index requirements
@@ -108,6 +197,7 @@ const Library: React.FC<LibraryProps> = () => {
       case 'Сценарио': return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'Работен лист': return 'bg-sky-100 text-sky-700 border-sky-200';
       case 'Писмена работа': return 'bg-rose-100 text-rose-700 border-rose-200';
+      case 'Програма': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
@@ -122,6 +212,15 @@ const Library: React.FC<LibraryProps> = () => {
           </h2>
           <p className="text-slate-500 text-sm">Вашите зачувани наставни материјали на едно место</p>
         </div>
+        {isAdmin && (
+          <button
+            onClick={addOfficialPrograms}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+          >
+            <Plus className="w-4 h-4" />
+            Додај официјални програми (МОН/БРО)
+          </button>
+        )}
       </div>
 
       <div className="bg-white p-4 rounded-2xl border border-indigo-50 shadow-sm flex flex-col md:flex-row gap-4">
@@ -148,6 +247,7 @@ const Library: React.FC<LibraryProps> = () => {
             <option value="Сценарио">Сценарија</option>
             <option value="Работен лист">Работни листови</option>
             <option value="Писмена работа">Писмени работи</option>
+            <option value="Програма">Програми</option>
           </select>
         </div>
       </div>
@@ -178,7 +278,14 @@ const Library: React.FC<LibraryProps> = () => {
                         <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-white transition-colors">
                           <FileText className="w-4 h-4" />
                         </div>
-                        <span className="font-bold text-slate-700">{item.title}</span>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-700">{item.title}</span>
+                          {item.isGlobal && (
+                            <span className="text-[10px] text-indigo-600 font-bold flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3" /> Официјален документ
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
