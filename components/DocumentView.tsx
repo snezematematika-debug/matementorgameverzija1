@@ -3,9 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { firestore, handleFirestoreError, OperationType } from '../services/firebase';
-import { FileText, ArrowLeft, Loader2, Calendar, Tag, Download, Printer } from 'lucide-react';
+import { FileText, ArrowLeft, Loader2, Calendar, Tag, Download, Printer, FileDown, Copy, Check, ChevronDown } from 'lucide-react';
 import FormattedText from './FormattedText';
 import { Timestamp } from 'firebase/firestore';
+import { parse } from 'marked';
+import toast from 'react-hot-toast';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 const DocumentView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +16,7 @@ const DocumentView: React.FC = () => {
   const [docData, setDocData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -97,50 +101,52 @@ const DocumentView: React.FC = () => {
 
   // Handle content which might be JSON
   let displayContent = docData.content;
+  let parsedJson: any = null;
+  
   try {
     if (typeof docData.content === 'string' && docData.content.trim().startsWith('{')) {
-      const parsed = JSON.parse(docData.content);
+      parsedJson = JSON.parse(docData.content);
       
       if (docData.type === 'Сценарио') {
         displayContent = `
-# Сценарио за час: ${parsed.topic || parsed.title || 'Без наслов'}
+# Сценарио за час: ${parsedJson.topic || parsedJson.title || 'Без наслов'}
 
 ## 1. Содржина и поими
-${parsed.content}
+${parsedJson.content}
 
 ## 2. Стандарди за оценување
-${parsed.standards}
+${parsedJson.standards}
 
 ## 3. Воведна активност (10 мин)
-${parsed.introActivity}
+${parsedJson.introActivity}
 
 ## 4. Главни активности (20-25 мин)
-${parsed.mainActivity}
+${parsedJson.mainActivity}
 
 ## 5. Завршна активност (10 мин)
-${parsed.finalActivity}
+${parsedJson.finalActivity}
 
 ## 6. Потребни средства
-${parsed.resources}
+${parsedJson.resources}
 
 ## 7. Следење на напредокот
-${parsed.assessment}
+${parsedJson.assessment}
         `.trim();
       } else if (docData.type === 'Лекција') {
         displayContent = `
-# ${parsed.title}
+# ${parsedJson.title}
 
 ## Цели на часот:
-${parsed.objectives?.map((o: string) => `- ${o}`).join('\n')}
+${parsedJson.objectives?.map((o: string) => `- ${o}`).join('\n')}
 
 ---
 
-${parsed.content}
+${parsedJson.content}
         `.trim();
       } else if (docData.type === 'Тест' || docData.type === 'Писмена работа') {
         let md = `# ${docData.type}: ${docData.title}\n\n`;
-        if (parsed.questions && Array.isArray(parsed.questions)) {
-          parsed.questions.forEach((q: any, idx: number) => {
+        if (parsedJson.questions && Array.isArray(parsedJson.questions)) {
+          parsedJson.questions.forEach((q: any, idx: number) => {
             md += `### ${idx + 1}. ${q.question} (${q.difficulty || ''})\n`;
             if (q.options && Array.isArray(q.options)) {
               q.options.forEach((opt: string, optIdx: number) => {
@@ -150,32 +156,163 @@ ${parsed.content}
             md += `\n`;
           });
         }
-        if (parsed.rubric) {
-          md += `\n---\n\n## Клуч за одговори и Рубрика за оценување\n\n${parsed.rubric}`;
+        if (parsedJson.rubric) {
+          md += `\n---\n\n## Клуч за одговори и Рубрика за оценување\n\n${parsedJson.rubric}`;
         }
         displayContent = md;
       } else if (docData.type === 'Работен лист') {
         displayContent = `
-# Работен лист: ${parsed.topic || docData.title}
+# Работен лист: ${parsedJson.topic || docData.title}
 
 ## Цели:
-${parsed.objectives}
+${parsedJson.objectives}
 
 ---
 
 ## Активности:
-${parsed.activities}
+${parsedJson.activities}
 
 ---
 
 ## Заклучок:
-${parsed.conclusion}
+${parsedJson.conclusion}
         `.trim();
       }
     }
   } catch (e) {
     console.warn("Failed to parse document JSON, showing raw content", e);
   }
+
+  const handleDownloadMarkdown = () => {
+    const blob = new Blob([displayContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${docData.title.replace(/\s+/g, '_')}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Преземено како Markdown');
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(displayContent);
+    setCopied(true);
+    toast.success('Копирано во меморија');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadWord = () => {
+    let htmlBody = '';
+    let style = `
+      body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+      td, th { border: 1px solid black; padding: 8px; vertical-align: top; }
+      .header-cell { background-color: #f3f4f6; font-weight: bold; width: 30%; }
+      h1 { font-size: 16pt; color: #2E4053; margin-top: 20px; text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
+      h2 { font-size: 14pt; color: #2E86C1; margin-top: 15px; }
+      p { margin-bottom: 10px; }
+      ul, ol { margin-bottom: 10px; }
+    `;
+
+    if (docData.type === 'Сценарио' && parsedJson) {
+      // Specialized landscape layout for scenarios
+      style = `
+        @page Section1 {
+          size: 29.7cm 21.0cm;
+          margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+          mso-page-orientation: landscape;
+        }
+        div.Section1 { page: Section1; }
+        body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 10pt; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
+        td, th { border: 1px solid black; padding: 5px; vertical-align: top; word-wrap: break-word; }
+        .header-cell { background-color: #f3f4f6; font-weight: bold; width: 20%; }
+        .section-header { background-color: #e5e7eb; font-weight: bold; text-align: center; }
+        h1, h2, h3 { margin: 5px 0; }
+      `;
+
+      htmlBody = `
+        <div class="Section1">
+          <p style="text-align: right; font-size: 9pt; color: #666; border-bottom: 1px solid #ccc;">Мате-Ментор - Платформа за дигитално образование</p>
+          <table>
+            <tr><td class="header-cell">Предмет:</td><td>Математика за ${docData.grade || '___'} одделение</td></tr>
+            <tr><td class="header-cell">Наставна Единица:</td><td style="font-weight: bold;">${parsedJson.topic || docData.title}</td></tr>
+            <tr><td class="header-cell">Тип:</td><td>Сценарио за час</td></tr>
+          </table>
+          <table>
+            <thead>
+              <tr>
+                <th class="section-header" style="width: 15%;">Содржина</th>
+                <th class="section-header" style="width: 20%;">Стандарди</th>
+                <th class="section-header" style="width: 35%;">Сценарио</th>
+                <th class="section-header" style="width: 15%;">Средства</th>
+                <th class="section-header" style="width: 15%;">Следење</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${parse(parsedJson.content || '')}</td>
+                <td>${parse(parsedJson.standards || '')}</td>
+                <td>
+                  <p><b>Воведна:</b></p>${parse(parsedJson.introActivity || '')}
+                  <hr/>
+                  <p><b>Главна:</b></p>${parse(parsedJson.mainActivity || '')}
+                  <hr/>
+                  <p><b>Завршна:</b></p>${parse(parsedJson.finalActivity || '')}
+                </td>
+                <td>${parse(parsedJson.resources || '')}</td>
+                <td>${parse(parsedJson.assessment || '')}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      const htmlContent = parse(displayContent);
+      htmlBody = `
+        <p style="text-align: right; font-size: 9pt; color: #666; border-bottom: 1px solid #ccc;">Мате-Ментор - Платформа за дигитално образование</p>
+        <table>
+          <tr><td class="header-cell">Предмет:</td><td>Математика за ${docData.grade || '___'} одделение</td></tr>
+          <tr><td class="header-cell">Тип:</td><td style="text-transform: uppercase; font-weight: bold;">${docData.type}</td></tr>
+          <tr><td class="header-cell">Наслов:</td><td style="font-weight: bold;">${docData.title}</td></tr>
+          <tr><td class="header-cell">Датум:</td><td>${formatDate(docData)}</td></tr>
+        </table>
+        <h1>${docData.title}</h1>
+        <div>${htmlContent}</div>
+        <br/><br/>
+        <table style="border: none;">
+          <tr style="border: none;">
+            <td style="border: none; border-top: 1px solid black; padding-top: 10px;">Датум: ________________</td>
+            <td style="border: none; border-top: 1px solid black; padding-top: 10px; text-align: right;">Потпис: ________________</td>
+          </tr>
+        </table>
+      `;
+    }
+    
+    const fullHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>${docData.title}</title>
+        <style>${style}</style>
+      </head>
+      <body>${htmlBody}</body>
+      </html>
+    `;
+
+    const blob = new Blob([fullHtml], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${docData.title.replace(/\s+/g, '_')}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Преземено како Word');
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-20">
@@ -233,7 +370,48 @@ ${parsed.conclusion}
           </div>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all text-sm outline-none">
+                Зачувај како
+                <ChevronDown className="w-4 h-4" />
+              </button>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content 
+                className="min-w-[160px] bg-white rounded-xl p-1 shadow-xl border border-slate-200 animate-in fade-in zoom-in duration-200 z-50"
+                sideOffset={5}
+                align="end"
+              >
+                <DropdownMenu.Item 
+                  className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg cursor-pointer outline-none transition-colors"
+                  onSelect={handleCopy}
+                >
+                  {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                  Копирај во меморија
+                </DropdownMenu.Item>
+                
+                <DropdownMenu.Item 
+                  className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg cursor-pointer outline-none transition-colors"
+                  onSelect={handleDownloadMarkdown}
+                >
+                  <Download className="w-4 h-4" />
+                  Markdown (.md)
+                </DropdownMenu.Item>
+                
+                <DropdownMenu.Item 
+                  className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg cursor-pointer outline-none transition-colors"
+                  onSelect={handleDownloadWord}
+                >
+                  <FileDown className="w-4 h-4" />
+                  Word (.doc)
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+
           <button 
             onClick={handlePrint}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-100 text-sm"

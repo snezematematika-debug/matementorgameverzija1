@@ -28,6 +28,7 @@ import AICreator from './components/AICreator';
 import Library from './components/Library';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import DocumentView from './components/DocumentView';
+import { Toaster } from 'react-hot-toast';
 import { useAuth } from './services/firebase';
 import { AppMode, GradeLevel } from './types';
 
@@ -218,6 +219,7 @@ const App: React.FC = () => {
       setGrade={setSelectedGrade}
       hideSidebar={userRole === 'STUDENT'}
     >
+      <Toaster position="top-right" />
       <Routes>
         <Route path="/library/document/:id" element={<DocumentView />} />
         <Route path="*" element={renderContent()} />
