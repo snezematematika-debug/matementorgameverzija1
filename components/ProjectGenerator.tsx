@@ -7,7 +7,6 @@ import Loading from './Loading';
 import FormattedText from './FormattedText';
 import { parse } from 'marked';
 import { ArrowLeft } from 'lucide-react';
-import { LibraryContext } from '../App';
 
 interface ProjectGeneratorProps {
   grade: GradeLevel;
@@ -15,7 +14,6 @@ interface ProjectGeneratorProps {
 }
 
 const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade, initialContent }) => {
-  const { goBackToLibrary, loadedItem } = React.useContext(LibraryContext);
   const availableThemes = PROJECT_THEMES.filter(theme => theme.grade === grade);
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
@@ -201,15 +199,6 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade, initialConte
       <div className="print:hidden">
         <div className="flex items-center justify-between border-b pb-4 mb-6">
             <div className="flex items-center gap-4">
-                {loadedItem && (
-                  <button 
-                    onClick={goBackToLibrary}
-                    className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600"
-                    title="Назад во библиотека"
-                  >
-                    <ArrowLeft size={24} />
-                  </button>
-                )}
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                     🚀 Проектни задачи (STEAM)
                     <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>

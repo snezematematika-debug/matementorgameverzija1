@@ -6,7 +6,6 @@ import { GradeLevel, LessonPackage } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
 import { ArrowLeft } from 'lucide-react';
-import { LibraryContext } from '../App';
 
 interface BoardPlanGeneratorProps {
   grade: GradeLevel;
@@ -14,7 +13,6 @@ interface BoardPlanGeneratorProps {
 }
 
 const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade, initialContent }) => {
-  const { goBackToLibrary, loadedItem } = React.useContext(LibraryContext);
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
   
@@ -103,15 +101,6 @@ const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade, initialC
       <div>
         <div className="flex items-center justify-between border-b pb-4 mb-6">
             <div className="flex items-center gap-4">
-                {loadedItem && (
-                  <button 
-                    onClick={goBackToLibrary}
-                    className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600"
-                    title="Назад во библиотека"
-                  >
-                    <ArrowLeft size={24} />
-                  </button>
-                )}
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                     👨‍🏫 План на табла
                     <span className="text-sm font-normal text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">{grade} Одд.</span>

@@ -6,7 +6,6 @@ import { GradeLevel, LessonPackage } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
 import { Sparkles, FileText, Download, Printer, Users, Brain, Heart, Star, ArrowLeft } from 'lucide-react';
-import { LibraryContext } from '../App';
 
 interface InclusionGeneratorProps {
   grade: GradeLevel;
@@ -77,7 +76,6 @@ const LEARNING_STYLES = [
 ];
 
 const InclusionGenerator: React.FC<InclusionGeneratorProps> = ({ grade, initialContent }) => {
-  const { goBackToLibrary, loadedItem } = React.useContext(LibraryContext);
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
   const [selectedDisability, setSelectedDisability] = useState<string>("");
@@ -241,15 +239,6 @@ const InclusionGenerator: React.FC<InclusionGeneratorProps> = ({ grade, initialC
       <div className="print:hidden">
         <div className="flex items-center justify-between border-b pb-4 mb-6">
             <div className="flex items-center gap-4">
-                {loadedItem && (
-                  <button 
-                    onClick={goBackToLibrary}
-                    className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600"
-                    title="Назад во библиотека"
-                  >
-                    <ArrowLeft size={24} />
-                  </button>
-                )}
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                     <Heart className="text-rose-500" /> Инклузија: Персонализирај за ИОП
                     <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>

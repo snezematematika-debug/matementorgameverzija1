@@ -10,7 +10,7 @@ import { Timestamp } from 'firebase/firestore';
 const DocumentView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [document, setDocument] = useState<any>(null);
+  const [docData, setDocData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +24,7 @@ const DocumentView: React.FC = () => {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          setDocument({ id: docSnap.id, ...docSnap.data() });
+          setDocData({ id: docSnap.id, ...docSnap.data() });
         } else {
           setError('Документот не е пронајден.');
         }
@@ -40,8 +40,8 @@ const DocumentView: React.FC = () => {
     fetchDocument();
   }, [id]);
 
-  const formatDate = (doc: any) => {
-    const ts = doc.createdAt || doc.timestamp;
+  const formatDate = (data: any) => {
+    const ts = data.createdAt || data.timestamp;
     if (!ts) return 'Непознато';
     const date = ts instanceof Timestamp ? ts.toDate() : new Date(ts);
     return date.toLocaleDateString('mk-MK', {
@@ -73,7 +73,7 @@ const DocumentView: React.FC = () => {
     );
   }
 
-  if (error || !document) {
+  if (error || !docData) {
     return (
       <div className="text-center py-20">
         <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -90,13 +90,18 @@ const DocumentView: React.FC = () => {
     );
   }
 
+  const handlePrint = () => {
+    window.focus();
+    window.print();
+  };
+
   // Handle content which might be JSON
-  let displayContent = document.content;
+  let displayContent = docData.content;
   try {
-    if (typeof document.content === 'string' && document.content.trim().startsWith('{')) {
-      const parsed = JSON.parse(document.content);
+    if (typeof docData.content === 'string' && docData.content.trim().startsWith('{')) {
+      const parsed = JSON.parse(docData.content);
       
-      if (document.type === 'Сценарио') {
+      if (docData.type === 'Сценарио') {
         displayContent = `
 # Сценарио за час: ${parsed.topic || parsed.title || 'Без наслов'}
 
@@ -121,7 +126,7 @@ ${parsed.resources}
 ## 7. Следење на напредокот
 ${parsed.assessment}
         `.trim();
-      } else if (document.type === 'Лекција') {
+      } else if (docData.type === 'Лекција') {
         displayContent = `
 # ${parsed.title}
 
@@ -132,14 +137,16 @@ ${parsed.objectives?.map((o: string) => `- ${o}`).join('\n')}
 
 ${parsed.content}
         `.trim();
-      } else if (document.type === 'Тест') {
-        let md = `# Тест: ${document.title}\n\n`;
+      } else if (docData.type === 'Тест' || docData.type === 'Писмена работа') {
+        let md = `# ${docData.type}: ${docData.title}\n\n`;
         if (parsed.questions && Array.isArray(parsed.questions)) {
           parsed.questions.forEach((q: any, idx: number) => {
-            md += `### ${idx + 1}. ${q.question} (${q.difficulty})\n`;
-            q.options.forEach((opt: string, optIdx: number) => {
-              md += `${String.fromCharCode(65 + optIdx)}) ${opt}\n`;
-            });
+            md += `### ${idx + 1}. ${q.question} (${q.difficulty || ''})\n`;
+            if (q.options && Array.isArray(q.options)) {
+              q.options.forEach((opt: string, optIdx: number) => {
+                md += `${String.fromCharCode(65 + optIdx)}) ${opt}\n`;
+              });
+            }
             md += `\n`;
           });
         }
@@ -147,6 +154,23 @@ ${parsed.content}
           md += `\n---\n\n## Клуч за одговори и Рубрика за оценување\n\n${parsed.rubric}`;
         }
         displayContent = md;
+      } else if (docData.type === 'Работен лист') {
+        displayContent = `
+# Работен лист: ${parsed.topic || docData.title}
+
+## Цели:
+${parsed.objectives}
+
+---
+
+## Активности:
+${parsed.activities}
+
+---
+
+## Заклучок:
+${parsed.conclusion}
+        `.trim();
       }
     }
   } catch (e) {
@@ -155,7 +179,33 @@ ${parsed.content}
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-20">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4">
+      <style>{`
+        @media print {
+          @page {
+            size: portrait;
+            margin: 20mm;
+          }
+          body {
+            background: white !important;
+          }
+          .print-container {
+            margin: 0 !important;
+            padding: 0 !important;
+            max-width: none !important;
+            width: 100% !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .document-card {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+          }
+        }
+      `}</style>
+      
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-4 no-print">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)}
@@ -166,27 +216,27 @@ ${parsed.content}
           </button>
           <div>
             <h2 className="text-2xl font-bold text-indigo-900 flex items-center gap-3">
-              {document.title}
+              {docData.title}
             </h2>
             <div className="flex flex-wrap gap-3 mt-1">
-              <span className={`px-3 py-0.5 rounded-full text-[10px] font-bold border ${getTypeColor(document.type)}`}>
-                {document.type}
+              <span className={`px-3 py-0.5 rounded-full text-[10px] font-bold border ${getTypeColor(docData.type)}`}>
+                {docData.type}
               </span>
               <span className="px-3 py-0.5 rounded-full text-[10px] font-bold border bg-slate-100 text-slate-700 border-slate-200">
-                {document.grade ? `${document.grade} одд.` : 'Непознато одделение'}
+                {docData.grade ? `${docData.grade} одд.` : 'Непознато одделение'}
               </span>
               <div className="flex items-center gap-1 text-xs text-slate-500">
                 <Calendar className="w-3 h-3" />
-                {formatDate(document)}
+                {formatDate(docData)}
               </div>
             </div>
           </div>
         </div>
         
-        <div className="flex gap-2 print:hidden">
+        <div className="flex gap-2">
           <button 
-            onClick={() => window.print()}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all text-sm"
+            onClick={handlePrint}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-100 text-sm"
           >
             <Printer className="w-4 h-4" />
             Печати
@@ -194,7 +244,7 @@ ${parsed.content}
         </div>
       </div>
 
-      <div className="bg-white p-8 md:p-12 rounded-2xl border border-slate-200 shadow-sm min-h-[600px]">
+      <div className="bg-white p-8 md:p-12 rounded-2xl border border-slate-200 shadow-sm min-h-[600px] document-card print-container">
         <FormattedText text={displayContent} />
       </div>
     </div>
