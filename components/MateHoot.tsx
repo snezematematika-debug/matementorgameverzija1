@@ -189,7 +189,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     setLoading(true);
     setError(null);
     try {
-      const content = await generateGameContent(selectedTopic, grade, 'MATEHOOT');
+      const content = await generateGameContent(selectedTopic, 'MATEHOOT', grade);
       const pin = generatePin();
       
       const newGameState: GameState = {

@@ -92,7 +92,15 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
           <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2">
             <Clock className="w-4 h-4 text-indigo-500" />
             <span className="text-sm font-bold text-slate-600">
-              {new Date().toLocaleDateString('mk-MK', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {(() => {
+                const now = new Date();
+                const days = ['Недела', 'Понеделник', 'Вторник', 'Среда', 'Четврток', 'Петок', 'Сабота'];
+                const months = [
+                  'Јануари', 'Февруари', 'Март', 'Април', 'Мај', 'Јуни',
+                  'Јули', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
+                ];
+                return `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+              })()}
             </span>
           </div>
         </div>

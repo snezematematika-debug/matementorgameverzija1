@@ -220,7 +220,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.LESSON 
-                        ? 'bg-blue-500/30 text-blue-100 shadow-lg border-blue-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-blue-200/80 hover:bg-indigo-800/40 hover:text-blue-100 border-transparent'
                     }`}
                   >
@@ -233,7 +233,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.SCENARIO 
-                        ? 'bg-emerald-500/30 text-emerald-100 shadow-lg border-emerald-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-emerald-200/80 hover:bg-indigo-800/40 hover:text-emerald-100 border-transparent'
                     }`}
                   >
@@ -246,7 +246,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.BOARD_PLAN 
-                        ? 'bg-indigo-500/30 text-indigo-100 shadow-lg border-indigo-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-indigo-200/80 hover:bg-indigo-800/40 hover:text-indigo-100 border-transparent'
                     }`}
                   >
@@ -267,7 +267,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                 }`}
               >
                 <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
-                  <span>🗂️</span> Материјали
+                  <span>📂</span> Материјали
                 </span>
                 <svg 
                   className={`w-4 h-4 transform transition-transform duration-300 ${openCategory === 'MATERIALS' ? 'rotate-180' : ''}`} 
@@ -286,7 +286,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.WORKSHEET 
-                        ? 'bg-sky-500/30 text-sky-100 shadow-lg border-sky-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-sky-200/80 hover:bg-indigo-800/40 hover:text-sky-100 border-transparent'
                     }`}
                   >
@@ -299,7 +299,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.QUIZ 
-                        ? 'bg-orange-500/30 text-orange-100 shadow-lg border-orange-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-orange-200/80 hover:bg-indigo-800/40 hover:text-orange-100 border-transparent'
                     }`}
                   >
@@ -312,7 +312,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.PROJECT 
-                        ? 'bg-rose-500/30 text-rose-100 shadow-lg border-rose-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-rose-200/80 hover:bg-indigo-800/40 hover:text-rose-100 border-transparent'
                     }`}
                   >
@@ -331,12 +331,12 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all border ${
                   currentMode === AppMode.LIBRARY 
-                    ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg' 
+                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' 
                     : 'border-transparent text-indigo-200 hover:bg-indigo-800/40 hover:text-white'
                 }`}
               >
                 <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider">
-                  <span>📂</span> Моја Библиотека
+                  <span>📖</span> Моја Библиотека
                 </span>
               </button>
             </div>
@@ -371,7 +371,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.TEACHER_PANEL 
-                        ? 'bg-teal-500/30 text-teal-100 shadow-lg border-teal-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-teal-200/80 hover:bg-indigo-800/40 hover:text-teal-100 border-transparent'
                     }`}
                   >
@@ -384,7 +384,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.ERROR_DETECTIVE 
-                        ? 'bg-orange-500/30 text-orange-100 shadow-lg border-orange-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-orange-200/80 hover:bg-indigo-800/40 hover:text-orange-100 border-transparent'
                     }`}
                   >
@@ -397,7 +397,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.VISUALIZER 
-                        ? 'bg-fuchsia-500/30 text-fuchsia-100 shadow-lg border-fuchsia-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-fuchsia-200/80 hover:bg-indigo-800/40 hover:text-fuchsia-100 border-transparent'
                     }`}
                   >
@@ -410,7 +410,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.GEOGEBRA 
-                        ? 'bg-blue-500/30 text-blue-100 shadow-lg border-blue-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-blue-200/80 hover:bg-indigo-800/40 hover:text-blue-100 border-transparent'
                     }`}
                   >
@@ -423,7 +423,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.MATHIGON 
-                        ? 'bg-amber-500/30 text-amber-100 shadow-lg border-amber-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-amber-200/80 hover:bg-indigo-800/40 hover:text-amber-100 border-transparent'
                     }`}
                   >
@@ -463,7 +463,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.GAMES 
-                        ? 'bg-pink-500/30 text-pink-100 shadow-lg border-pink-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-pink-200/80 hover:bg-indigo-800/40 hover:text-pink-100 border-transparent'
                     }`}
                   >
@@ -476,7 +476,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.BINGO 
-                        ? 'bg-amber-500/30 text-amber-100 shadow-lg border-amber-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-amber-200/80 hover:bg-indigo-800/40 hover:text-amber-100 border-transparent'
                     }`}
                   >
@@ -489,7 +489,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.BOARD_GAME 
-                        ? 'bg-emerald-500/30 text-emerald-100 shadow-lg border-emerald-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-emerald-200/80 hover:bg-indigo-800/40 hover:text-emerald-100 border-transparent'
                     }`}
                   >
@@ -502,7 +502,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.MATE_SAFE 
-                        ? 'bg-indigo-500/30 text-indigo-100 shadow-lg border-indigo-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-indigo-200/80 hover:bg-indigo-800/40 hover:text-indigo-100 border-transparent'
                     }`}
                   >
@@ -515,7 +515,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.MATE_MACHINE 
-                        ? 'bg-slate-500/30 text-slate-100 shadow-lg border-slate-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-slate-200/80 hover:bg-indigo-800/40 hover:text-slate-100 border-transparent'
                     }`}
                   >
@@ -555,7 +555,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.AI_CREATOR 
-                        ? 'bg-indigo-500/30 text-indigo-100 shadow-lg border-indigo-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-indigo-200/80 hover:bg-indigo-800/40 hover:text-indigo-100 border-transparent'
                     }`}
                   >
@@ -568,7 +568,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.AI_REVIEWER 
-                        ? 'bg-cyan-500/30 text-cyan-100 shadow-lg border-cyan-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-cyan-200/80 hover:bg-indigo-800/40 hover:text-cyan-100 border-transparent'
                     }`}
                   >
@@ -608,7 +608,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.ADVANCED_PRACTICE 
-                        ? 'bg-yellow-500/30 text-yellow-100 shadow-lg border-yellow-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-yellow-200/80 hover:bg-indigo-800/40 hover:text-yellow-100 border-transparent'
                     }`}
                   >
@@ -621,7 +621,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.REMEDIAL_TEACHING 
-                        ? 'bg-emerald-500/30 text-emerald-100 shadow-lg border-emerald-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-emerald-200/80 hover:bg-indigo-800/40 hover:text-emerald-100 border-transparent'
                     }`}
                   >
@@ -634,7 +634,7 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                       currentMode === AppMode.INCLUSION 
-                        ? 'bg-purple-500/30 text-purple-100 shadow-lg border-purple-400' 
+                        ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
                         : 'text-purple-200/80 hover:bg-indigo-800/40 hover:text-purple-100 border-transparent'
                     }`}
                   >
@@ -674,8 +674,8 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
                       onClick={() => setMode(AppMode.ANALYTICS)}
                       className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-3 border ${
                         currentMode === AppMode.ANALYTICS 
-                          ? 'bg-slate-500/30 text-slate-100 shadow-lg border-slate-400' 
-                          : 'text-slate-400 hover:bg-indigo-800/40 hover:text-slate-100 border-transparent'
+                          ? 'bg-indigo-600 text-white shadow-lg border-indigo-400' 
+                          : 'text-indigo-400 hover:bg-indigo-800/40 hover:text-slate-100 border-transparent'
                       }`}
                     >
                       <span>📊</span> Статистички извештаи

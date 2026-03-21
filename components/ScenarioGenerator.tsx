@@ -90,7 +90,7 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ grade, initialCon
     setError(null);
     setScenario(null);
     try {
-      const result = await generateScenarioContent(selectedTopic);
+      const result = await generateScenarioContent(selectedTopic, grade);
       setScenario(result);
     } catch (err: any) {
       setError(err.message || "Се појави грешка при генерирање на сценариото.");

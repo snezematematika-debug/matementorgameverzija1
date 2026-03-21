@@ -134,7 +134,7 @@ const MateBingo: React.FC<MateBingoProps> = ({ grade, initialRole = null, onBack
     setLoading(true);
     setError(null);
     try {
-      const content = await generateGameContent(selectedTopic, grade, 'BINGO');
+      const content = await generateGameContent(selectedTopic, 'BINGO', grade);
       if (!content || !content.questions) {
         throw new Error("Неуспешно генерирање на прашања. Ве молиме обидете се повторно.");
       }

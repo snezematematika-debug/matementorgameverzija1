@@ -213,7 +213,7 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade, initialC
     setError(null);
     setWorksheet(null);
     try {
-      const result = await generateWorksheet(currentTopic.name, worksheetType);
+      const result = await generateWorksheet(currentTopic.name, grade, worksheetType);
       if (result) {
         setWorksheet(result);
       } else {
