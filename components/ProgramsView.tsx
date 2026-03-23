@@ -7,33 +7,41 @@ const programs = [
     grade: "VI одделение",
     title: "Наставна програма за VI одделение",
     description: "Официјална наставна програма по Математика од Бирото за развој на образованието (БРО).",
-    link: "programa_6odd.pdf",
+    link: "/programa_6odd.pdf",
     color: "border-blue-100 hover:border-blue-300",
-    iconColor: "bg-blue-600"
+    iconColor: "bg-blue-600",
+    hoverColor: "group-hover:text-blue-600",
+    btnHover: "group-hover:bg-blue-600"
   },
   {
     grade: "VII одделение",
     title: "Наставна програма за VII одделение",
     description: "Официјална наставна програма по Математика од Бирото за развој на образованието (БРО).",
-    link: "programa_7odd.pdf",
-    color: "border-indigo-100 hover:border-indigo-300",
-    iconColor: "bg-indigo-600"
+    link: "/programa_7odd.pdf",
+    color: "border-amber-100 hover:border-amber-300",
+    iconColor: "bg-amber-500",
+    hoverColor: "group-hover:text-amber-600",
+    btnHover: "group-hover:bg-amber-600"
   },
   {
     grade: "VIII одделение",
     title: "Наставна програма за VIII одделение",
     description: "Официјална наставна програма по Математика од Бирото за развој на образованието (БРО).",
-    link: "programa_8odd.pdf",
+    link: "/programa_8odd.pdf",
     color: "border-purple-100 hover:border-purple-300",
-    iconColor: "bg-purple-600"
+    iconColor: "bg-purple-600",
+    hoverColor: "group-hover:text-purple-600",
+    btnHover: "group-hover:bg-purple-600"
   },
   {
     grade: "IX одделение",
     title: "Наставна програма за IX одделение",
     description: "Официјална наставна програма по Математика од Бирото за развој на образованието (БРО).",
-    link: "programa_9odd.pdf",
+    link: "/programa_9odd.pdf",
     color: "border-rose-100 hover:border-rose-300",
-    iconColor: "bg-rose-600"
+    iconColor: "bg-rose-600",
+    hoverColor: "group-hover:text-rose-600",
+    btnHover: "group-hover:bg-rose-600"
   }
 ];
 
@@ -74,7 +82,7 @@ const ProgramsView: React.FC = () => {
               <span className="text-xs font-black uppercase tracking-widest opacity-70 text-slate-500">
                 {program.grade}
               </span>
-              <h3 className="text-2xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+              <h3 className={`text-2xl font-bold text-slate-900 ${program.hoverColor} transition-colors`}>
                 {program.title}
               </h3>
               <p className="text-slate-500 leading-relaxed">
@@ -83,7 +91,7 @@ const ProgramsView: React.FC = () => {
             </div>
 
             <div className="mt-8 flex items-center gap-2 text-sm font-bold">
-              <span className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white group-hover:bg-indigo-600 transition-colors">
+              <span className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white ${program.btnHover} transition-colors`}>
                 <Download className="w-4 h-4" />
                 Отвори PDF
               </span>
