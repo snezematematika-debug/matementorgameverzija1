@@ -14,7 +14,7 @@ interface ProjectGeneratorProps {
 }
 
 const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade, initialContent }) => {
-  const availableThemes = PROJECT_THEMES.filter(theme => theme.grade === grade);
+  const availableThemes = PROJECT_THEMES.filter(theme => theme.id.startsWith('steam-'));
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   
@@ -233,7 +233,7 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade, initialConte
                         className="w-full p-3 border-2 border-indigo-300 rounded-lg focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 focus:outline-none bg-white font-bold text-slate-700 transition-all shadow-sm"
                     >
                         {availableThemes.map(theme => (
-                        <option key={theme.id} value={theme.id}>{theme.title}</option>
+                        <option key={theme.id} value={theme.id}>{theme.title.replace(' (STEAM)', '')}</option>
                         ))}
                     </select>
                 </div>
