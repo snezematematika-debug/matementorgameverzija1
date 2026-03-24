@@ -298,17 +298,56 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
   const submitAnswer = async (optionIndex: number) => {
     if (!gameState?.pin || !playerId || lastAnswerResult || gameState.status !== 'QUESTION') return;
     
-    const question = gameState.content.questions[gameState.currentQuestionIndex || 0];
-    if (!question) return;
+    const qIndex = Number(gameState.currentQuestionIndex || 0);
+    const question = gameState.content.questions[qIndex];
+    if (!question) {
+      console.error('MateHoot Error: Question not found at index', qIndex);
+      return;
+    }
 
-    // Simple comparison as requested
-    const isCorrect = Number(optionIndex) === Number(question.correctAnswerIndex);
+    // Robust comparison
+    const selectedIdx = Number(optionIndex);
+    const correctIdxRaw = question.correctAnswerIndex;
+    const correctIdx = Number(correctIdxRaw);
     
-    console.log('--- MateHoot Debug ---');
-    console.log('Selected Answer Index:', optionIndex);
-    console.log('Correct Answer Index:', question.correctAnswerIndex);
-    console.log('Result of Comparison:', isCorrect);
-    console.log('----------------------');
+    const selectedValue = String(question.options[selectedIdx] || '').trim();
+    const correctValueFromIndex = String(correctIdxRaw || '').trim();
+    
+    // Check if it's correct by index (0-based)
+    let isCorrect = selectedIdx === correctIdx;
+
+    // Fallback 1: If the AI provided a 1-based index by mistake (common with LLMs)
+    if (!isCorrect && selectedIdx + 1 === correctIdx) {
+      console.log('MateHoot: Detected potential 1-based index from AI');
+      isCorrect = true;
+    }
+
+    // Fallback 2: If the AI provided the actual answer value instead of an index
+    // (e.g., question: "7+8", options: ["1", "15", "2", "3"], correctAnswerIndex: 15)
+    if (!isCorrect) {
+      if (selectedValue === correctValueFromIndex && correctValueFromIndex !== '') {
+        console.log('MateHoot: Detected answer value in correctAnswerIndex field');
+        isCorrect = true;
+      }
+    }
+
+    // Fallback 3: Case-insensitive and whitespace-insensitive value match
+    if (!isCorrect) {
+      const normalizedSelected = selectedValue.toLowerCase().replace(/\s+/g, '');
+      const normalizedCorrect = correctValueFromIndex.toLowerCase().replace(/\s+/g, '');
+      if (normalizedSelected === normalizedCorrect && normalizedSelected !== '') {
+        console.log('MateHoot: Detected normalized value match');
+        isCorrect = true;
+      }
+    }
+
+    console.log('--- MateHoot Detailed Debug ---');
+    console.log('Question:', question.question);
+    console.log('Options:', question.options);
+    console.log('Selected:', { index: selectedIdx, value: selectedValue });
+    console.log('Correct (from AI):', { raw: correctIdxRaw, index: correctIdx });
+    console.log('Final Validation Result:', isCorrect);
+    console.log('-------------------------------');
     
     // Calculate points based on speed
     const duration = 30;
@@ -316,7 +355,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     const speedBonus = Math.max(0, duration - elapsed) * 10;
     const points = isCorrect ? 1000 + speedBonus : 0;
 
-    setLastAnswerResult({ correct: isCorrect, points });
+    setLastAnswerResult({ correct: isCorrect, points, questionIndex: qIndex });
 
     // Update player score in Firebase
     const playerRef = ref(db, `games/${gameState.pin}/players/${playerId}`);
@@ -601,7 +640,21 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
               {/* Options Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {currentQuestion.options.map((option: string, idx: number) => {
-                  const isCorrect = idx === currentQuestion.correctAnswerIndex;
+                  const correctIdxRaw = currentQuestion.correctAnswerIndex;
+                  const correctIdx = Number(correctIdxRaw);
+                  const optionValue = String(option || '').trim();
+                  const correctValueFromIndex = String(correctIdxRaw || '').trim();
+
+                  // Robust check for correctness
+                  let isCorrect = idx === correctIdx;
+                  if (!isCorrect && idx + 1 === correctIdx) isCorrect = true;
+                  if (!isCorrect && optionValue === correctValueFromIndex && correctValueFromIndex !== '') isCorrect = true;
+                  if (!isCorrect) {
+                    const nOpt = optionValue.toLowerCase().replace(/\s+/g, '');
+                    const nCorr = correctValueFromIndex.toLowerCase().replace(/\s+/g, '');
+                    if (nOpt === nCorr && nOpt !== '') isCorrect = true;
+                  }
+
                   const showResult = gameState.status === 'RESULT';
                   
                   return (
@@ -710,6 +763,14 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
               <p className="text-xl font-bold opacity-80">
                 {isCorrect ? `+${points} поени` : 'Повеќе среќа следниот пат'}
               </p>
+              {!isCorrect && (
+                <div className="mt-4 p-4 bg-white/10 rounded-xl">
+                  <p className="text-sm font-bold opacity-60 uppercase tracking-widest mb-1">Точниот одговор беше:</p>
+                  <p className="text-2xl font-black">
+                    {currentQuestion.options[Number(currentQuestion.correctAnswerIndex)] || currentQuestion.correctAnswerIndex}
+                  </p>
+                </div>
+              )}
             </div>
             
             <div className="bg-black/10 p-6 rounded-2xl w-full">
