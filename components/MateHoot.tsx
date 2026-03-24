@@ -726,6 +726,9 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     }
 
     if (role === 'STUDENT') {
+      const currentQuestion = gameState.content.questions[gameState.currentQuestionIndex || 0];
+      if (!currentQuestion) return null;
+
       if (gameState.status === 'RESULT') {
         const me = gameState.players?.find((p: any) => p.id === playerId);
         const result = lastAnswerResult || me?.lastAnswer;
@@ -790,8 +793,6 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
           </div>
         );
       }
-
-      const currentQuestion = gameState.content.questions[gameState.currentQuestionIndex || 0];
 
       return (
         <div className="h-full flex flex-col p-4 gap-4 overflow-y-auto">
