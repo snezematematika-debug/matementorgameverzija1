@@ -304,6 +304,12 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     // Simple comparison as requested
     const isCorrect = Number(optionIndex) === Number(question.correctAnswerIndex);
     
+    console.log('--- MateHoot Debug ---');
+    console.log('Selected Answer Index:', optionIndex);
+    console.log('Correct Answer Index:', question.correctAnswerIndex);
+    console.log('Result of Comparison:', isCorrect);
+    console.log('----------------------');
+    
     // Calculate points based on speed
     const duration = 30;
     const elapsed = Math.floor((Date.now() - (gameState.questionStartTime || 0)) / 1000);
