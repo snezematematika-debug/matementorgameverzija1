@@ -52,7 +52,6 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
   const [error, setError] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
-  const [hasAnswered, setHasAnswered] = useState(false);
   const [lastAnswerResult, setLastAnswerResult] = useState<{ correct: boolean, points: number } | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -113,7 +112,6 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
   // Reset student state when question changes
   useEffect(() => {
     if (role === 'STUDENT' && gameState?.status === 'QUESTION') {
-      setHasAnswered(false);
       setLastAnswerResult(null);
     }
   }, [gameState?.currentQuestionIndex, gameState?.status]);
@@ -298,9 +296,12 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
   };
 
   const submitAnswer = async (optionIndex: number) => {
-    if (!gameState?.pin || !playerId || hasAnswered || gameState.status !== 'QUESTION') return;
+    if (!gameState?.pin || !playerId || lastAnswerResult || gameState.status !== 'QUESTION') return;
     
     const question = gameState.content.questions[gameState.currentQuestionIndex || 0];
+    if (!question) return;
+
+    // Simple comparison as requested
     const isCorrect = Number(optionIndex) === Number(question.correctAnswerIndex);
     
     // Calculate points based on speed
@@ -309,7 +310,6 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     const speedBonus = Math.max(0, duration - elapsed) * 10;
     const points = isCorrect ? 1000 + speedBonus : 0;
 
-    setHasAnswered(true);
     setLastAnswerResult({ correct: isCorrect, points });
 
     // Update player score in Firebase
@@ -668,7 +668,10 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
 
     if (role === 'STUDENT') {
       if (gameState.status === 'RESULT') {
-        if (!lastAnswerResult) {
+        const me = gameState.players?.find((p: any) => p.id === playerId);
+        const result = lastAnswerResult || me?.lastAnswer;
+        
+        if (!result) {
           return (
             <div className="max-w-md mx-auto h-[70vh] bg-indigo-600 rounded-[3rem] flex flex-col items-center justify-center text-center p-10 text-white shadow-2xl">
               <Sparkles className="w-20 h-20 mb-8 opacity-50" />
@@ -677,7 +680,10 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
             </div>
           );
         }
-        const isCorrect = lastAnswerResult?.correct;
+
+        const isCorrect = result.correct ?? result.isCorrect;
+        const points = result.points || 0;
+
         return (
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -696,19 +702,19 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
               )}
               <h2 className="text-5xl font-black mb-2">{isCorrect ? 'ТОЧНО!' : 'ПОГРЕШНО'}</h2>
               <p className="text-xl font-bold opacity-80">
-                {isCorrect ? `+${lastAnswerResult?.points} поени` : 'Повеќе среќа следниот пат'}
+                {isCorrect ? `+${points} поени` : 'Повеќе среќа следниот пат'}
               </p>
             </div>
             
             <div className="bg-black/10 p-6 rounded-2xl w-full">
               <p className="text-sm font-bold uppercase tracking-widest opacity-60 mb-2">Твојот резултат</p>
-              <p className="text-3xl font-black">{gameState.players.find(p => p.id === playerId)?.score || 0}</p>
+              <p className="text-3xl font-black">{me?.score || 0}</p>
             </div>
           </motion.div>
         );
       }
 
-      if (hasAnswered) {
+      if (lastAnswerResult) {
         return (
           <div className="max-w-md mx-auto h-[70vh] bg-indigo-600 rounded-[3rem] flex flex-col items-center justify-center text-center p-10 text-white shadow-2xl">
             <Loader2 className="w-20 h-20 animate-spin mb-8 opacity-50" />
