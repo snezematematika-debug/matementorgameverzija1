@@ -301,7 +301,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     if (!gameState?.pin || !playerId || hasAnswered || gameState.status !== 'QUESTION') return;
     
     const question = gameState.content.questions[gameState.currentQuestionIndex || 0];
-    const isCorrect = optionIndex === question.correctAnswerIndex;
+    const isCorrect = Number(optionIndex) === Number(question.correctAnswerIndex);
     
     // Calculate points based on speed
     const duration = 30;
