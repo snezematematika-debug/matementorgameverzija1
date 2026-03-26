@@ -1147,6 +1147,7 @@ export const generateGameContent = async (topic: string, type: string, grade: st
           {
             "question": "Текстот на прашањето...",
             "options": ["Опција 1", "Опција 2", "Опција 3", "Опција 4"],
+            "answer": "Опција 1",
             "correctAnswerIndex": 0,
             "explanation": "Зошто е ова точно..."
           },

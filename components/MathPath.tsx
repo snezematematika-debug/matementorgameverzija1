@@ -670,15 +670,26 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
 
           {/* Controls */}
           <div className="lg:sticky lg:top-8 space-y-6 self-start">
-            <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] shadow-xl border border-slate-100 text-center space-y-4 sm:space-y-6">
-              <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">На ред е</h3>
+            <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] shadow-xl border border-slate-100 text-center space-y-4 sm:space-y-6 relative overflow-hidden">
+              {/* Subtle background accent for active turn */}
+              {isMyTurn && (
+                <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500 animate-pulse" />
+              )}
+              
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">На ред е</h3>
               <div className="flex flex-col items-center justify-center gap-2">
-                <span className="text-5xl sm:text-6xl mb-1 sm:mb-2">{currentPlayer.avatar}</span>
-                <span className="text-xl sm:text-2xl font-black text-slate-900">{currentPlayer.name}</span>
-                {isMyTurn && <span className="text-xs font-black text-emerald-600 animate-pulse uppercase tracking-widest">Твој ред е!</span>}
+                <div className={`w-24 h-24 rounded-3xl flex items-center justify-center text-6xl mb-2 transition-all ${isMyTurn ? 'bg-emerald-50 scale-110 shadow-inner' : 'bg-slate-50'}`}>
+                  {currentPlayer.avatar}
+                </div>
+                <span className="text-2xl font-black text-slate-900">{currentPlayer.name}</span>
+                {isMyTurn && (
+                  <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest animate-bounce mt-2">
+                    <Zap className="w-3 h-3 fill-current" /> Твој ред е!
+                  </div>
+                )}
               </div>
 
-              <div className="py-6 sm:py-8">
+              <div className="py-4 sm:py-6">
                 <motion.div
                   animate={isRolling ? { rotate: [0, 90, 180, 270, 360], scale: [1, 1.2, 1] } : {}}
                   transition={{ repeat: isRolling ? Infinity : 0, duration: 0.2 }}
@@ -687,7 +698,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
                   {diceValue ? (
                     <span className="text-4xl sm:text-5xl font-black text-emerald-600">{diceValue}</span>
                   ) : (
-                    <Dice5 className="w-10 h-10 sm:w-12 sm:h-12 text-slate-300" />
+                    <Dice5 className="w-10 h-10 sm:w-12 sm:h-12 text-slate-200" />
                   )}
                 </motion.div>
               </div>
@@ -705,21 +716,21 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
               </button>
             </div>
 
-            {/* Legend */}
-            <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-              <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Инструкции</h4>
-              <ul className="space-y-3 text-sm font-medium text-slate-600">
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
-                  Врти коцка за да се придвижиш.
+            {/* Legend - more subtle */}
+            <div className="bg-white/50 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-100 opacity-60 hover:opacity-100 transition-opacity">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Инструкции</h4>
+              <ul className="space-y-2 text-[11px] font-bold text-slate-500">
+                <li className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-emerald-400 flex-shrink-0" />
+                  Врти коцка за движење.
                 </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
-                  Реши ја задачата за да го завршиш потегот.
+                <li className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-emerald-400 flex-shrink-0" />
+                  Реши задача за крај на потег.
                 </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 flex-shrink-0" />
-                  Погрешен одговор = прескокнување на следниот ред.
+                <li className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-red-400 flex-shrink-0" />
+                  Грешка = казна (прескок на ред).
                 </li>
               </ul>
             </div>

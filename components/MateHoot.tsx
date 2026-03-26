@@ -52,7 +52,12 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
   const [error, setError] = useState<string | null>(null);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
-  const [lastAnswerResult, setLastAnswerResult] = useState<{ correct: boolean, points: number } | null>(null);
+  const [lastAnswerResult, setLastAnswerResult] = useState<{ 
+    correct: boolean, 
+    points: number, 
+    questionIndex?: number, 
+    answerIndex?: number 
+  } | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const [isJoined, setIsJoined] = useState(false);
@@ -312,6 +317,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     
     const selectedValue = String(question.options[selectedIdx] || '').trim();
     const correctValueFromIndex = String(correctIdxRaw || '').trim();
+    const correctValueFromAnswer = String(question.answer || '').trim();
     
     // Check if it's correct by index (0-based)
     let isCorrect = selectedIdx === correctIdx;
@@ -322,21 +328,42 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
       isCorrect = true;
     }
 
-    // Fallback 2: If the AI provided the actual answer value instead of an index
-    // (e.g., question: "7+8", options: ["1", "15", "2", "3"], correctAnswerIndex: 15)
-    if (!isCorrect) {
-      if (selectedValue === correctValueFromIndex && correctValueFromIndex !== '') {
+    // Fallback 2: If the AI provided the actual answer value in correctAnswerIndex
+    if (!isCorrect && correctValueFromIndex !== '') {
+      if (selectedValue === correctValueFromIndex) {
         console.log('MateHoot: Detected answer value in correctAnswerIndex field');
         isCorrect = true;
+      } else {
+        const nSelected = selectedValue.toLowerCase().replace(/\s+/g, '');
+        const nCorrect = correctValueFromIndex.toLowerCase().replace(/\s+/g, '');
+        if (nSelected === nCorrect && nSelected !== '') {
+          console.log('MateHoot: Detected normalized value match with correctAnswerIndex');
+          isCorrect = true;
+        }
       }
     }
 
-    // Fallback 3: Case-insensitive and whitespace-insensitive value match
-    if (!isCorrect) {
-      const normalizedSelected = selectedValue.toLowerCase().replace(/\s+/g, '');
-      const normalizedCorrect = correctValueFromIndex.toLowerCase().replace(/\s+/g, '');
-      if (normalizedSelected === normalizedCorrect && normalizedSelected !== '') {
-        console.log('MateHoot: Detected normalized value match');
+    // Fallback 3: If the AI provided the correct answer in the 'answer' field (from schema)
+    if (!isCorrect && correctValueFromAnswer !== '') {
+      if (selectedValue === correctValueFromAnswer) {
+        console.log('MateHoot: Detected answer match in "answer" field');
+        isCorrect = true;
+      } else {
+        const nSelected = selectedValue.toLowerCase().replace(/\s+/g, '');
+        const nCorrect = correctValueFromAnswer.toLowerCase().replace(/\s+/g, '');
+        if (nSelected === nCorrect && nSelected !== '') {
+          console.log('MateHoot: Detected normalized answer match in "answer" field');
+          isCorrect = true;
+        }
+      }
+    }
+
+    // Fallback 4: If the AI provided "A", "B", "C", "D" instead of 0, 1, 2, 3
+    if (!isCorrect && typeof correctIdxRaw === 'string') {
+      const charMap: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+      const normalizedRaw = correctIdxRaw.trim().toUpperCase();
+      if (charMap[normalizedRaw] === selectedIdx) {
+        console.log('MateHoot: Detected A/B/C/D letter match');
         isCorrect = true;
       }
     }
@@ -644,15 +671,34 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
                   const correctIdx = Number(correctIdxRaw);
                   const optionValue = String(option || '').trim();
                   const correctValueFromIndex = String(correctIdxRaw || '').trim();
+                  const correctValueFromAnswer = String(currentQuestion.answer || '').trim();
 
                   // Robust check for correctness
                   let isCorrect = idx === correctIdx;
                   if (!isCorrect && idx + 1 === correctIdx) isCorrect = true;
-                  if (!isCorrect && optionValue === correctValueFromIndex && correctValueFromIndex !== '') isCorrect = true;
-                  if (!isCorrect) {
-                    const nOpt = optionValue.toLowerCase().replace(/\s+/g, '');
-                    const nCorr = correctValueFromIndex.toLowerCase().replace(/\s+/g, '');
-                    if (nOpt === nCorr && nOpt !== '') isCorrect = true;
+                  
+                  if (!isCorrect && correctValueFromIndex !== '') {
+                    if (optionValue === correctValueFromIndex) isCorrect = true;
+                    else {
+                      const nOpt = optionValue.toLowerCase().replace(/\s+/g, '');
+                      const nCorr = correctValueFromIndex.toLowerCase().replace(/\s+/g, '');
+                      if (nOpt === nCorr && nOpt !== '') isCorrect = true;
+                    }
+                  }
+
+                  if (!isCorrect && correctValueFromAnswer !== '') {
+                    if (optionValue === correctValueFromAnswer) isCorrect = true;
+                    else {
+                      const nOpt = optionValue.toLowerCase().replace(/\s+/g, '');
+                      const nCorr = correctValueFromAnswer.toLowerCase().replace(/\s+/g, '');
+                      if (nOpt === nCorr && nOpt !== '') isCorrect = true;
+                    }
+                  }
+
+                  if (!isCorrect && typeof correctIdxRaw === 'string') {
+                    const charMap: Record<string, number> = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+                    const normalizedRaw = correctIdxRaw.trim().toUpperCase();
+                    if (charMap[normalizedRaw] === idx) isCorrect = true;
                   }
 
                   const showResult = gameState.status === 'RESULT';
@@ -770,7 +816,20 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
                 <div className="mt-4 p-4 bg-white/10 rounded-xl">
                   <p className="text-sm font-bold opacity-60 uppercase tracking-widest mb-1">Точниот одговор беше:</p>
                   <p className="text-2xl font-black">
-                    {currentQuestion.options[Number(currentQuestion.correctAnswerIndex)] || currentQuestion.correctAnswerIndex}
+                    {(() => {
+                      const idx = Number(currentQuestion.correctAnswerIndex);
+                      const options = currentQuestion.options || [];
+                      const answer = String(currentQuestion.answer || '').trim();
+                      
+                      // Try 0-based index
+                      if (options[idx]) return options[idx];
+                      // Try 1-based index
+                      if (options[idx - 1]) return options[idx - 1];
+                      // Try answer field
+                      if (answer) return answer;
+                      // Fallback to raw value
+                      return String(currentQuestion.correctAnswerIndex);
+                    })()}
                   </p>
                 </div>
               )}
