@@ -59,14 +59,11 @@ const ProgramsView: React.FC = () => {
       {/* Programs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
         {programs.map((program, index) => (
-          <motion.a
+          <a
             key={index}
             href={program.link}
             target="_blank"
             rel="noopener noreferrer"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
             className={`group flex flex-col p-8 rounded-3xl border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${program.color} bg-white`}
           >
             <div className="flex items-start justify-between mb-6">
@@ -96,7 +93,7 @@ const ProgramsView: React.FC = () => {
                 Отвори PDF
               </span>
             </div>
-          </motion.a>
+          </a>
         ))}
       </div>
 
