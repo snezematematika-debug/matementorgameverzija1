@@ -300,59 +300,87 @@ export const generateLessonConnectivity = async (topic: string, grade: string): 
   };
 
 export const generateScenarioContent = async (topic: string, grade: string = 'N/A'): Promise<GeneratedScenario> => {
-    const cached = await getCachedResponse('scenario', { topic, grade });
+    // Cache versioning to force fresh generation when prompt changes
+    const CACHE_VERSION = 'v3'; 
+    const cached = await getCachedResponse('scenario', { topic, grade, version: CACHE_VERSION });
     if (cached) return cached;
 
-    try {
-      const prompt = `
-        Креирај детално Сценарио за час по математика на тема: "${topic}".
-        Одделение: ${grade}.
-        Пополни ги полињата за да одговараат на официјалниот формат за подготовки.
-        
-        ${MATH_INSTRUCTION}
-        
-        Биди конкретен, методичен и јасен.
-        Врати JSON формат со следните полиња (сите се string):
-        - topic: Насловот на темата.
-        - standards: Стандарди за оценување (Користи булети).
-        - content: Содржина и нови поими кои се воведуваат.
-        - introActivity: Опис на воведната активност (околу 10 мин).
-        - mainActivity: Опис на главните активности, работа во групи, задачи (околу 20-25 мин). Користи Unicode за формули.
-        - finalActivity: Завршна активност, рефлексија и домашна работа (околу 10 мин).
-        - resources: Потребни средства и материјали.
-        - assessment: Начини на следење на напредокот.
-      `;
-  
-      const response = await callGeminiWithRetry({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
-          systemInstruction: SYSTEM_PERSONA,
-          responseMimeType: "application/json",
-        }
-      });
-  
-      // Track usage (non-blocking)
-      incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
-      trackGeneration({
-        contentType: 'scenario',
-        topic,
-        grade,
-        model: 'gemini-3-flash-preview'
-      }).catch(e => console.error("Generation tracking failed:", e));
+    let attempts = 0;
+    const maxAttempts = 2;
 
-      const text = response.text;
-      if (!text) throw new Error("No response content");
-      
-      const result = parseJsonSafe(text) as GeneratedScenario;
-      if (result) {
-        await saveToCache('scenario', { topic, grade }, result);
+    while (attempts < maxAttempts) {
+      try {
+        attempts++;
+        const prompt = `
+          Креирај ИСКЛУЧИТЕЛНО ДЕТАЛНО, ТЕМЕЛНО И ОПШИРНО Сценарио за час по математика на тема: "${topic}".
+          Одделение: ${grade}.
+          
+          Твојата цел е да креираш професионална подготовка која наставникот може веднаш да ја испечати и користи. Биди многу прецизен и користи стручна терминологија.
+          
+          ${MATH_INSTRUCTION}
+          
+          ВАЖНО: Секое поле треба да содржи богат и структуриран текст (користи Markdown за болдирање и листи каде што е соодветно). Не штеди на зборови - наставникот бара професионална и темелна подготовка.
+        `;
+    
+        const response = await callGeminiWithRetry({
+          model: 'gemini-3.1-pro-preview',
+          contents: prompt,
+          config: {
+            systemInstruction: SYSTEM_PERSONA + "\nСекогаш враќај опширни и детални одговори за секое поле во сценариото.",
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                topic: { type: Type.STRING, description: "Целосниот наслов на наставната единица" },
+                standards: { type: Type.STRING, description: "Стандарди за оценување (детални)" },
+                content: { type: Type.STRING, description: "Содржина и нови поими (опширно објаснување)" },
+                introActivity: { type: Type.STRING, description: "Воведна активност (10 мин)" },
+                mainActivity: { type: Type.STRING, description: "Главни активности (20-25 мин) - најопширен дел" },
+                finalActivity: { type: Type.STRING, description: "Завршна активност (10 мин)" },
+                resources: { type: Type.STRING, description: "Потребни средства и материјали" },
+                assessment: { type: Type.STRING, description: "Начини на следење на напредокот" }
+              },
+              required: ["topic", "standards", "content", "introActivity", "mainActivity", "finalActivity", "resources", "assessment"]
+            }
+          }
+        });
+    
+        // Track usage (non-blocking)
+        incrementDailyQuota().catch(e => console.error("Quota increment failed:", e));
+        trackGeneration({
+          contentType: 'scenario',
+          topic,
+          grade,
+          model: 'gemini-3.1-pro-preview'
+        }).catch(e => console.error("Generation tracking failed:", e));
+
+        const text = response.text;
+        if (!text) throw new Error("AI моделот не врати содржина.");
+        
+        const result = parseJsonSafe(text) as GeneratedScenario;
+        
+        // Validation: Ensure we have at least some content in the main fields
+        const minLength = 100; 
+        if (!result || !result.content || result.content.length < minLength || !result.mainActivity || result.mainActivity.length < minLength) {
+          console.warn(`Attempt ${attempts}: Generated scenario is too short. Content length: ${result?.content?.length}, Main activity length: ${result?.mainActivity?.length}`);
+          if (attempts < maxAttempts) continue; // Retry
+          throw new Error("Генерираното сценарио е премногу кратко или празно. Ве молиме обидете се повторно со истата или друга тема.");
+        }
+
+        if (result) {
+          await saveToCache('scenario', { topic, grade, version: CACHE_VERSION }, result);
+        }
+        return result;
+      } catch (error: any) {
+        if (attempts < maxAttempts && !error.message.includes("Invalid JSON")) {
+          console.warn(`Attempt ${attempts} failed, retrying...`, error);
+          continue;
+        }
+        handleGeminiError(error);
+        return null as any;
       }
-      return result;
-    } catch (error: any) {
-      handleGeminiError(error);
-      return null as any;
     }
+    throw new Error("Неуспешно генерирање на сценарио по повеќе обиди.");
   };
 
 export const generateQuizQuestions = async (topic: string, grade: string): Promise<{questions: QuizQuestion[], rubric: string}> => {
