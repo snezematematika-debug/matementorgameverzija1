@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, deleteDoc, doc, orderBy, Timestamp, addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { firestore, auth, handleFirestoreError, OperationType } from '../services/firebase';
+import { firestore, auth, useAuth } from '../services/firebase';
 import { Folder, FileText, Trash2, ExternalLink, Loader2, Search, Calendar, Tag, ShieldCheck, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -21,6 +21,7 @@ interface LibraryProps {}
 
 const Library: React.FC<LibraryProps> = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,7 +29,8 @@ const Library: React.FC<LibraryProps> = () => {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const fetchItems = async () => {
-    if (!auth.currentUser) {
+    const currentUserId = user?.uid || auth.currentUser?.uid;
+    if (!currentUserId) {
       setLoading(false);
       return;
     }
@@ -37,7 +39,7 @@ const Library: React.FC<LibraryProps> = () => {
       // Fetch user items
       const userQuery = query(
         collection(firestore, 'library'),
-        where('userId', '==', auth.currentUser.uid)
+        where('userId', '==', currentUserId)
       );
       
       const userSnapshot = await getDocs(userQuery);
@@ -47,6 +49,16 @@ const Library: React.FC<LibraryProps> = () => {
       userSnapshot.forEach((doc) => {
         fetchedItems.push({ id: doc.id, ...doc.data() } as LibraryItem);
       });
+
+      // Merge local library items if any
+      try {
+        const localItems = JSON.parse(localStorage.getItem('matementor_local_library') || '[]');
+        localItems.forEach((li: any) => {
+          if (!fetchedItems.some(fi => fi.id === li.id)) {
+            fetchedItems.push(li);
+          }
+        });
+      } catch (e) {}
       
       // Sort in memory to avoid index requirements
       fetchedItems.sort((a, b) => {
@@ -57,8 +69,13 @@ const Library: React.FC<LibraryProps> = () => {
       
       setItems(fetchedItems);
     } catch (error) {
-      console.error('Error fetching library items:', error);
-      handleFirestoreError(error, OperationType.LIST, 'library');
+      console.warn('Firestore library fetch failed, using local storage fallback:', error);
+      try {
+        const localItems = JSON.parse(localStorage.getItem('matementor_local_library') || '[]');
+        setItems(localItems);
+      } catch (e) {
+        setItems([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -66,7 +83,7 @@ const Library: React.FC<LibraryProps> = () => {
 
   useEffect(() => {
     fetchItems();
-  }, [auth.currentUser]);
+  }, [user, auth.currentUser]);
 
   const handleDelete = async (id: string) => {
     setItemToDelete(id);

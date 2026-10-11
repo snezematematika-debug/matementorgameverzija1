@@ -6,7 +6,7 @@ import { incrementDailyQuota, trackGeneration } from "./analyticsService";
 import { getCachedResponse, saveToCache } from "./cacheService";
 
 // Helper to safely get the API client
-const getAiClient = async () => {
+export const getAiClient = async () => {
   // Priority: process.env (Server/Node) -> import.meta.env (Vite/Client)
   let apiKey = '';
   

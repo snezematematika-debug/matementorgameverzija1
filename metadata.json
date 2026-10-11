@@ -1,5 +1,6 @@
 {
   "name": "Мате-Ментор: Мате-Хут!",
   "description": "Интерактивна образовна платформа за математика со Мате-Хут квизови во живо, генерирани лекции и сценарија за наставници.",
-  "requestFramePermissions": ["camera"]
+  "requestFramePermissions": ["camera"],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import { Sparkles, Loader2, Download, Copy, FileText, Settings2, Printer, FileDown, Type as TypeIcon, Layers } from 'lucide-react';
 import FormattedText from './FormattedText';
 import SaveOptionsDropdown from './SaveOptionsDropdown';
@@ -7,6 +6,7 @@ import { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel, Tabl
 import { saveAs } from 'file-saver';
 import { THEMES } from '../constants';
 import { useAuth } from '../services/firebase';
+import { getAiClient } from '../services/geminiService';
 
 const AI_CREATOR_PROMPT = `Ти си експерт за креирање на сумативни математички тестови и писмени работи според наставната програма на Бирото за развој на образованието во Македонија.
 
@@ -127,7 +127,7 @@ const AICreator: React.FC<AICreatorProps> = ({ grade, initialContent }) => {
     `;
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = await getAiClient();
       const model = "gemini-3-flash-preview";
 
       const response = await ai.models.generateContent({

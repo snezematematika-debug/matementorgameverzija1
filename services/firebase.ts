@@ -5,7 +5,17 @@ import { getAnalytics, isSupported } from "firebase/analytics";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useState, useEffect } from "react";
 
-import firebaseConfig from '../firebase-applet-config.json';
+// Direct Firebase configuration from firebase-applet-config.json
+export const firebaseConfig = {
+  apiKey: "AIzaSyAtXI1kYErR34Cnv9MnxhW6XCobD5dCous",
+  authDomain: "matementorgameverzija1.firebaseapp.com",
+  databaseURL: "https://matementorgameverzija1-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "matementorgameverzija1",
+  storageBucket: "matementorgameverzija1.firebasestorage.app",
+  messagingSenderId: "544726317445",
+  appId: "1:544726317445:web:59976435497c6b511c6cec",
+  measurementId: "G-7311KEZ9HK"
+};
 
 const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
@@ -45,18 +55,82 @@ export const registerWithEmail = async (email: string, pass: string, name: strin
   }
 };
 
-export const logout = () => signOut(auth);
+const DEMO_USER_KEY = 'matementor_demo_user';
+
+export const getDemoUser = (): User | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(DEMO_USER_KEY) || localStorage.getItem(DEMO_USER_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+};
+
+export const loginAsDemoUser = (name = "Снежана Златковска", email = "snezematematika@gmail.com", role: 'TEACHER' | 'STUDENT' = 'TEACHER') => {
+  const demoUser = {
+    uid: "demo-teacher-uid",
+    displayName: name,
+    email: email,
+    emailVerified: true,
+    isAnonymous: false,
+    photoURL: null,
+    providerData: [],
+  } as unknown as User;
+
+  try {
+    sessionStorage.setItem(DEMO_USER_KEY, JSON.stringify(demoUser));
+    localStorage.setItem(DEMO_USER_KEY, JSON.stringify(demoUser));
+    sessionStorage.setItem('matementor_role', role);
+  } catch (e) {}
+
+  window.dispatchEvent(new CustomEvent('auth-state-changed', { detail: demoUser }));
+  return demoUser;
+};
+
+export const logout = async () => {
+  try {
+    sessionStorage.removeItem(DEMO_USER_KEY);
+    localStorage.removeItem(DEMO_USER_KEY);
+  } catch (e) {}
+  window.dispatchEvent(new CustomEvent('auth-state-changed', { detail: null }));
+  try {
+    await signOut(auth);
+  } catch (e) {
+    // ignore
+  }
+};
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => getDemoUser() || auth.currentUser);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const currentDemo = getDemoUser();
+    if (currentDemo) {
+      setUser(currentDemo);
+      setLoading(false);
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      const activeDemo = getDemoUser();
+      if (!activeDemo) {
+        setUser(firebaseUser);
+      }
       setLoading(false);
     });
-    return unsubscribe;
+
+    const handleCustomAuth = (e: Event) => {
+      const customUser = (e as CustomEvent).detail;
+      setUser(customUser);
+      setLoading(false);
+    };
+
+    window.addEventListener('auth-state-changed', handleCustomAuth);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('auth-state-changed', handleCustomAuth);
+    };
   }, []);
 
   return { user, loading };

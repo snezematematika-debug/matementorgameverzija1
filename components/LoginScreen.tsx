@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { LogIn, Mail, Lock, ArrowRight, Github } from 'lucide-react';
-import { signInWithGoogle, loginWithEmail, registerWithEmail } from '../services/firebase';
+import { LogIn, Mail, Lock, ArrowRight, Github, Sparkles, Gamepad2, CheckCircle2 } from 'lucide-react';
+import { signInWithGoogle, loginWithEmail, registerWithEmail, loginAsDemoUser } from '../services/firebase';
 
 const MathSymbol: React.FC<{ symbol: string; x: string; y: string; delay: number; size?: string }> = ({ symbol, x, y, delay, size = "text-2xl" }) => (
   <motion.div
@@ -123,6 +123,43 @@ const LoginScreen: React.FC = () => {
               </motion.div>
               <h1 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">Добредојдовте во Mate-Mentor</h1>
               <p className="text-slate-500 text-sm">Вашиот асистент во светот на математиката</p>
+            </div>
+
+            {/* Quick Demo Access for Preview */}
+            <div className="mb-6 bg-gradient-to-br from-sky-50 to-indigo-50 border border-sky-100 rounded-2xl p-4 shadow-inner">
+              <div className="flex items-center gap-2 mb-2.5">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-bold text-sky-950 uppercase tracking-wider">Брз пристап за тестирање</span>
+              </div>
+              
+              <button 
+                type="button"
+                onClick={() => loginAsDemoUser("Снежана Златковска", "snezematematika@gmail.com", "TEACHER")}
+                className="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-sky-200 transition-all flex items-center justify-center gap-2 group mb-2"
+              >
+                <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+                <span>Влези веднаш (Наставник)</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => loginAsDemoUser("Ученик (Гостин)", "student@matementor.mk", "STUDENT")}
+                className="w-full bg-white/80 hover:bg-white text-slate-700 border border-slate-200 font-semibold py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs"
+              >
+                <Gamepad2 className="w-4 h-4 text-indigo-500" />
+                <span>Пристапи како Ученик (Игри и Квизови)</span>
+              </button>
+            </div>
+
+            <div className="relative flex items-center justify-center mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200"></div>
+              </div>
+              <span className="relative px-3 bg-white text-[11px] font-semibold text-slate-400 uppercase tracking-wider">или најава со сметка</span>
             </div>
 
             {/* Form */}

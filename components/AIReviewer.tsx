@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import { Upload, Trash2, Download, Loader2, FileSearch, CheckCircle2, AlertCircle } from 'lucide-react';
 import FormattedText from './FormattedText';
+import { getAiClient } from '../services/geminiService';
 
 const AI_REVIEWER_PROMPT = `Ти си врвен асистент за оценување математички тестови. Твоја задача е:
 
@@ -48,7 +48,7 @@ const AIReviewer: React.FC = () => {
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = await getAiClient();
       const model = "gemini-3-flash-preview";
 
       const base64Data = image.split(',')[1];

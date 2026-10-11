@@ -31,7 +31,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import DocumentView from './components/DocumentView';
 import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
-import { useAuth } from './services/firebase';
+import { useAuth, loginAsDemoUser } from './services/firebase';
 import { AppMode, GradeLevel } from './types';
 
 const App: React.FC = () => {
@@ -44,6 +44,15 @@ const App: React.FC = () => {
   const [userRole, setUserRole] = useState<'TEACHER' | 'STUDENT' | null>(null);
   const [mateMachineProblem, setMateMachineProblem] = useState<string | undefined>(undefined);
   const [loadedLibraryItem, setLoadedLibraryItem] = useState<{type: string, content: string} | null>(null);
+
+  // Auto-authenticate student players joining via game PIN link
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlPin = params.get('pin');
+    if (urlPin && !user && !loading) {
+      loginAsDemoUser("Ученик (Играч)", "student@matementor.mk", "STUDENT");
+    }
+  }, [user, loading]);
 
   // Initialize state from session storage or URL
   useEffect(() => {
