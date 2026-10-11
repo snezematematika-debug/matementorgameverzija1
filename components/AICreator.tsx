@@ -128,7 +128,7 @@ const AICreator: React.FC<AICreatorProps> = ({ grade, initialContent }) => {
 
     try {
       const ai = await getAiClient();
-      const model = "gemini-3-flash-preview";
+      const model = "gemini-3.8-flash";
 
       const response = await ai.models.generateContent({
         model,

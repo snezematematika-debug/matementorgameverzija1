@@ -140,7 +140,7 @@ const AdvancedPractice: React.FC<AdvancedPracticeProps> = ({ grade }) => {
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-orange-500"></div>
                                     <h3 className="font-bold text-slate-900 text-xl mb-4">Задача:</h3>
                                     {/* Updated container class for SVG support: Centered, responsive height/width, margin */}
-                                    <div className="text-lg text-slate-800 leading-relaxed font-medium [&_svg]:mx-auto [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:my-6 [&_svg]:drop-shadow-sm">
+                                    <div className="text-lg text-slate-800 leading-relaxed font-medium [&_svg:not(.katex_svg)]:mx-auto [&_svg:not(.katex_svg)]:max-w-full [&_svg:not(.katex_svg)]:h-auto [&_svg:not(.katex_svg)]:my-6 [&_svg:not(.katex_svg)]:drop-shadow-sm">
                                         <FormattedText text={problem} />
                                     </div>
                                 </div>

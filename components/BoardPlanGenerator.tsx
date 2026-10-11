@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { CURRICULUM, THEMES } from '../constants';
-import { getContentPackage } from '../services/geminiService';
+import { generateBoardPlan } from '../services/geminiService';
+import { getFallbackBoardPlan } from '../services/fallbackService';
 import { GradeLevel, LessonPackage } from '../types';
 import Loading from './Loading';
 import FormattedText from './FormattedText';
@@ -63,14 +64,29 @@ const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade, initialC
     setError(null);
     setFullPackage(null);
     try {
-      const result = await getContentPackage(grade, selectedTopic);
-      if (result) {
-        setFullPackage(result);
+      const plan = await generateBoardPlan(selectedTopic, grade);
+      if (plan) {
+        setFullPackage({
+          boardPlan: plan,
+          grade,
+          topic: selectedTopic,
+        } as any);
       } else {
-        throw new Error("Неуспешно генерирање на планот за табла.");
+        const fallback = getFallbackBoardPlan(selectedTopic, grade);
+        setFullPackage({
+          boardPlan: fallback,
+          grade,
+          topic: selectedTopic,
+        } as any);
       }
     } catch (err: any) {
-      setError(err.message || "Грешка при креирање на планот.");
+      console.warn("generateBoardPlan error caught in UI, applying fallback:", err);
+      const fallback = getFallbackBoardPlan(selectedTopic, grade);
+      setFullPackage({
+        boardPlan: fallback,
+        grade,
+        topic: selectedTopic,
+      } as any);
     } finally {
       setLoading(false);
     }
@@ -186,17 +202,7 @@ const BoardPlanGenerator: React.FC<BoardPlanGeneratorProps> = ({ grade, initialC
              {/* Board Container */}
              <div 
                 ref={boardRef}
-                className={`
-                    bg-[#2F4F4F] p-8 md:p-12 rounded-lg border-[12px] border-[#5d4037] shadow-2xl relative overflow-y-auto max-h-[80vh] min-h-[500px]
-                    /* GLOBAL SVG STYLES for the Chalkboard */
-                    [&_svg]:stroke-white [&_svg]:stroke-[2px] 
-                    [&_path]:stroke-white [&_circle]:stroke-white [&_line]:stroke-white [&_rect]:stroke-white 
-                    [&_text]:fill-white [&_text]:stroke-none
-                    /* Prevent stretching - Limit max width and center them */
-                    [&_svg]:max-w-[500px] [&_svg]:mx-auto [&_svg]:my-6 [&_svg]:h-auto
-                    /* Ensure no background on the SVG itself so the board shows through */
-                    [&_svg]:bg-transparent
-                `}
+                className="chalkboard-container bg-[#2F4F4F] p-8 md:p-12 rounded-lg border-[12px] border-[#5d4037] shadow-2xl relative overflow-y-auto max-h-[80vh] min-h-[500px]"
                 style={{
                     boxShadow: 'inset 0 0 100px rgba(0,0,0,0.5), 0 20px 25px -5px rgba(0, 0, 0, 0.5)'
                 }}

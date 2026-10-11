@@ -9,6 +9,7 @@ import { Timestamp } from 'firebase/firestore';
 import { parse } from 'marked';
 import toast from 'react-hot-toast';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { parseItemDate } from './Library';
 
 const DocumentView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -53,16 +54,19 @@ const DocumentView: React.FC = () => {
   }, [id]);
 
   const formatDate = (data: any) => {
-    const ts = data.createdAt || data.timestamp;
-    if (!ts) return 'Непознато';
-    const date = ts instanceof Timestamp ? ts.toDate() : new Date(ts);
-    return date.toLocaleDateString('mk-MK', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const raw = data?.createdAt || data?.timestamp;
+    const date = parseItemDate(raw);
+    try {
+      return date.toLocaleDateString('mk-MK', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return date.toLocaleDateString();
+    }
   };
 
   const getTypeColor = (type: string) => {

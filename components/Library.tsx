@@ -17,6 +17,58 @@ interface LibraryItem {
   timestamp?: any; // Fallback for old documents
 }
 
+export const parseItemDate = (val: any): Date => {
+  if (!val) return new Date();
+
+  // If already a Date object
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? new Date() : val;
+  }
+
+  // If Firestore Timestamp instance with toDate()
+  if (typeof val?.toDate === 'function') {
+    try {
+      const d = val.toDate();
+      if (d instanceof Date && !isNaN(d.getTime())) return d;
+    } catch (e) {}
+  }
+
+  // If serialized Firestore Timestamp or object with seconds / _seconds
+  if (typeof val === 'object' && val !== null) {
+    const seconds = typeof val.seconds === 'number' 
+      ? val.seconds 
+      : (typeof val._seconds === 'number' ? val._seconds : null);
+    if (seconds !== null) {
+      const d = new Date(seconds * 1000);
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  // If number (epoch ms or seconds)
+  if (typeof val === 'number') {
+    const ms = val < 10000000000 ? val * 1000 : val;
+    const d = new Date(ms);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  // If ISO string or formatted string
+  if (typeof val === 'string') {
+    const parsed = Date.parse(val);
+    if (!isNaN(parsed)) {
+      return new Date(parsed);
+    }
+    const num = Number(val);
+    if (!isNaN(num) && num > 0) {
+      const ms = num < 10000000000 ? num * 1000 : num;
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  // Fallback to current date
+  return new Date();
+};
+
 interface LibraryProps {}
 
 const Library: React.FC<LibraryProps> = () => {
@@ -62,8 +114,8 @@ const Library: React.FC<LibraryProps> = () => {
       
       // Sort in memory to avoid index requirements
       fetchedItems.sort((a, b) => {
-        const timeA = (a.createdAt?.seconds || a.timestamp?.seconds || 0);
-        const timeB = (b.createdAt?.seconds || b.timestamp?.seconds || 0);
+        const timeA = parseItemDate(a.createdAt || a.timestamp).getTime();
+        const timeB = parseItemDate(b.createdAt || b.timestamp).getTime();
         return timeB - timeA;
       });
       
@@ -111,16 +163,19 @@ const Library: React.FC<LibraryProps> = () => {
   });
 
   const formatDate = (item: LibraryItem) => {
-    const ts = item.createdAt || item.timestamp;
-    if (!ts) return 'Непознато';
-    const date = ts instanceof Timestamp ? ts.toDate() : new Date(ts);
-    return date.toLocaleDateString('mk-MK', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const raw = item?.createdAt || item?.timestamp;
+    const date = parseItemDate(raw);
+    try {
+      return date.toLocaleDateString('mk-MK', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return date.toLocaleDateString();
+    }
   };
 
   const getTypeColor = (type: string) => {

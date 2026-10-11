@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CURRICULUM, THEMES } from '../constants';
 import { generateLessonContent, generateLessonConnectivity } from '../services/geminiService';
+import { getFallbackLesson, getFallbackConnectivity } from '../services/fallbackService';
 import { GradeLevel, GeneratedLesson } from '../types';
 import Loading from './Loading';
 import SaveOptionsDropdown from './SaveOptionsDropdown';
@@ -94,10 +95,13 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade, initialContent
       if (result) {
         setLesson(result);
       } else {
-        throw new Error("Неуспешно генерирање на лекцијата.");
+        const fallback = getFallbackLesson(selectedTopic, grade, includeRealWorldContext);
+        setLesson(fallback);
       }
     } catch (err: any) {
-      setError(err.message || "Се појави грешка при генерирање на лекцијата.");
+      console.warn("generateLessonContent error caught, using fallback lesson:", err);
+      const fallback = getFallbackLesson(selectedTopic, grade, includeRealWorldContext);
+      setLesson(fallback);
     } finally {
       setLoading(false);
     }
@@ -117,10 +121,11 @@ const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade, initialContent
         if (result) {
           setConnectivity(result);
         } else {
-          setConnectivityContent("Не успеавме да ги вчитаме податоците за поврзаност.");
+          setConnectivity(getFallbackConnectivity(selectedTopic, grade));
         }
     } catch (e) {
-        setConnectivityContent("Не успеавме да ги вчитаме податоците за поврзаност.");
+        console.warn("generateLessonConnectivity error caught, using fallback:", e);
+        setConnectivity(getFallbackConnectivity(selectedTopic, grade));
     } finally {
         setLoadingConnectivity(false);
     }

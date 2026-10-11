@@ -49,7 +49,7 @@ const AIReviewer: React.FC = () => {
 
     try {
       const ai = await getAiClient();
-      const model = "gemini-3-flash-preview";
+      const model = "gemini-3.8-flash";
 
       const base64Data = image.split(',')[1];
       

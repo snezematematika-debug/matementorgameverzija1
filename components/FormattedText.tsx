@@ -21,21 +21,56 @@ const attributeMap: Record<string, string> = {
   'stroke-opacity': 'strokeOpacity',
   'text-anchor': 'textAnchor',
   'viewbox': 'viewBox',
+  'preserveaspectratio': 'preserveAspectRatio',
   'font-family': 'fontFamily',
   'font-weight': 'fontWeight',
+  'dominant-baseline': 'dominantBaseline',
+  'alignment-baseline': 'alignmentBaseline',
+  'clip-path': 'clipPath',
+  'fill-rule': 'fillRule',
+  'stroke-dasharray': 'strokeDasharray',
+  'stroke-dashoffset': 'strokeDashoffset',
+  'stroke-miterlimit': 'strokeMiterlimit',
 };
 
 const mapProps = (props: any) => {
   const newProps: any = {};
   Object.keys(props).forEach(key => {
-    const mappedKey = attributeMap[key.toLowerCase()] || key;
+    const lower = key.toLowerCase();
+    const mappedKey = attributeMap[lower] || key;
     newProps[mappedKey] = props[key];
   });
+  if (newProps.preserveaspectratio) {
+    if (!newProps.preserveAspectRatio) {
+      newProps.preserveAspectRatio = newProps.preserveaspectratio;
+    }
+    delete newProps.preserveaspectratio;
+  }
+  if (newProps.viewbox) {
+    if (!newProps.viewBox) {
+      newProps.viewBox = newProps.viewbox;
+    }
+    delete newProps.viewbox;
+  }
   return newProps;
+};
+
+// Normalizes Unicode square roots (√225 or √(x)) to LaTeX ($\sqrt{...}$)
+const normalizeMathRoots = (content: string): string => {
+  if (!content || !content.includes('√')) return content;
+  const parts = content.split(/(```[\s\S]*?```)/g);
+  return parts.map(part => {
+    if (part.startsWith('```')) return part;
+    let res = part.replace(/√\s*\(([^)]+)\)/g, '$\\sqrt{$1}$');
+    res = res.replace(/(?<![\\$])√\s*([0-9a-zA-Z]+)(?!\$)/g, '$\\sqrt{$1}$');
+    return res;
+  }).join('');
 };
 
 const FormattedText: React.FC<FormattedTextProps> = ({ text, className = "", theme = 'light' }) => {
   if (!text) return null;
+
+  const processedText = React.useMemo(() => normalizeMathRoots(text), [text]);
 
   // Theme based classes
   const colors = theme === 'light' ? {
@@ -97,11 +132,52 @@ const FormattedText: React.FC<FormattedTextProps> = ({ text, className = "", the
           strong: ({node, ...props}) => <strong className={colors.strong} {...props} />,
           
           // SVG Support & Attribute Mapping
-          svg: ({node, ...props}) => <svg {...mapProps(props)} />,
+          svg: ({node, ...props}) => {
+            const mapped = mapProps(props);
+            // Protect KaTeX square root and formula SVGs
+            const isKatexSvg = 
+              props.viewBox === '0 0 400000 1080' || 
+              props.width === '400em' || 
+              (node?.properties?.className as any)?.includes?.('katex') ||
+              (typeof props.className === 'string' && props.className.includes('katex'));
+
+            if (isKatexSvg) {
+              return (
+                <svg
+                  {...mapped}
+                  preserveAspectRatio="xMinYMin slice"
+                  style={{
+                    ...(mapped.style || {}),
+                    display: 'block',
+                    position: 'absolute',
+                    width: '100%',
+                    height: 'inherit',
+                    fill: 'currentColor',
+                    stroke: 'currentColor',
+                    margin: 0,
+                    padding: 0,
+                    border: 'none',
+                    maxWidth: 'none',
+                    maxHeight: 'none'
+                  }}
+                />
+              );
+            }
+            return <svg {...mapped} />;
+          },
           text: ({node, ...props}) => <text {...mapProps(props)} />,
           rect: ({node, ...props}) => <rect {...mapProps(props)} />,
           circle: ({node, ...props}) => <circle {...mapProps(props)} />,
-          path: ({node, ...props}) => <path {...mapProps(props)} />,
+          path: ({node, ...props}) => {
+            const mapped = mapProps(props);
+            const isKatexPath = 
+              (typeof props.d === 'string' && props.d.startsWith('M95')) || 
+              (typeof props.d === 'string' && props.d.includes('H400000'));
+            if (isKatexPath) {
+              return <path {...mapped} stroke="none" strokeWidth={0} fill="currentColor" />;
+            }
+            return <path {...mapped} />;
+          },
           line: ({node, ...props}) => <line {...mapProps(props)} />,
           ellipse: ({node, ...props}) => <ellipse {...mapProps(props)} />,
           polygon: ({node, ...props}) => <polygon {...mapProps(props)} />,
@@ -120,7 +196,7 @@ const FormattedText: React.FC<FormattedTextProps> = ({ text, className = "", the
           }
         }}
       >
-        {text}
+        {processedText}
       </ReactMarkdown>
     </div>
   );
