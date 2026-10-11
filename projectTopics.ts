@@ -16,9 +16,11 @@ export const PROJECT_THEMES: CurriculumTheme[] = [
   { id: "vii-5", title: "Тема 5: Работа со податоци", grade: GradeLevel.VII },
 
   // Grade VIII
-  { id: "viii-1", title: "Тема 1: Геометрија (Питагорова теорема и 3Д форми)", grade: GradeLevel.VIII },
-  { id: "viii-2", title: "Тема 2: Алгебра и линеарни функции", grade: GradeLevel.VIII },
-  { id: "viii-3", title: "Тема 3: Работа со податоци и статистика", grade: GradeLevel.VIII },
+  { id: "viii-1", title: "Тема 1: Броеви и операции со броеви", grade: GradeLevel.VIII },
+  { id: "viii-2", title: "Тема 2: Геометрија", grade: GradeLevel.VIII },
+  { id: "viii-3", title: "Тема 3: Алгебра", grade: GradeLevel.VIII },
+  { id: "viii-4", title: "Тема 4: Мерење", grade: GradeLevel.VIII },
+  { id: "viii-5", title: "Тема 5: Работа со податоци", grade: GradeLevel.VIII },
 
   // Grade IX
   { id: "ix-1", title: "Тема 1: Реални броеви и алгебра", grade: GradeLevel.IX },
@@ -91,19 +93,36 @@ export const PROJECT_TOPICS: CurriculumTopic[] = [
   { id: "vii-5.2", themeId: "vii-5", name: "Обработка на податоци и толкување резултати од истражување", grade: GradeLevel.VII },
   { id: "vii-5.3", themeId: "vii-5", name: "Веројатност", grade: GradeLevel.VII },
 
-  // Grade VIII - Theme 1: Геометрија
-  { id: "viii-1.1", themeId: "viii-1", name: "Питагорова теорема", grade: GradeLevel.VIII },
-  { id: "viii-1.2", themeId: "viii-1", name: "Примена на Питагорова теорема", grade: GradeLevel.VIII },
-  { id: "viii-1.3", themeId: "viii-1", name: "Плоштина и волумен на призма", grade: GradeLevel.VIII },
-  { id: "viii-1.4", themeId: "viii-1", name: "Плоштина и волумен на пирамида", grade: GradeLevel.VIII },
+  // Grade VIII - Theme 1: Броеви и операции со броеви
+  { id: "viii-1.1", themeId: "viii-1", name: "Проект: Градот на релации (Релации меѓу урбани објекти)", grade: GradeLevel.VIII },
+  { id: "viii-1.2", themeId: "viii-1", name: "Проект: Истражување на пропорции во наука и географија", grade: GradeLevel.VIII },
+  { id: "viii-1.3", themeId: "viii-1", name: "Истражување: Запишување големи броеви од природата и науката со a · 10^k", grade: GradeLevel.VIII },
+  { id: "viii-1.4", themeId: "viii-1", name: "Проценти во реалниот живот: попусти, камати и семеен буџет", grade: GradeLevel.VIII },
 
-  // Grade VIII - Theme 2: Алгебра и линеарни функции
-  { id: "viii-2.1", themeId: "viii-2", name: "Линеарни равенки", grade: GradeLevel.VIII },
-  { id: "viii-2.2", themeId: "viii-2", name: "Линеарни функции и нивни графици", grade: GradeLevel.VIII },
+  // Grade VIII - Theme 2: Геометрија
+  { id: "viii-2.1", themeId: "viii-2", name: "Истражување: Питагорова теорема и конструкција на Питагорови дрва", grade: GradeLevel.VIII },
+  { id: "viii-2.2", themeId: "viii-2", name: "Дизајн на керамички плочки и мозаици со делови од круг и кружница", grade: GradeLevel.VIII },
+  { id: "viii-2.3", themeId: "viii-2", name: "Изработка на макети и постери за правилни полиедри (Платонови тела)", grade: GradeLevel.VIII },
+  { id: "viii-2.4", themeId: "viii-2", name: "Просторен дизајн на изометриска хартија со коцки и квадари", grade: GradeLevel.VIII },
+  { id: "viii-2.5", themeId: "viii-2", name: "Мисловни мапи и симулации на комбинирани геометриски трансформации", grade: GradeLevel.VIII },
 
-  // Grade VIII - Theme 3: Работа со податоци и статистика
-  { id: "viii-3.1", themeId: "viii-3", name: "Собирање и претставување на податоци", grade: GradeLevel.VIII },
-  { id: "viii-3.2", themeId: "viii-3", name: "Статистички параметри", grade: GradeLevel.VIII },
+  // Grade VIII - Theme 3: Алгебра
+  { id: "viii-3.1", themeId: "viii-3", name: "Архитектонски план на стан пресметан со алгебарски изрази", grade: GradeLevel.VIII },
+  { id: "viii-3.2", themeId: "viii-3", name: "Линеарни функции и дигитална геометриска уметност (со GeoGebra)", grade: GradeLevel.VIII },
+  { id: "viii-3.3", themeId: "viii-3", name: "Математичко моделирање: Оптимален избор на понуди за превоз/услуги", grade: GradeLevel.VIII },
+  { id: "viii-3.4", themeId: "viii-3", name: "Анализа на наклон кај сообраќајни знаци преку линеарна функција", grade: GradeLevel.VIII },
+
+  // Grade VIII - Theme 4: Мерење
+  { id: "viii-4.1", themeId: "viii-4", name: "Проект Патување: План и графици за дводневна училишна екскурзија", grade: GradeLevel.VIII },
+  { id: "viii-4.2", themeId: "viii-4", name: "Оптимизација на трошоци: Најевтино лого од жица со делови од круг", grade: GradeLevel.VIII },
+  { id: "viii-4.3", themeId: "viii-4", name: "Хортикултурно уредување на училишниот двор со 2Д геометриски форми", grade: GradeLevel.VIII },
+  { id: "viii-4.4", themeId: "viii-4", name: "Изработка на макети на призми и пирамиди со пресметка на плоштина и волумен", grade: GradeLevel.VIII },
+
+  // Grade VIII - Theme 5: Работа со податоци
+  { id: "viii-5.1", themeId: "viii-5", name: "Статистичко истражување со репрезентативен примерок во училиштето", grade: GradeLevel.VIII },
+  { id: "viii-5.2", themeId: "viii-5", name: "Маркетинг анализа на потрошувачки навики со софтвер за табели", grade: GradeLevel.VIII },
+  { id: "viii-5.3", themeId: "viii-5", name: "Табеларна анализа на приходи, расходи и профит на локални бизниси", grade: GradeLevel.VIII },
+  { id: "viii-5.4", themeId: "viii-5", name: "Експериментална веројатност: Симулација на градски сообраќај и семафори", grade: GradeLevel.VIII },
 
   // Grade IX - Theme 1: Реални броеви и алгебра
   { id: "ix-1.1", themeId: "ix-1", name: "Реални броеви", grade: GradeLevel.IX },

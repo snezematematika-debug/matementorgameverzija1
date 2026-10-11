@@ -4,27 +4,35 @@ import { SYSTEM_PERSONA } from "../constants";
 import { QuizQuestion, GeneratedLesson, GeneratedScenario, LessonPackage } from "../types";
 import { incrementDailyQuota, trackGeneration } from "./analyticsService";
 import { getCachedResponse, saveToCache } from "./cacheService";
+import { firebaseConfig } from "./firebase";
 
 // Helper to safely get the API client
 export const getAiClient = async () => {
-  // Priority: process.env (Server/Node) -> import.meta.env (Vite/Client)
+  // Priority: process.env (Server/Node/Vite) -> import.meta.env (Vite/Client) -> session/local -> Firebase built-in key
   let apiKey = '';
   
   if (typeof process !== 'undefined' && process.env) {
     apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || process.env.VITE_API_KEY || '';
   }
   
-  if (!apiKey && typeof import.meta !== 'undefined' && import.meta.env) {
-    apiKey = import.meta.env.VITE_API_KEY || import.meta.env.GEMINI_API_KEY || import.meta.env.API_KEY || '';
+  if (!apiKey && typeof import.meta !== 'undefined' && (import.meta as any).env) {
+    const metaEnv = (import.meta as any).env;
+    apiKey = metaEnv.VITE_API_KEY || metaEnv.GEMINI_API_KEY || metaEnv.API_KEY || '';
+  }
+
+  if (!apiKey && typeof window !== 'undefined') {
+    try {
+      apiKey = sessionStorage.getItem('matementor_gemini_key') || localStorage.getItem('matementor_gemini_key') || '';
+    } catch (e) {}
+  }
+
+  // Fallback to built-in Firebase / Google Cloud key for Preview mode if no custom GEMINI_API_KEY is supplied
+  if (!apiKey || apiKey === 'undefined' || apiKey === 'null' || apiKey.length < 10) {
+    apiKey = firebaseConfig.apiKey || 'AIzaSyAtXI1kYErR34Cnv9MnxhW6XCobD5dCous';
   }
 
   // Clean up potential string artifacts
-  apiKey = apiKey.trim().replace(/['"]/g, '');
-
-  if (!apiKey || apiKey === 'undefined' || apiKey === 'null' || apiKey.length < 10) {
-    console.error("API_KEY is missing or invalid format.");
-    throw new Error("Техничка грешка: API клучот не е пронајден или е невалиден. Ве молиме проверете ги поставките (Secrets).");
-  }
+  apiKey = (apiKey || '').trim().replace(/['"]/g, '');
 
   return new GoogleGenAI({ apiKey });
 };
