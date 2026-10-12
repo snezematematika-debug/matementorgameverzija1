@@ -11,10 +11,11 @@ import { parse } from 'marked';
 
 interface LessonGeneratorProps {
   grade: GradeLevel;
+  setGrade?: (grade: GradeLevel) => void;
   initialContent?: string;
 }
 
-const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade, initialContent }) => {
+const LessonGenerator: React.FC<LessonGeneratorProps> = ({ grade, setGrade, initialContent }) => {
   // State for selections
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
@@ -261,12 +262,34 @@ ${lesson.content}
 
       {/* Input Section - Hidden on Print */}
       <div className="print:hidden">
-        <div className="border-b pb-4 mb-6">
-            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                📚 Генератор на лекции
-                <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>
-            </h2>
-            <p className="text-slate-500 mt-1">Изберете тема и лекција од наставната програма за {grade} одделение.</p>
+        <div className="border-b pb-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                  📚 Генератор на лекции
+                  <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>
+              </h2>
+              <p className="text-slate-500 mt-1">Изберете одделение, тема и лекција од наставната програма.</p>
+            </div>
+            {setGrade && (
+              <div className="flex items-center gap-2 bg-indigo-50/80 p-1.5 px-3 rounded-xl border border-indigo-200">
+                <span className="text-xs font-bold text-indigo-700 uppercase">Одделение:</span>
+                <select
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value as GradeLevel)}
+                  className="bg-white text-indigo-900 font-bold text-sm px-3 py-1.5 rounded-lg border border-indigo-200 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm"
+                >
+                  <option value={GradeLevel.I}>🌱 I Одделение</option>
+                  <option value={GradeLevel.II}>🌿 II Одделение</option>
+                  <option value={GradeLevel.III}>🍀 III Одделение</option>
+                  <option value={GradeLevel.IV}>⭐ IV Одделение</option>
+                  <option value={GradeLevel.V}>🌟 V Одделение</option>
+                  <option value={GradeLevel.VI}>👶 VI Одделение</option>
+                  <option value={GradeLevel.VII}>👧 VII Одделение</option>
+                  <option value={GradeLevel.VIII}>🧑 VIII Одделение</option>
+                  <option value={GradeLevel.IX}>🎓 IX Одделение</option>
+                </select>
+              </div>
+            )}
         </div>
 
         {/* Motivational Instruction for Teachers */}

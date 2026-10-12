@@ -113,19 +113,19 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (currentMode) {
       case AppMode.LESSON:
-        return <LessonGenerator grade={selectedGrade} initialContent={loadedLibraryItem?.type === 'Лекција' ? loadedLibraryItem.content : undefined} />;
+        return <LessonGenerator grade={selectedGrade} setGrade={setSelectedGrade} initialContent={loadedLibraryItem?.type === 'Лекција' ? loadedLibraryItem.content : undefined} />;
       case AppMode.SCENARIO:
-        return <ScenarioGenerator grade={selectedGrade} initialContent={loadedLibraryItem?.type === 'Сценарио' ? loadedLibraryItem.content : undefined} />;
+        return <ScenarioGenerator grade={selectedGrade} setGrade={setSelectedGrade} initialContent={loadedLibraryItem?.type === 'Сценарио' ? loadedLibraryItem.content : undefined} />;
       case AppMode.QUIZ:
-        return <QuizMaker grade={selectedGrade} initialContent={loadedLibraryItem?.type === 'Тест' ? loadedLibraryItem.content : undefined} />;
+        return <QuizMaker grade={selectedGrade} setGrade={setSelectedGrade} initialContent={loadedLibraryItem?.type === 'Тест' ? loadedLibraryItem.content : undefined} />;
       case AppMode.WORKSHEET:
-        return <WorksheetGenerator grade={selectedGrade} initialContent={loadedLibraryItem?.type === 'Работен лист' ? loadedLibraryItem.content : undefined} />;
+        return <WorksheetGenerator grade={selectedGrade} setGrade={setSelectedGrade} initialContent={loadedLibraryItem?.type === 'Работен лист' ? loadedLibraryItem.content : undefined} />;
       case AppMode.PROJECT:
-        return <ProjectGenerator grade={selectedGrade} />;
+        return <ProjectGenerator grade={selectedGrade} setGrade={setSelectedGrade} />;
       case AppMode.VISUALIZER:
         return <GeometryVisualizer grade={selectedGrade} />;
       case AppMode.BOARD_PLAN:
-        return <BoardPlanGenerator grade={selectedGrade} />;
+        return <BoardPlanGenerator grade={selectedGrade} setGrade={setSelectedGrade} />;
       case AppMode.ADVANCED_PRACTICE:
         return <AdvancedPractice grade={selectedGrade} />;
       case AppMode.LIBRARY:
@@ -136,6 +136,7 @@ const App: React.FC = () => {
         return (
           <TeacherPanel 
             grade={selectedGrade} 
+            setGrade={setSelectedGrade}
             setMateMachineProblem={setMateMachineProblem}
             setMode={changeMode}
           />
@@ -144,6 +145,7 @@ const App: React.FC = () => {
         return (
           <MateHoot 
             grade={selectedGrade} 
+            setGrade={setSelectedGrade}
             initialRole={userRole} 
             onBack={() => {
               setUserRole('TEACHER');
@@ -155,6 +157,7 @@ const App: React.FC = () => {
         return (
           <MateBingo 
             grade={selectedGrade} 
+            setGrade={setSelectedGrade}
             initialRole={userRole} 
             onBack={() => {
               setUserRole('TEACHER');
@@ -166,6 +169,7 @@ const App: React.FC = () => {
         return (
           <MathPath 
             grade={selectedGrade} 
+            setGrade={setSelectedGrade}
             initialRole={userRole}
             onBack={() => {
               setUserRole('TEACHER');
@@ -177,6 +181,7 @@ const App: React.FC = () => {
         return (
           <MateSafe 
             grade={selectedGrade} 
+            setGrade={setSelectedGrade}
             initialRole={userRole}
             onBack={() => {
               setUserRole('TEACHER');
@@ -185,13 +190,13 @@ const App: React.FC = () => {
           />
         );
       case AppMode.MATE_MACHINE:
-        return <MateMachine grade={selectedGrade} initialProblem={mateMachineProblem} />;
+        return <MateMachine grade={selectedGrade} setGrade={setSelectedGrade} initialProblem={mateMachineProblem} />;
       case AppMode.GEOGEBRA:
         return <GeoGebra />;
       case AppMode.MATHIGON:
         return <Mathigon />;
       case AppMode.DASHBOARD:
-        return <Dashboard setMode={changeMode} />;
+        return <Dashboard setMode={changeMode} selectedGrade={selectedGrade} setGrade={setSelectedGrade} />;
       case AppMode.ANALYTICS:
         return <AdminDashboard />;
       case AppMode.REMEDIAL_TEACHING:

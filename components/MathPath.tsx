@@ -27,6 +27,7 @@ import Loading from './Loading';
 
 interface MathPathProps {
   grade: GradeLevel;
+  setGrade?: (grade: GradeLevel) => void;
   initialRole?: 'TEACHER' | 'STUDENT' | null;
   onBack: () => void;
 }
@@ -72,7 +73,12 @@ const PATH_COLORS = [
   'bg-lime-100 border-lime-300 text-lime-700',
 ];
 
-const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }) => {
+const MathPath: React.FC<MathPathProps> = ({ grade, setGrade, initialRole = null, onBack }) => {
+  const [currentGrade, setCurrentGrade] = useState<GradeLevel>(grade);
+
+  useEffect(() => {
+    setCurrentGrade(grade);
+  }, [grade]);
   const [role, setRole] = useState<'TEACHER' | 'STUDENT' | null>(initialRole);
   const [gameState, setGameState] = useState<any>(null);
   const [pinInput, setPinInput] = useState(() => {
@@ -176,7 +182,7 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
     setIsLoading(true);
     setError(null);
     try {
-      const content = await generateGameContent(topic, 'BOARD_GAME', grade);
+      const content = await generateGameContent(topic, 'BOARD_GAME', currentGrade);
       const pin = generatePin();
       
       const newGameState = {
@@ -404,7 +410,30 @@ const MathPath: React.FC<MathPathProps> = ({ grade, initialRole = null, onBack }
           <Zap className="text-amber-500" /> Поставки за Мате-Трка
         </h2>
         
-        <div className="space-y-8">
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">Одделение</label>
+            <select
+              value={currentGrade}
+              onChange={(e) => {
+                const newGrade = e.target.value as GradeLevel;
+                setCurrentGrade(newGrade);
+                if (setGrade) setGrade(newGrade);
+              }}
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-emerald-500 font-bold text-slate-800 outline-none cursor-pointer"
+            >
+              <option value={GradeLevel.I}>🌱 I Одделение</option>
+              <option value={GradeLevel.II}>🌿 II Одделение</option>
+              <option value={GradeLevel.III}>🍀 III Одделение</option>
+              <option value={GradeLevel.IV}>⭐ IV Одделение</option>
+              <option value={GradeLevel.V}>🌟 V Одделение</option>
+              <option value={GradeLevel.VI}>👶 VI Одделение</option>
+              <option value={GradeLevel.VII}>👧 VII Одделение</option>
+              <option value={GradeLevel.VIII}>🧑 VIII Одделение</option>
+              <option value={GradeLevel.IX}>🎓 IX Одделение</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Тема за Трка</label>
             <input

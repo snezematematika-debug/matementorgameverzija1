@@ -1,6 +1,31 @@
 import { CurriculumTheme, CurriculumTopic, GradeLevel } from "./types";
 
 export const PROJECT_THEMES: CurriculumTheme[] = [
+  // Grade I
+  { id: "p-i-1", title: "Тема 1: Броеви до 20", grade: GradeLevel.I },
+  { id: "p-i-2", title: "Тема 2: Геометрија околу нас", grade: GradeLevel.I },
+  { id: "p-i-3", title: "Тема 3: Мерење и време", grade: GradeLevel.I },
+
+  // Grade II
+  { id: "p-ii-1", title: "Тема 1: Броеви и пазарење до 100", grade: GradeLevel.II },
+  { id: "p-ii-2", title: "Тема 2: Геометрија и симетрија", grade: GradeLevel.II },
+  { id: "p-ii-3", title: "Тема 3: Мерење и податоци", grade: GradeLevel.II },
+
+  // Grade III
+  { id: "p-iii-1", title: "Тема 1: Броеви и пари до 1000", grade: GradeLevel.III },
+  { id: "p-iii-2", title: "Тема 2: Геометрија и периметар", grade: GradeLevel.III },
+  { id: "p-iii-3", title: "Тема 3: Мерење и рецепти", grade: GradeLevel.III },
+
+  // Grade IV
+  { id: "p-iv-1", title: "Тема 1: Финансии и големи броеви", grade: GradeLevel.IV },
+  { id: "p-iv-2", title: "Тема 2: Геометрија, агли и плоштина", grade: GradeLevel.IV },
+  { id: "p-iv-3", title: "Тема 3: Статистичко истражување", grade: GradeLevel.IV },
+
+  // Grade V
+  { id: "p-v-1", title: "Тема 1: Броеви, шифри и проценти", grade: GradeLevel.V },
+  { id: "p-v-2", title: "Тема 2: Дизајн, плоштина и волумен", grade: GradeLevel.V },
+  { id: "p-v-3", title: "Тема 3: Веројатност и статистика", grade: GradeLevel.V },
+
   // Grade VI
   { id: "vi-1", title: "Тема 1: Броеви", grade: GradeLevel.VI },
   { id: "vi-2", title: "Тема 2: Геометрија", grade: GradeLevel.VI },
@@ -35,6 +60,46 @@ export const PROJECT_THEMES: CurriculumTheme[] = [
 ];
 
 export const PROJECT_TOPICS: CurriculumTopic[] = [
+  // Grade I
+  { id: "p-i-1.1", themeId: "p-i-1", name: "Броење и игра со омилените играчки", grade: GradeLevel.I },
+  { id: "p-i-1.2", themeId: "p-i-1", name: "Моето семејство претставено во бројки", grade: GradeLevel.I },
+  { id: "p-i-2.1", themeId: "p-i-2", name: "Лов на форми: Геометриски форми во училницата", grade: GradeLevel.I },
+  { id: "p-i-2.2", themeId: "p-i-2", name: "Цртање робот од геометриски фигури", grade: GradeLevel.I },
+  { id: "p-i-3.1", themeId: "p-i-3", name: "Мојот дневен распоред: Кога што правам", grade: GradeLevel.I },
+  { id: "p-i-3.2", themeId: "p-i-3", name: "Мала детска продавница со македонски монети", grade: GradeLevel.I },
+
+  // Grade II
+  { id: "p-ii-1.1", themeId: "p-ii-1", name: "Школски пазар: Купување и враќање кусур", grade: GradeLevel.II },
+  { id: "p-ii-1.2", themeId: "p-ii-1", name: "Магична табела на стотка и низи од броеви", grade: GradeLevel.II },
+  { id: "p-ii-2.1", themeId: "p-ii-2", name: "Симетрија во природата: Пеперутки и лисја", grade: GradeLevel.II },
+  { id: "p-ii-2.2", themeId: "p-ii-2", name: "Изградба на геометриски град од 3Д тела", grade: GradeLevel.II },
+  { id: "p-ii-3.1", themeId: "p-ii-3", name: "Мерење со линијар: Колку се долги училишните прибори", grade: GradeLevel.II },
+  { id: "p-ii-3.2", themeId: "p-ii-3", name: "Пиктограм: Нашите омилени спортски активности", grade: GradeLevel.II },
+
+  // Grade III
+  { id: "p-iii-1.1", themeId: "p-iii-1", name: "Планирање буџет за роденденска забава", grade: GradeLevel.III },
+  { id: "p-iii-1.2", themeId: "p-iii-1", name: "Дропки во кујната: Поделба на пица и овошје", grade: GradeLevel.III },
+  { id: "p-iii-2.1", themeId: "p-iii-2", name: "Дизајнирање детско игралиште (Пресметка на периметар)", grade: GradeLevel.III },
+  { id: "p-iii-2.2", themeId: "p-iii-2", name: "Креативни кутии: Својства и мрежи на 3Д тела", grade: GradeLevel.III },
+  { id: "p-iii-3.1", themeId: "p-iii-3", name: "Време и патување: Распоред на патување низ Македонија", grade: GradeLevel.III },
+  { id: "p-iii-3.2", themeId: "p-iii-3", name: "Мерење маса и зафатнина: Рецепт за вкусен колач", grade: GradeLevel.III },
+
+  // Grade IV
+  { id: "p-iv-1.1", themeId: "p-iv-1", name: "Семеен пазарен буџет со децимални броеви", grade: GradeLevel.IV },
+  { id: "p-iv-1.2", themeId: "p-iv-1", name: "Спортот во бројки: Мерења на време и растојанија", grade: GradeLevel.IV },
+  { id: "p-iv-2.1", themeId: "p-iv-2", name: "Архитектонски план за мојата соба (Периметар и плоштина)", grade: GradeLevel.IV },
+  { id: "p-iv-2.2", themeId: "p-iv-2", name: "Агли во архитектурата на нашиот град", grade: GradeLevel.IV },
+  { id: "p-iv-3.1", themeId: "p-iv-3", name: "Статистичко истражување: Навиките за читање книги", grade: GradeLevel.IV },
+  { id: "p-iv-3.2", themeId: "p-iv-3", name: "Еко-проект: Колку отпад рециклираме во училиштето", grade: GradeLevel.IV },
+
+  // Grade V
+  { id: "p-v-1.1", themeId: "p-v-1", name: "Тајни шифри со прости броеви и делители", grade: GradeLevel.V },
+  { id: "p-v-1.2", themeId: "p-v-1", name: "Проценти во продавниците: Сезонски попусти и заштеди", grade: GradeLevel.V },
+  { id: "p-v-2.1", themeId: "p-v-2", name: "Дизајн на училишен аквариум (Волумен и зафатнина)", grade: GradeLevel.V },
+  { id: "p-v-2.2", themeId: "p-v-2", name: "Пакување производи: Минимална плоштина на картон", grade: GradeLevel.V },
+  { id: "p-v-3.1", themeId: "p-v-3", name: "Игри на среќа и фер правила: Експерименти со веројатност", grade: GradeLevel.V },
+  { id: "p-v-3.2", themeId: "p-v-3", name: "Метеоролошка станица: Просечни температури и линиски дијаграми", grade: GradeLevel.V },
+
   // Grade VI - Theme 1: Броеви
   { id: "vi-1.1", themeId: "vi-1", name: "Множества", grade: GradeLevel.VI },
   { id: "vi-1.2", themeId: "vi-1", name: "Природни броеви", grade: GradeLevel.VI },

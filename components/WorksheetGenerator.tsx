@@ -10,12 +10,13 @@ import { parse } from 'marked';
 
 interface WorksheetGeneratorProps {
   grade: GradeLevel;
+  setGrade?: (grade: GradeLevel) => void;
   initialContent?: string;
 }
 
 type Tool = 'pen' | 'line' | 'eraser';
 
-const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade, initialContent }) => {
+const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade, setGrade, initialContent }) => {
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [worksheetType, setWorksheetType] = useState<'STANDARD' | 'DIFFERENTIATED' | 'EXIT_TICKET'>('STANDARD');
@@ -303,12 +304,34 @@ const WorksheetGenerator: React.FC<WorksheetGeneratorProps> = ({ grade, initialC
 
       {/* Input Section */}
       <div className="print:hidden">
-        <div className="border-b pb-4 mb-6">
-            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                📄 Работни листови
-                <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>
-            </h2>
-            <p className="text-slate-500 mt-1">Изберете лекција и генерирајте работен лист.</p>
+        <div className="border-b pb-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                  📄 Работни листови
+                  <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>
+              </h2>
+              <p className="text-slate-500 mt-1">Изберете одделение, тема и лекција за генерирање работен лист.</p>
+            </div>
+            {setGrade && (
+              <div className="flex items-center gap-2 bg-indigo-50/80 p-1.5 px-3 rounded-xl border border-indigo-200">
+                <span className="text-xs font-bold text-indigo-700 uppercase">Одделение:</span>
+                <select
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value as GradeLevel)}
+                  className="bg-white text-indigo-900 font-bold text-sm px-3 py-1.5 rounded-lg border border-indigo-200 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm"
+                >
+                  <option value={GradeLevel.I}>🌱 I Одделение</option>
+                  <option value={GradeLevel.II}>🌿 II Одделение</option>
+                  <option value={GradeLevel.III}>🍀 III Одделение</option>
+                  <option value={GradeLevel.IV}>⭐ IV Одделение</option>
+                  <option value={GradeLevel.V}>🌟 V Одделение</option>
+                  <option value={GradeLevel.VI}>👶 VI Одделение</option>
+                  <option value={GradeLevel.VII}>👧 VII Одделение</option>
+                  <option value={GradeLevel.VIII}>🧑 VIII Одделение</option>
+                  <option value={GradeLevel.IX}>🎓 IX Одделение</option>
+                </select>
+              </div>
+            )}
         </div>
 
         <div className="flex flex-col gap-4 bg-slate-50 p-6 rounded-xl border border-slate-100">

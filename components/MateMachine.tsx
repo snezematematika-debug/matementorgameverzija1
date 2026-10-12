@@ -17,6 +17,7 @@ import { GradeLevel } from '../types';
 
 interface MateMachineProps {
   grade: GradeLevel;
+  setGrade?: (grade: GradeLevel) => void;
   initialProblem?: string;
 }
 
@@ -28,7 +29,8 @@ interface Step {
   feedback?: string;
 }
 
-const MateMachine: React.FC<MateMachineProps> = ({ grade, initialProblem }) => {
+const MateMachine: React.FC<MateMachineProps> = ({ grade, setGrade, initialProblem }) => {
+  const [currentGrade, setCurrentGrade] = useState<GradeLevel>(grade);
   const [difficulty, setDifficulty] = useState<Difficulty>('SIMPLE');
   const [gameState, setGameState] = useState<'IDLE' | 'PLAYING' | 'FINISHED'>('IDLE');
   const [initialExpression, setInitialExpression] = useState('');
@@ -39,6 +41,10 @@ const MateMachine: React.FC<MateMachineProps> = ({ grade, initialProblem }) => {
   const [isHintLoading, setIsHintLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setCurrentGrade(grade);
+  }, [grade]);
 
   useEffect(() => {
     if (initialProblem) {
@@ -60,22 +66,115 @@ const MateMachine: React.FC<MateMachineProps> = ({ grade, initialProblem }) => {
   const generateProblem = () => {
     let problem = '';
 
-    if (difficulty === 'SIMPLE') {
-      const a = Math.floor(Math.random() * 10) + 1;
-      const b = Math.floor(Math.random() * 20) + 1;
-      const x = Math.floor(Math.random() * 10) + 1;
-      const c = a * x + b;
-      problem = `${a}x + ${b} = ${c}`;
-    } else if (difficulty === 'STANDARD') {
-      const a = Math.floor(Math.random() * 5) + 2;
-      const b = Math.floor(Math.random() * 5) + 1;
-      const x = Math.floor(Math.random() * 5) + 1;
-      const c = a * (x + b);
-      problem = `${a}(x + ${b}) = ${c}`;
-    } else {
-      const a = Math.floor(Math.random() * 3) + 1;
-      const b = Math.floor(Math.random() * 5) + 1;
-      problem = `Поедностави: (${a}x + ${b})²`;
+    // Grade I: Numbers up to 20
+    if (currentGrade === GradeLevel.I) {
+      if (difficulty === 'SIMPLE') {
+        const x = Math.floor(Math.random() * 8) + 1;
+        const b = Math.floor(Math.random() * (10 - x)) + 1;
+        problem = `x + ${b} = ${x + b}`;
+      } else if (difficulty === 'STANDARD') {
+        const x = Math.floor(Math.random() * 10) + 1;
+        const b = Math.floor(Math.random() * (20 - x)) + 1;
+        problem = `x + ${b} = ${x + b}`;
+      } else {
+        const x = Math.floor(Math.random() * 9) + 1;
+        const c = Math.floor(Math.random() * 10) + 10;
+        const b = c - x;
+        problem = `${c} - x = ${b}`;
+      }
+    } 
+    // Grade II: Numbers up to 100, basic multiplication (2, 5, 10)
+    else if (currentGrade === GradeLevel.II) {
+      if (difficulty === 'SIMPLE') {
+        const x = Math.floor(Math.random() * 30) + 10;
+        const b = Math.floor(Math.random() * 30) + 10;
+        problem = `x + ${b} = ${x + b}`;
+      } else if (difficulty === 'STANDARD') {
+        const mult = [2, 5, 10][Math.floor(Math.random() * 3)];
+        const x = Math.floor(Math.random() * 9) + 1;
+        problem = `${mult} * x = ${mult * x}`;
+      } else {
+        const x = Math.floor(Math.random() * 40) + 10;
+        const b = Math.floor(Math.random() * 40) + 10;
+        problem = `${x + b} - x = ${b}`;
+      }
+    }
+    // Grade III: Numbers up to 1000, times tables up to 100
+    else if (currentGrade === GradeLevel.III) {
+      if (difficulty === 'SIMPLE') {
+        const a = Math.floor(Math.random() * 7) + 3;
+        const x = Math.floor(Math.random() * 9) + 2;
+        problem = `${a} * x = ${a * x}`;
+      } else if (difficulty === 'STANDARD') {
+        const a = Math.floor(Math.random() * 6) + 2;
+        const x = Math.floor(Math.random() * 8) + 2;
+        const b = Math.floor(Math.random() * 20) + 5;
+        problem = `${a}x + ${b} = ${a * x + b}`;
+      } else {
+        const b = Math.floor(Math.random() * 8) + 2;
+        const x = Math.floor(Math.random() * 8) + 2;
+        problem = `x : ${b} = ${x}`;
+      }
+    }
+    // Grade IV: Numbers up to 1 000 000, multi-digit operations
+    else if (currentGrade === GradeLevel.IV) {
+      if (difficulty === 'SIMPLE') {
+        const a = Math.floor(Math.random() * 8) + 2;
+        const x = Math.floor(Math.random() * 15) + 5;
+        const b = Math.floor(Math.random() * 50) + 10;
+        problem = `${a}x + ${b} = ${a * x + b}`;
+      } else if (difficulty === 'STANDARD') {
+        const a = Math.floor(Math.random() * 5) + 2;
+        const b = Math.floor(Math.random() * 10) + 1;
+        const x = Math.floor(Math.random() * 10) + 2;
+        problem = `${a}(x + ${b}) = ${a * (x + b)}`;
+      } else {
+        const a = Math.floor(Math.random() * 5) + 2;
+        const x = Math.floor(Math.random() * 10) + 5;
+        const b = Math.floor(Math.random() * 20) + 10;
+        problem = `${a}x - ${b} = ${a * x - b}`;
+      }
+    }
+    // Grade V: Decimals, fractions, equations
+    else if (currentGrade === GradeLevel.V) {
+      if (difficulty === 'SIMPLE') {
+        const a = Math.floor(Math.random() * 6) + 2;
+        const x = Math.floor(Math.random() * 12) + 2;
+        const b = Math.floor(Math.random() * 25) + 5;
+        problem = `${a}x + ${b} = ${a * x + b}`;
+      } else if (difficulty === 'STANDARD') {
+        const a = Math.floor(Math.random() * 4) + 2;
+        const b = Math.floor(Math.random() * 8) + 2;
+        const x = Math.floor(Math.random() * 8) + 2;
+        problem = `${a}(x - ${b}) = ${a * (x - b)}`;
+      } else {
+        const a = Math.floor(Math.random() * 4) + 3;
+        const c = Math.floor(Math.random() * 2) + 1;
+        const x = Math.floor(Math.random() * 6) + 2;
+        const b = Math.floor(Math.random() * 10) + 5;
+        const d = (a - c) * x + b;
+        problem = `${a}x + ${b} = ${c}x + ${d}`;
+      }
+    }
+    // Grade VI - IX: Full Algebra
+    else {
+      if (difficulty === 'SIMPLE') {
+        const a = Math.floor(Math.random() * 10) + 1;
+        const b = Math.floor(Math.random() * 20) + 1;
+        const x = Math.floor(Math.random() * 10) + 1;
+        const c = a * x + b;
+        problem = `${a}x + ${b} = ${c}`;
+      } else if (difficulty === 'STANDARD') {
+        const a = Math.floor(Math.random() * 5) + 2;
+        const b = Math.floor(Math.random() * 5) + 1;
+        const x = Math.floor(Math.random() * 5) + 1;
+        const c = a * (x + b);
+        problem = `${a}(x + ${b}) = ${c}`;
+      } else {
+        const a = Math.floor(Math.random() * 3) + 1;
+        const b = Math.floor(Math.random() * 5) + 1;
+        problem = `Поедностави: (${a}x + ${b})²`;
+      }
     }
 
     setInitialExpression(problem);
@@ -151,21 +250,43 @@ const MateMachine: React.FC<MateMachineProps> = ({ grade, initialProblem }) => {
             <p className="text-slate-500 font-medium">Алгебарски процесор за чекор-по-чекор решавање</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          {(['SIMPLE', 'STANDARD', 'ADVANCED'] as Difficulty[]).map((d) => (
-            <button
-              key={d}
-              onClick={() => setDifficulty(d)}
-              disabled={gameState !== 'IDLE'}
-              className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${
-                difficulty === d 
-                  ? 'bg-indigo-600 text-white shadow-md' 
-                  : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
-              } disabled:opacity-50`}
-            >
-              {d === 'SIMPLE' ? 'Едноставно' : d === 'STANDARD' ? 'Стандардно' : 'Напредно'}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          <select
+            value={currentGrade}
+            onChange={(e) => {
+              const newGrade = e.target.value as GradeLevel;
+              setCurrentGrade(newGrade);
+              if (setGrade) setGrade(newGrade);
+            }}
+            disabled={gameState !== 'IDLE'}
+            className="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer disabled:opacity-50"
+          >
+            <option value={GradeLevel.I}>🌱 I Одд.</option>
+            <option value={GradeLevel.II}>🌿 II Одд.</option>
+            <option value={GradeLevel.III}>🍀 III Одд.</option>
+            <option value={GradeLevel.IV}>⭐ IV Одд.</option>
+            <option value={GradeLevel.V}>🌟 V Одд.</option>
+            <option value={GradeLevel.VI}>👶 VI Одд.</option>
+            <option value={GradeLevel.VII}>👧 VII Одд.</option>
+            <option value={GradeLevel.VIII}>🧑 VIII Одд.</option>
+            <option value={GradeLevel.IX}>🎓 IX Одд.</option>
+          </select>
+          <div className="flex gap-1.5">
+            {(['SIMPLE', 'STANDARD', 'ADVANCED'] as Difficulty[]).map((d) => (
+              <button
+                key={d}
+                onClick={() => setDifficulty(d)}
+                disabled={gameState !== 'IDLE'}
+                className={`px-3 py-2 rounded-xl font-bold text-xs transition-all ${
+                  difficulty === d 
+                    ? 'bg-indigo-600 text-white shadow-md' 
+                    : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                } disabled:opacity-50`}
+              >
+                {d === 'SIMPLE' ? 'Едноставно' : d === 'STANDARD' ? 'Стандардно' : 'Напредно'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

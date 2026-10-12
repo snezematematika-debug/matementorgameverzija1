@@ -26,6 +26,7 @@ import FormattedText from './FormattedText';
 
 interface MateHootProps {
   grade: GradeLevel;
+  setGrade?: (grade: GradeLevel) => void;
   initialRole?: 'TEACHER' | 'STUDENT' | null;
   onBack: () => void;
 }
@@ -37,7 +38,12 @@ const COLORS = [
   { name: 'Green', bg: 'bg-emerald-500', hover: 'hover:bg-emerald-600', icon: '■', shadow: 'shadow-emerald-200' },
 ];
 
-const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }) => {
+const MateHoot: React.FC<MateHootProps> = ({ grade, setGrade, initialRole = null, onBack }) => {
+  const [currentGrade, setCurrentGrade] = useState<GradeLevel>(grade);
+
+  useEffect(() => {
+    setCurrentGrade(grade);
+  }, [grade]);
   const [role, setRole] = useState<'TEACHER' | 'STUDENT' | null>(initialRole);
   const [pinInput, setPinInput] = useState(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -192,7 +198,7 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
     setLoading(true);
     setError(null);
     try {
-      const content = await generateGameContent(selectedTopic, 'MATEHOOT', grade);
+      const content = await generateGameContent(selectedTopic, 'MATEHOOT', currentGrade);
       const pin = generatePin();
       
       const newGameState: GameState = {
@@ -466,7 +472,30 @@ const MateHoot: React.FC<MateHootProps> = ({ grade, initialRole = null, onBack }
           <Sparkles className="text-indigo-500" /> Поставки за Мате-Хут
         </h2>
         
-        <div className="space-y-8">
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wider">Одделение</label>
+            <select
+              value={currentGrade}
+              onChange={(e) => {
+                const newGrade = e.target.value as GradeLevel;
+                setCurrentGrade(newGrade);
+                if (setGrade) setGrade(newGrade);
+              }}
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 font-bold text-slate-800 outline-none cursor-pointer"
+            >
+              <option value={GradeLevel.I}>🌱 I Одделение</option>
+              <option value={GradeLevel.II}>🌿 II Одделение</option>
+              <option value={GradeLevel.III}>🍀 III Одделение</option>
+              <option value={GradeLevel.IV}>⭐ IV Одделение</option>
+              <option value={GradeLevel.V}>🌟 V Одделение</option>
+              <option value={GradeLevel.VI}>👶 VI Одделение</option>
+              <option value={GradeLevel.VII}>👧 VII Одделение</option>
+              <option value={GradeLevel.VIII}>🧑 VIII Одделение</option>
+              <option value={GradeLevel.IX}>🎓 IX Одделение</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Избери тема за квизот</label>
             <input

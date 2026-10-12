@@ -15,13 +15,15 @@ import {
   ShieldCheck,
   Cpu
 } from 'lucide-react';
-import { AppMode } from '../types';
+import { AppMode, GradeLevel } from '../types';
 
 interface DashboardProps {
   setMode: (mode: AppMode) => void;
+  selectedGrade?: GradeLevel;
+  setGrade?: (grade: GradeLevel) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setMode, selectedGrade, setGrade }) => {
   const quotes = [
     { text: "Математиката е јазикот на кој Бог го напишал универзумот.", author: "Галилео Галилеј" },
     { text: "Суштината на математиката не е да ги направи едноставните работи комплицирани, туку да ги направи комплицираните работи едноставни.", author: "С. Гудер" },
@@ -88,7 +90,27 @@ const Dashboard: React.FC<DashboardProps> = ({ setMode }) => {
             Твојот дигитален кабинет е подготвен за денешните часови.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {selectedGrade && setGrade && (
+            <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Одделение:</span>
+              <select
+                value={selectedGrade}
+                onChange={(e) => setGrade(e.target.value as GradeLevel)}
+                className="bg-indigo-50 text-indigo-900 font-bold text-sm px-3 py-1.5 rounded-xl border border-indigo-200 outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer"
+              >
+                <option value={GradeLevel.I}>🌱 I Одделение</option>
+                <option value={GradeLevel.II}>🌿 II Одделение</option>
+                <option value={GradeLevel.III}>🍀 III Одделение</option>
+                <option value={GradeLevel.IV}>⭐ IV Одделение</option>
+                <option value={GradeLevel.V}>🌟 V Одделение</option>
+                <option value={GradeLevel.VI}>👶 VI Одделение</option>
+                <option value={GradeLevel.VII}>👧 VII Одделение</option>
+                <option value={GradeLevel.VIII}>🧑 VIII Одделение</option>
+                <option value={GradeLevel.IX}>🎓 IX Одделение</option>
+              </select>
+            </div>
+          )}
           <div className="bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2">
             <Clock className="w-4 h-4 text-indigo-500" />
             <span className="text-sm font-bold text-slate-600">

@@ -10,11 +10,12 @@ import { ArrowLeft } from 'lucide-react';
 
 interface ProjectGeneratorProps {
   grade: GradeLevel;
+  setGrade?: (grade: GradeLevel) => void;
   initialContent?: string;
 }
 
-const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade, initialContent }) => {
-  const availableThemes = PROJECT_THEMES.filter(theme => theme.id.startsWith('steam-'));
+const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade, setGrade, initialContent }) => {
+  const availableThemes = PROJECT_THEMES.filter(theme => theme.grade === grade || theme.id.startsWith('steam-'));
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   
@@ -197,14 +198,34 @@ const ProjectGenerator: React.FC<ProjectGeneratorProps> = ({ grade, initialConte
 
       {/* Input Section - Hidden on Print */}
       <div className="print:hidden">
-        <div className="flex items-center justify-between border-b pb-4 mb-6">
-            <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-4 mb-6 gap-4">
+            <div>
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                     🚀 Проектни задачи (STEAM)
                     <span className="text-sm font-normal text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{grade} Одд.</span>
                 </h2>
+                <p className="text-slate-500 mt-1">Генерирајте креативни истражувачки проекти поврзани со реалниот живот.</p>
             </div>
-            <p className="text-slate-500 mt-1 hidden md:block">Генерирајте креативни истражувачки проекти поврзани со реалниот живот.</p>
+            {setGrade && (
+              <div className="flex items-center gap-2 bg-indigo-50/80 p-1.5 px-3 rounded-xl border border-indigo-200">
+                <span className="text-xs font-bold text-indigo-700 uppercase">Одделение:</span>
+                <select
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value as GradeLevel)}
+                  className="bg-white text-indigo-900 font-bold text-sm px-3 py-1.5 rounded-lg border border-indigo-200 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm"
+                >
+                  <option value={GradeLevel.I}>🌱 I Одделение</option>
+                  <option value={GradeLevel.II}>🌿 II Одделение</option>
+                  <option value={GradeLevel.III}>🍀 III Одделение</option>
+                  <option value={GradeLevel.IV}>⭐ IV Одделение</option>
+                  <option value={GradeLevel.V}>🌟 V Одделение</option>
+                  <option value={GradeLevel.VI}>👶 VI Одделение</option>
+                  <option value={GradeLevel.VII}>👧 VII Одделение</option>
+                  <option value={GradeLevel.VIII}>🧑 VIII Одделение</option>
+                  <option value={GradeLevel.IX}>🎓 IX Одделение</option>
+                </select>
+              </div>
+            )}
         </div>
 
         {/* Teacher Instruction */}

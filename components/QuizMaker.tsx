@@ -13,10 +13,11 @@ import { parse } from 'marked';
 
 interface QuizMakerProps {
   grade: GradeLevel;
+  setGrade?: (grade: GradeLevel) => void;
   initialContent?: string;
 }
 
-const QuizMaker: React.FC<QuizMakerProps> = ({ grade, initialContent }) => {
+const QuizMaker: React.FC<QuizMakerProps> = ({ grade, setGrade, initialContent }) => {
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
 
@@ -220,12 +221,34 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ grade, initialContent }) => {
 
   return (
     <div className="space-y-6">
-      <div className="border-b pb-4 mb-6 print:hidden">
-        <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            📝 Квиз тестови
-            <span className="text-sm font-normal text-teal-600 bg-teal-50 px-2 py-1 rounded-full">{grade} Одд.</span>
-        </h2>
-        <p className="text-slate-500 mt-1">Проверка на знаење за теми од {grade} одделение.</p>
+      <div className="border-b pb-4 mb-6 print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+              📝 Квиз тестови
+              <span className="text-sm font-normal text-teal-600 bg-teal-50 px-2 py-1 rounded-full">{grade} Одд.</span>
+          </h2>
+          <p className="text-slate-500 mt-1">Проверка на знаење за соодветната наставна програма.</p>
+        </div>
+        {setGrade && (
+          <div className="flex items-center gap-2 bg-teal-50/80 p-1.5 px-3 rounded-xl border border-teal-200">
+            <span className="text-xs font-bold text-teal-700 uppercase">Одделение:</span>
+            <select
+              value={grade}
+              onChange={(e) => setGrade(e.target.value as GradeLevel)}
+              className="bg-white text-teal-900 font-bold text-sm px-3 py-1.5 rounded-lg border border-teal-200 outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer shadow-sm"
+            >
+              <option value={GradeLevel.I}>🌱 I Одделение</option>
+              <option value={GradeLevel.II}>🌿 II Одделение</option>
+              <option value={GradeLevel.III}>🍀 III Одделение</option>
+              <option value={GradeLevel.IV}>⭐ IV Одделение</option>
+              <option value={GradeLevel.V}>🌟 V Одделение</option>
+              <option value={GradeLevel.VI}>👶 VI Одделение</option>
+              <option value={GradeLevel.VII}>👧 VII Одделение</option>
+              <option value={GradeLevel.VIII}>🧑 VIII Одделение</option>
+              <option value={GradeLevel.IX}>🎓 IX Одделение</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Motivational Instruction for Teachers */}

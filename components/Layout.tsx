@@ -160,8 +160,38 @@ const Layout: React.FC<LayoutProps> = ({ currentMode, setMode, selectedGrade, se
               </button>
               
               {/* Expandable Options */}
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isGradeMenuOpen ? 'max-h-64 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isGradeMenuOpen ? 'max-h-[36rem] opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
                  <div className="flex flex-col gap-1 pl-2">
+                    <button
+                       onClick={() => handleGradeSelect(GradeLevel.I)}
+                       className={`flex items-center gap-3 w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.I ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
+                    >
+                       <span className="text-lg">🌱</span> I Одделение
+                    </button>
+                    <button
+                       onClick={() => handleGradeSelect(GradeLevel.II)}
+                       className={`flex items-center gap-3 w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.II ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
+                    >
+                       <span className="text-lg">🌿</span> II Одделение
+                    </button>
+                    <button
+                       onClick={() => handleGradeSelect(GradeLevel.III)}
+                       className={`flex items-center gap-3 w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.III ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
+                    >
+                       <span className="text-lg">🍀</span> III Одделение
+                    </button>
+                    <button
+                       onClick={() => handleGradeSelect(GradeLevel.IV)}
+                       className={`flex items-center gap-3 w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.IV ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
+                    >
+                       <span className="text-lg">⭐</span> IV Одделение
+                    </button>
+                    <button
+                       onClick={() => handleGradeSelect(GradeLevel.V)}
+                       className={`flex items-center gap-3 w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.V ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}
+                    >
+                       <span className="text-lg">🌟</span> V Одделение
+                    </button>
                     <button
                        onClick={() => handleGradeSelect(GradeLevel.VI)}
                        className={`flex items-center gap-3 w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedGrade === GradeLevel.VI ? 'bg-indigo-600 text-white shadow-md' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'}`}

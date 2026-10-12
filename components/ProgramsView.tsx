@@ -4,6 +4,56 @@ import { motion } from 'motion/react';
 
 const programs = [
   {
+    grade: "I одделение",
+    title: "Наставна програма за I одделение",
+    description: "Официјална наставна програма по Математика за прво одделение од Бирото за развој на образованието (БРО).",
+    link: "https://bro.gov.mk/",
+    color: "border-emerald-100 hover:border-emerald-300",
+    iconColor: "bg-emerald-600",
+    hoverColor: "group-hover:text-emerald-600",
+    btnHover: "group-hover:bg-emerald-600"
+  },
+  {
+    grade: "II одделение",
+    title: "Наставна програма за II одделение",
+    description: "Официјална наставна програма по Математика за второ одделение од Бирото за развој на образованието (БРО).",
+    link: "https://bro.gov.mk/",
+    color: "border-teal-100 hover:border-teal-300",
+    iconColor: "bg-teal-600",
+    hoverColor: "group-hover:text-teal-600",
+    btnHover: "group-hover:bg-teal-600"
+  },
+  {
+    grade: "III одделение",
+    title: "Наставна програма за III одделение",
+    description: "Официјална наставна програма по Математика за трето одделение од Бирото за развој на образованието (БРО).",
+    link: "https://bro.gov.mk/",
+    color: "border-cyan-100 hover:border-cyan-300",
+    iconColor: "bg-cyan-600",
+    hoverColor: "group-hover:text-cyan-600",
+    btnHover: "group-hover:bg-cyan-600"
+  },
+  {
+    grade: "IV одделение",
+    title: "Наставна програма за IV одделение",
+    description: "Официјална наставна програма по Математика за четврто одделение од Бирото за развој на образованието (БРО).",
+    link: "https://bro.gov.mk/",
+    color: "border-indigo-100 hover:border-indigo-300",
+    iconColor: "bg-indigo-600",
+    hoverColor: "group-hover:text-indigo-600",
+    btnHover: "group-hover:bg-indigo-600"
+  },
+  {
+    grade: "V одделение",
+    title: "Наставна програма за V одделение",
+    description: "Официјална наставна програма по Математика за петто одделение од Бирото за развој на образованието (БРО).",
+    link: "https://bro.gov.mk/",
+    color: "border-violet-100 hover:border-violet-300",
+    iconColor: "bg-violet-600",
+    hoverColor: "group-hover:text-violet-600",
+    btnHover: "group-hover:bg-violet-600"
+  },
+  {
     grade: "VI одделение",
     title: "Наставна програма за VI одделение",
     description: "Официјална наставна програма по Математика од Бирото за развој на образованието (БРО).",

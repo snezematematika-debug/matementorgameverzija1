@@ -9,6 +9,7 @@ import { ArrowRight } from 'lucide-react';
 
 interface TeacherPanelProps {
   grade: GradeLevel;
+  setGrade?: (grade: GradeLevel) => void;
   setMateMachineProblem?: (problem: string) => void;
   setMode?: (mode: AppMode) => void;
 }
@@ -16,7 +17,7 @@ interface TeacherPanelProps {
 type Tool = 'pen' | 'line' | 'eraser';
 type PanelTab = 'NOTEBOOK' | 'MATE_MACHINE';
 
-const TeacherPanel: React.FC<TeacherPanelProps> = ({ grade, setMateMachineProblem, setMode }) => {
+const TeacherPanel: React.FC<TeacherPanelProps> = ({ grade, setGrade, setMateMachineProblem, setMode }) => {
   const [activeTab, setActiveTab] = useState<PanelTab>('NOTEBOOK');
   const [selectedThemeId, setSelectedThemeId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
@@ -279,11 +280,34 @@ const TeacherPanel: React.FC<TeacherPanelProps> = ({ grade, setMateMachineProble
 
   return (
     <div className="space-y-4">
-      <div className="border-b pb-4 print:hidden">
-        <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            👨‍🏫 Панел за наставници
-        </h2>
-        <p className="text-slate-500 mt-1">Алатки за подготовка и изведување на наставата.</p>
+      <div className="border-b pb-4 print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+              👨‍🏫 Панел за наставници
+              <span className="text-sm font-normal text-teal-600 bg-teal-50 px-2 py-1 rounded-full">{grade} Одд.</span>
+          </h2>
+          <p className="text-slate-500 mt-1">Алатки за подготовка и интерактивно изведување на наставата.</p>
+        </div>
+        {setGrade && (
+          <div className="flex items-center gap-2 bg-teal-50/80 p-1.5 px-3 rounded-xl border border-teal-200">
+            <span className="text-xs font-bold text-teal-700 uppercase">Одделение:</span>
+            <select
+              value={grade}
+              onChange={(e) => setGrade(e.target.value as GradeLevel)}
+              className="bg-white text-teal-900 font-bold text-sm px-3 py-1.5 rounded-lg border border-teal-200 outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer shadow-sm"
+            >
+              <option value={GradeLevel.I}>🌱 I Одделение</option>
+              <option value={GradeLevel.II}>🌿 II Одделение</option>
+              <option value={GradeLevel.III}>🍀 III Одделение</option>
+              <option value={GradeLevel.IV}>⭐ IV Одделение</option>
+              <option value={GradeLevel.V}>🌟 V Одделение</option>
+              <option value={GradeLevel.VI}>👶 VI Одделение</option>
+              <option value={GradeLevel.VII}>👧 VII Одделение</option>
+              <option value={GradeLevel.VIII}>🧑 VIII Одделение</option>
+              <option value={GradeLevel.IX}>🎓 IX Одделение</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
